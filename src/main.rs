@@ -1,3 +1,4 @@
+mod check;
 mod symbol;
 
 fn main() {
