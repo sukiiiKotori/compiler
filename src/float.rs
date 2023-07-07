@@ -85,7 +85,7 @@ pub fn parse_float(s: &str) -> f32 {
             parse_absolute_float(s)
         }
     } else { // dec
-        s.parse::<f32>().unwrap()
+        f32::from_str(s).unwrap()
     }
 }
 
