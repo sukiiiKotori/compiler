@@ -2,33 +2,15 @@
 检查数据类型
 */
 
-// 检查是否为数字
-fn is_digit(c: char) -> bool {
-    (c >= '0') && (c <= '9')
-}
-
 // 检查是否为十进制数
 pub fn is_decimal(s: &str) -> bool {
-    if s.len() > 1 && (&s[0..1] == "+" || &s[0..1] == "-") {
-        s.chars()
-            .skip(1)
-            .all(|c| is_digit(c))
-    } else {
-        s.chars()
-            .all(|c| is_digit(c))
-    }
-}
-
-// 检查是否为十六进制字符 a-f A-F
-fn is_hex_letter(c: char) -> bool {
-    (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
+    s.to_string().parse::<i32>().is_ok()
 }
 
 // 检查是否为十六进制数
 pub fn is_hex(s: &str) -> bool {
-    s.len() > 2
-        && (&s[0..2] == "0x" || &s[0..2] == "0X")
-        && s[2..].chars().all(|c| is_digit(c) || is_hex_letter(c))
+    s.len() > 2 && (&s[0..2] == "0x" || &s[0..2] == "0X")
+        && i32::from_str_radix(&s[2..], 16).is_ok()
 }
 
 // 检查是否为立即数
