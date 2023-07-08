@@ -2,6 +2,7 @@ mod float;
 mod check;
 mod symbol;
 mod ast;
+mod llvm_struct;
 
 /*
 编译器设置选项
