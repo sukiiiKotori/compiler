@@ -14,6 +14,15 @@ pub struct SymbolType {
     pub is_const : bool,
 }
 
+impl Default for SymbolType {
+    fn default() -> Self {
+        Self {
+            width:SymbolWidth::Void,
+            is_const:true,
+        }
+    }
+}
+
 // 符号值
 #[derive(Debug, Clone)]
 pub enum SymbolVal {
