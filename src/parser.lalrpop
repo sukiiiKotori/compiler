@@ -264,11 +264,6 @@ Number: Number = {
     FloatConst => Number::Float(<>),  // 浮点数常量
 }
 
-// 十六进制数
-Hexadecimal: String = {
-    r"0[xX][0-9a-fA-F]+" => String::from(<>),
-}
-
 // 整数常量
 IntConst: i32 = {
     r"[1-9][0-9]*" => i32::from_str_radix(<>, 10).unwrap(),  // 十进制整数
