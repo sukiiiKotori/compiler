@@ -3,6 +3,7 @@ mod check;
 mod symbol;
 mod ast;
 mod llvm_struct;
+mod llvm_gen;
 
 /*
 编译器设置选项

@@ -1,4 +1,4 @@
-use crate::sym_type::*;
+use crate::symbol::*;
 use std::collections::HashMap;
 
 #[derive(Clone)]
@@ -41,7 +41,7 @@ impl Scopes {
         }
     }
 
-    pub fn is_global(&self) -> bool {
+    pub fn is_global_scope(&self) -> bool {
         self.scope_vec.len() == 1
     }
 
@@ -75,7 +75,7 @@ impl Scopes {
         }
     }
 
-    pub fn enter_func(&mut self, func_type: &SymType) {
+    pub fn enter_function(&mut self, func_type: &SymType) {
         // 进入函数作用域
         // 在作用域堆栈中推入一个新的函数作用域
         self.scope_vec.push(Scope {
@@ -84,7 +84,7 @@ impl Scopes {
         });
     }
 
-    pub fn enter_block(&mut self) {
+    pub fn enter_basis_block(&mut self) {
         // 进入基本块作用域
         // 在作用域堆栈中推入一个新的基本块作用域
         self.scope_vec.push(Scope {
@@ -93,7 +93,7 @@ impl Scopes {
         });
     }
 
-    pub fn enter_if(&mut self) {
+    pub fn enter_if_scope(&mut self) {
         // 进入If语句作用域
         // 在作用域堆栈中推入一个新的If语句作用域
         self.scope_vec.push(Scope {
@@ -102,7 +102,7 @@ impl Scopes {
         });
     }
 
-    pub fn enter_while(&mut self, entry: &String, end: &String) {
+    pub fn enter_while_scope(&mut self, entry: &String, end: &String) {
         // 进入While循环作用域
         // 在作用域堆栈中推入一个新的While循环作用域，并指定循环入口和循环结束标签
         self.scope_vec.push(Scope {
@@ -111,14 +111,14 @@ impl Scopes {
         });
     }
 
-    pub fn exit(&mut self) {
+    pub fn exit_current_scope(&mut self) {
         // 退出当前作用域
         // 从作用域堆栈中弹出顶部的作用域
         self.scope_vec.pop();
     }
 
 
-    pub fn is_inside_while(&self) -> bool {
+    pub fn is_in_while(&self) -> bool {
         self.scope_vec
             .iter()
             .rev()
@@ -145,7 +145,7 @@ impl Scopes {
         })
     }
 
-    pub fn get_curr_func_type(&self) -> Option<SymType> {
+    pub fn get_current_function_type(&self) -> Option<SymType> {
         self.scope_vec
             .iter()
             .rev()
@@ -155,7 +155,7 @@ impl Scopes {
             })
     }
 
-    pub fn get_func(&self, id: &str) -> Option<&Symbol> {
+    pub fn get_function(&self, id: &str) -> Option<&Symbol> {
         self.scope_vec
             .iter()
             .rev()
@@ -184,13 +184,13 @@ impl Scopes {
 }
 
 pub struct Labels {
-    pub counter: i32,
-    // pure number counter
+    pub number_counter: i32,
+    // pure number_counter
     pub local: HashMap<String, i32>,
-    // local label counter
+    // local label number_counter
     pub global: HashMap<String, i32>,
-    // global label counter
-    pub block: HashMap<String, i32>,  // 基本块标号计数，只允许特定标号
+    // global label number_counter
+    pub basis_block: HashMap<String, i32>,  // 基本块标号计数，只允许特定标号
 }
 
 const BLOCK_LABELS: [&str; 14] = [
@@ -213,22 +213,22 @@ const BLOCK_LABELS: [&str; 14] = [
 impl Labels {
     pub fn new() -> Self {
         let mut labels = Labels {
-            counter: 0,
+            number_counter: 0,
             local: HashMap::new(),
-            block: BLOCK_LABELS.iter().map(|label| (String::from(*label), 0)).collect(),
+            basis_block: BLOCK_LABELS.iter().map(|label| (String::from(*label), 0)).collect(),
             global: HashMap::new(),
         };
         labels
     }
 
     pub fn pop_num_str(&mut self) -> String {
-        let res = format!("%{}", self.counter);
-        self.counter += 1;
+        let res = format!("%{}", self.number_counter);
+        self.number_counter += 1;
         res
     }
 
     pub fn recover_num(&mut self) {
-        self.counter -= 1;
+        self.number_counter -= 1;
     }
 
     pub fn pop_local(&mut self, ident: &str) -> String {
@@ -248,7 +248,7 @@ impl Labels {
     }
 
     pub fn pop_block(&mut self, ident: &str) -> String {
-        let val = self.block.get_mut(ident).expect("Undefined block label");
+        let val = self.basis_block.get_mut(ident).expect("Undefined block label");
         let res = format!("{}_{}", ident, *val);
         *val += 1;
         res
@@ -256,8 +256,8 @@ impl Labels {
 
     pub fn clear(&mut self) {
         self.local.clear();
-        self.counter = 0;
-        for counter in self.block.values_mut() {
+        self.number_counter = 0;
+        for counter in self.basis_block.values_mut() {
             *counter = 0;
         }
     }
