@@ -1,18 +1,18 @@
-use crate::symbol::*;
+use crate::structures::symbol::*;
 use std::collections::HashMap;
 
 #[derive(Clone)]
 pub struct Symbol {
     pub label: String,
-    pub sym_type: SymType,
-    pub sym_val: SymVal,
+    pub sym_type: SymbolType,
+    pub sym_val: SymbolVal,
 }
 
 pub enum ScopeType {
     BasicBlock,
     If,
     While(String, String),
-    Func(SymType),
+    Func(SymbolType),
     Global,
 }
 
@@ -49,11 +49,11 @@ impl Scopes {
         &mut self,
         labels: &mut Labels,
         ident: &str,
-        sym_type: &SymType,
-        sym_val: &SymVal,
+        sym_type: &SymbolType,
+        sym_val: &SymbolVal,
         flag: Option<bool>,
     ) -> Option<String> {
-        let flag = flag.unwrap_or(self.is_global());
+        let flag = flag.unwrap_or(self.is_global_scope());
         let curr_scope = self.scope_vec.last_mut().unwrap();
 
         let label: String;
@@ -75,7 +75,7 @@ impl Scopes {
         }
     }
 
-    pub fn enter_function(&mut self, func_type: &SymType) {
+    pub fn enter_function(&mut self, func_type: &SymbolType) {
         // 进入函数作用域
         // 在作用域堆栈中推入一个新的函数作用域
         self.scope_vec.push(Scope {
@@ -145,7 +145,7 @@ impl Scopes {
         })
     }
 
-    pub fn get_current_function_type(&self) -> Option<SymType> {
+    pub fn get_current_function_type(&self) -> Option<SymbolType> {
         self.scope_vec
             .iter()
             .rev()
@@ -159,7 +159,7 @@ impl Scopes {
         self.scope_vec
             .iter()
             .rev()
-            .find_map(|scope| scope.tab.get(id).filter(|item| matches!(item.sym_val, SymVal::Func(_, _))))
+            .find_map(|scope| scope.tab.get(id).filter(|item| matches!(item.sym_val, SymbolVal::Func(_, _))))
     }
 
     pub fn get(&mut self, id: &str) -> Option<&mut Symbol> {

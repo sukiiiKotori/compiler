@@ -1,13 +1,13 @@
-use crate::llvm_struct::{LLVMProgram, InstrType};
-use crate::symbol::*;
-use crate::llvm_gen::scopes::{Labels};
-use crate::float::{format_double, parse_float};
+use crate::structures::llvm_struct::{LLVMProgram, InstructionType};
+use crate::structures::symbol::*;
+use crate::llvm_gen::scopes::Labels;
+use crate::untils::float::{format_double, parse_float};
 
 
 /// 检查数组/指针是否为同一类型
 /// 当一层出现指针时，将这一层恒定为相同类型
-fn array_is_equal(arr1: &SymType, arr2: &SymType) -> bool {
-    if let (Width::Arr{tar: tar1, dims: dims1}, Width::Arr{tar: tar2, dims: dims2}) = (&arr1.width, &arr2.width) {
+fn array_is_equal(arr1: &SymbolType, arr2: &SymbolType) -> bool {
+    if let (SymbolWidth::Arr{tar: tar1, dims: dims1}, SymbolWidth::Arr{tar: tar2, dims: dims2}) = (&arr1.width, &arr2.width) {
 
         let mut dims1 = dims1.clone();
         let mut dims2 = dims2.clone();
@@ -34,13 +34,13 @@ fn array_is_equal(arr1: &SymType, arr2: &SymType) -> bool {
 }
 
 /// 检查ty是否为数组/指针
-fn is_array(ty: &SymType) -> bool {
+fn is_array(ty: &SymbolType) -> bool {
     Width::Arr{tar: _, dims: _} == ty.width
 }
 
 /// 常量和变量的类型转换
 pub fn type_conver(program: &mut LLVMProgram, 
-    labels: &mut Labels, value: String, ty1: &SymType, ty2: &SymType) -> String {
+    labels: &mut Labels, value: String, ty1: &SymbolType, ty2: &SymbolType) -> String {
 
     // 类型一样直接返回
     if ty1.width == ty2.width {
@@ -62,14 +62,14 @@ pub fn type_conver(program: &mut LLVMProgram,
         }
         dims1.remove(0);
         dims2.remove(0);
-        let new_ty1 = SymType::new(Width::Arr{tar: tar1.clone(), dims: dims1}, false);
-        let new_ty2 = SymType::new(Width::Arr{tar: tar2.clone(), dims: dims2}, false);
+        let new_ty1 = SymbolType::new(Width::Arr{tar: tar1.clone(), dims: dims1}, false);
+        let new_ty2 = SymbolType::new(Width::Arr{tar: tar2.clone(), dims: dims2}, false);
 
         let cast_res = labels.pop_num_str();
         let ty_vec = vec!(&new_ty1, &new_ty2);
         let str_vec = vec!(cast_res.as_str(), value.as_str());
-        program.push_instr(InstrType::BitCast, str_vec, ty_vec);
-        vprintln!("Warning: cast {} from {:?} to {:?}", value, ty1, ty2);
+        program.push_instr(InstructionType::BitCast, str_vec, ty_vec);
+        log_println!("Warning: cast {} from {:?} to {:?}", value, ty1, ty2);
 
         return cast_res;
     }
@@ -84,7 +84,7 @@ pub fn type_conver(program: &mut LLVMProgram,
             } else if ty1.width == Width::Float {
                 let label = labels.pop_num_str();
                 program.push_instr(
-                    InstrType::Fptosi, 
+                    InstructionType::Fptosi, 
                     vec!(&label, &result),
                     vec!(&ty1, &ty2),
                 );
@@ -93,7 +93,7 @@ pub fn type_conver(program: &mut LLVMProgram,
                 let ty_vec = vec!(ty1);
                 let label = labels.pop_num_str();
                 let str_vec = vec!("ne", label.as_str(), "0", result.as_str());
-                program.push_instr(InstrType::Icmp, str_vec, ty_vec);
+                program.push_instr(InstructionType::Icmp, str_vec, ty_vec);
                 result = label;
             }
             result
@@ -104,7 +104,7 @@ pub fn type_conver(program: &mut LLVMProgram,
             } else if ty2.width == Width::Float {
                 let label = labels.pop_num_str();
                 program.push_instr(
-                    InstrType::Sitofp, 
+                    InstructionType::Sitofp, 
                     vec!(&label, &result),
                     vec!(&ty1, &ty2),
                 );
@@ -112,7 +112,7 @@ pub fn type_conver(program: &mut LLVMProgram,
             } else {
                 let label = labels.pop_num_str();
                 program.push_instr(
-                    InstrType::Zext, 
+                    InstructionType::Zext, 
                     vec!(&label, &result),
                     vec!(&ty1, &ty2),
                 );
@@ -150,7 +150,7 @@ pub fn type_conver(program: &mut LLVMProgram,
 
 /// 比较两个数值类型，若类型不同，调用type_conver将类型低的转换为高的，最后返回比较结果
 pub fn type_cmpare(program: &mut LLVMProgram, labels: &mut Labels, 
-    ty1: SymType, op1: String, ty2: SymType, op2: String) -> (SymType, String, String) {
+    ty1: SymbolType, op1: String, ty2: SymbolType, op2: String) -> (SymbolType, String, String) {
 
     // 类型相同的情况
     if ty1.width == ty2.width {

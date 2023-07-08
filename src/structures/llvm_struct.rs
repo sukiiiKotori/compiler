@@ -1,4 +1,4 @@
-use crate::symbol::*;
+use crate::structures::symbol::*;
 
 // llvm程序开始
 #[derive(Debug, Default)]

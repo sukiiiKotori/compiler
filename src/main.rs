@@ -1,10 +1,8 @@
-mod float;
-mod check;
-mod symbol;
+mod untils;
+mod structures;
 mod ast;
-mod llvm_struct;
 mod llvm_gen;
-
+mod riscv_gen;
 /*
 编译器设置选项
 */

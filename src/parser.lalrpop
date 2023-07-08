@@ -1,7 +1,7 @@
 grammar;
 
 use crate::ast::*;
-use crate::symbol::*;
+use crate::structures::symbol::*;
 
 // 使用 LALRPOP 语法定义的语法规则，用于解析 SysY 编程语言的语法。
 
