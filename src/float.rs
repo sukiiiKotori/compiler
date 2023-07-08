@@ -88,39 +88,3 @@ pub fn parse_float(s: &str) -> f32 {
         f32::from_str(s).unwrap()
     }
 }
-
-#[cfg(test)]
-mod test_float {
-    use super::*;
-    use std::io::Write;
-    #[test]
-	fn conver_floats() {
-	    const EXAMPLES: [&str; 14] = [
-	        "5.5", 
-	        "03.141592653589793", 
-	        "1e-6", 
-	        "0x1.921fb6p+1", 
-	        "0x.AP-3", 
-	        ".33E+5", 
-	        "1e9",
-	        "233",
-	        "3.2",
-	        "2.",
-	        "1e1",
-	        "0x1.7487b2p+7",
-            "0x5b.acp1",
-            "0x1af.p2"
-	    ];
-        let mut output = std::fs::File::create("test_float.log").unwrap();
-	    for example in EXAMPLES.iter() {
-	        write!(output, "example = {}\n", example).unwrap();
-	        let x = parse_float(example);
-	        let hex_x = format_double(x);
-	        write!(output, "x = {}, hex x = {}\n", x, hex_x).unwrap();
-	
-	        let new_x = parse_float(hex_x.as_str());
-	        let new_hex_x = format_double(new_x);
-	        write!(output, "new x = {}, new hex x = {}\n\n", new_x, new_hex_x).unwrap();
-	    }
-	}
-}
