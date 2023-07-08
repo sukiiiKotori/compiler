@@ -1,3 +1,8 @@
+grammar;
+
+use crate::ast::*;
+use crate::symbol::*;
+
 // 使用 LALRPOP 语法定义的语法规则，用于解析 SysY 编程语言的语法。
 
 // 匹配空白字符
@@ -119,16 +124,15 @@ Block: Block = {
     "{" <items: (<BlockItem>)*> "}" => Block{items},
 }
 
+Stmt: Stmt = {
+    MatchedStmt => <>,
+    OpenStmt => <>,
+}
+
 // 代码块中的语句或声明
 BlockItem: BlockItem = {
     <decl: Decl> => BlockItem::Decl(<>),  // 声明
     <stmt: Stmt> => BlockItem::Stmt(<>),  // 语句
-}
-
-// 语句
-Stmt: Stmt = {
-    MatchedStmt => <>,  // 匹配语句
-    OpenStmt => <>,  // 开放语句
 }
 
 // 匹配语句
@@ -144,10 +148,9 @@ MatchedStmt: Stmt = {
             stmt2: Some(Box::new(stmt2)),
         }  // if-else 语句
     },
-    "break" ";" => Stmt::Break,  // break 语句
-    "continue" ";" => Stmt::Continue,  // continue 语句
+    "break" ";" => Stmt::Break,
+    "continue" ";" => Stmt::Continue,
 }
-
 // 开放语句
 OpenStmt: Stmt = {
     "if" "(" <exp: Exp> ")" <stmt: Stmt> => {
@@ -163,7 +166,7 @@ OpenStmt: Stmt = {
             stmt1: Box::new(stmt1),
             stmt2: Some(Box::new(stmt2)),
         }  // if-else 语句
-   continued:
+    },
     "while" "(" <exp: Exp> ")" <stmt: Stmt> => {
         Stmt::While {
             exp: exp,
