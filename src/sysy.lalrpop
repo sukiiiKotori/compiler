@@ -1,0 +1,259 @@
+grammar;
+
+use crate::ast::*;
+use crate::symbol::*;
+
+match {
+    r"\s*" => {},
+    r"//[^\n\r]*[\n\r]*" => {},
+    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => {},
+    _,
+}
+
+pub SysY: SysY = {
+    <unit: CompUnit> <mut units: (CompUnit)*> => {
+        units.insert(0, unit);
+        SysY{units}
+    },
+}
+
+CompUnit: CompUnit = {
+    FuncDef => CompUnit::FuncDef(<>),
+    Decl => CompUnit::Decl(<>),
+}
+
+FuncDef: FuncDef = {
+    <func_type: Type> <id: Ident> "(" <params: FuncFParams?> ")" <block: Block> => FuncDef{
+        func_type, id, params, block},
+}
+
+Type: Type = {
+    "void" => Type{ty: SymType::new(Width::Void, false)},
+    "int" => Type{ty: SymType::new(Width::I32, false)},
+    "float" => Type{ty: SymType::new(Width::Float, false)},
+}
+
+FuncFParams: Vec<FuncFParam> = {
+    <param: FuncFParam> <mut params: ("," <FuncFParam>)*> => {
+        params.insert(0, param);
+        params
+    },
+}
+
+FuncFParam: FuncFParam = {
+    <ty: Type> <id: Ident> => FuncFParam{ty, id, idx: vec!()},
+    <ty: Type> <id: Ident> "[" "]" <exps: ("[" <Exp> "]")*> => {
+        let mut idx: Vec<Index> = vec!(Index::Ptr(-1));
+        for exp in exps.into_iter() {
+            idx.push(Index::Exp(exp));
+        }
+        FuncFParam{ty, id, idx}
+    },
+}
+
+Decl: Decl = {
+    ConstDecl => Decl::ConstDecl(<>),
+    VarDecl => Decl::VarDecl(<>),
+}
+
+ConstDecl: ConstDecl = {
+    "const" <ty: Type> <def: ConstDef> <mut defs: ("," <ConstDef>)*> ";" => {
+        defs.insert(0, def);
+        ConstDecl {
+            ty: ty,
+            defs: defs,
+        }
+    },
+}
+
+ConstDef: ConstDef = {
+    <id: Ident> <dims: ("[" <Exp> "]")*> "=" <init: InitVal> => {
+        ConstDef{id: id, dims: dims, init: init}
+    },
+}
+
+VarDecl: VarDecl = {
+    <ty: Type> <def: VarDef> <mut defs: ("," <VarDef>)*> ";" => {
+        defs.insert(0, def);
+        VarDecl {
+            ty: ty,
+            defs: defs,
+        }
+    },
+}
+
+VarDef: VarDef = {
+    <id: Ident> <dims: ("[" <Exp> "]")*> <init: ("=" <InitVal>)?> => {
+        VarDef{id: id, dims: dims, init: init}
+    },
+}
+
+InitVal: InitVal = {
+    Exp => InitVal::Exp(<>),
+    "{" "}" => {
+        InitVal::Arr(Box::new(vec!()))
+    },
+    "{" <init: InitVal> <mut inits: ("," <InitVal>)*> "}" => {
+        inits.insert(0, init);
+        InitVal::Arr(Box::new(inits))
+    },
+}
+
+Block: Block = {
+    "{" <items: (<BlockItem>)*> "}" => Block{items},
+}
+
+BlockItem: BlockItem = {
+    <decl: Decl> => BlockItem::Decl(<>),
+    <stmt: Stmt> => BlockItem::Stmt(<>),
+}
+
+Stmt: Stmt = {
+    MatchedStmt => <>,
+    OpenStmt => <>,
+}
+
+MatchedStmt: Stmt = {
+    <val: LVal> "=" <exp: Exp> ";" => Stmt::Assign(Assign{val, exp}),
+    <exp: (Exp)?> ";" => Stmt::Exp(exp),
+    Block => Stmt::Block(<>),
+    "return" <val: (Exp)?> ";" => Stmt::Return(Return{<>}),
+    "if" "(" <exp: Exp> ")" <stmt1: MatchedStmt> "else" <stmt2: MatchedStmt> => {
+        Stmt::If {
+            exp: exp,
+            stmt1: Box::new(stmt1),
+            stmt2: Some(Box::new(stmt2)),
+        }
+    },
+    "break" ";" => Stmt::Break,
+    "continue" ";" => Stmt::Continue,
+}
+
+OpenStmt: Stmt = {
+    "if" "(" <exp: Exp> ")" <stmt: Stmt> => {
+        Stmt::If {
+            exp: exp,
+            stmt1: Box::new(stmt),
+            stmt2: None,
+        }
+    },
+    "if" "(" <exp: Exp> ")" <stmt1: MatchedStmt> "else" <stmt2: OpenStmt> => {
+        Stmt::If {
+            exp: exp,
+            stmt1: Box::new(stmt1),
+            stmt2: Some(Box::new(stmt2)),
+        }
+    },
+    "while" "(" <exp: Exp> ")" <stmt: Stmt> => {
+        Stmt::While {
+            exp: exp,
+            stmt: Box::new(stmt),
+        }
+    }
+}
+
+Exp: Exp = <exp: LOrExp> => Exp{exp: Box::new(<>)};
+
+LVal: LVal = {
+    <id: Ident> <idx: ("[" <Exp> "]")*> => {
+        LVal{id: id, idx: idx}
+    },
+}
+
+PrimaryExp: PrimaryExp = {
+    "(" <exp: Exp> ")" => PrimaryExp::Exp(<>),
+    <num: Number> => PrimaryExp::Number(<>),
+    <val: LVal> => PrimaryExp::LVal(<>),
+};
+
+UnaryExp: UnaryExp = {
+    <prim_exp: PrimaryExp> => UnaryExp::PrimExp(<>),
+    "+" <unary_exp: UnaryExp> => UnaryExp::Pos(Box::new(<>)),
+    "-" <unary_exp: UnaryExp> => UnaryExp::Neg(Box::new(<>)),
+    "!" <unary_exp: UnaryExp> => UnaryExp::Not(Box::new(<>)),
+    <id: Ident> "(" <params: (FuncRParams)?> ")" => {
+        UnaryExp::Call{
+            id,
+            params,
+        }
+    }
+};
+
+FuncRParams: Vec<Exp> = {
+    <param: Exp> <mut params: ("," <Exp>)*> => {
+        params.insert(0, param);
+        params
+    }
+}
+
+MulExp: MulExp = {
+    <unary_exp: UnaryExp> => MulExp::UnaryExp(<>),
+    <exp1: MulExp> "*" <exp2: UnaryExp> => MulExp::Mul(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <exp1: MulExp> "/" <exp2: UnaryExp> => MulExp::Div(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <exp1: MulExp> "%" <exp2: UnaryExp> => MulExp::Mod(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),
+};
+
+AddExp: AddExp = {
+    <mul_exp: MulExp> => AddExp::MulExp(<>),
+    <exp1: AddExp> "+" <exp2: MulExp> => AddExp::Add(AddExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <exp1: AddExp> "-" <exp2: MulExp> => AddExp::Sub(AddExpBody{exp1: Box::new(exp1), exp2: exp2}),
+};
+
+RelExp: RelExp = {
+    <add_exp: AddExp> => RelExp::AddExp(<>),
+    <exp1: RelExp> "<" <exp2: AddExp> => RelExp::Lt(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <exp1: RelExp> ">" <exp2: AddExp> => RelExp::Gt(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <exp1: RelExp> "<=" <exp2: AddExp> => RelExp::Le(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <exp1: RelExp> ">=" <exp2: AddExp> => RelExp::Ge(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
+};
+
+EqExp: EqExp = {
+    <rel_exp: RelExp> => EqExp::RelExp(<>),
+    <exp1: EqExp> "==" <exp2: RelExp> => EqExp::EQ(EqExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <exp1: EqExp> "!=" <exp2: RelExp> => EqExp::NE(EqExpBody{exp1: Box::new(exp1), exp2: exp2}),
+};
+
+LAndExp: LAndExp = {
+    <eq_exp: EqExp> => LAndExp::EqExp(<>),
+    <exp1: LAndExp> "&&" <exp2: EqExp> => LAndExp::And(Box::new(exp1), exp2),
+};
+
+LOrExp: LOrExp = {
+    <land_exp: LAndExp> => LOrExp::LAndExp(<>),
+    <exp1: LOrExp> "||" <exp2: LAndExp> => LOrExp::Or(Box::new(exp1), exp2),
+}
+
+ConstExp: Exp = Exp => <>;
+
+Number: Number = {
+    IntConst => Number::Int(<>),
+    FloatConst => Number::Float(<>),
+}
+
+Ident: String = {
+    r"[_a-zA-Z][_a-zA-Z0-9]*" => String::from(<>),
+}
+
+Hexadecimal: String = {
+    r"0[xX][0-9a-fA-F]+" => String::from(<>),
+}
+
+Octonary: String = {
+    r"0[0-7]*" => String::from(<>),
+}
+
+IntConst: i32 = {
+    r"[1-9][0-9]*" => i32::from_str_radix(<>, 10).unwrap(),
+    Octonary => i32::from_str_radix(&<>, 8).unwrap(),
+    <hex: Hexadecimal> => i32::from_str_radix(&hex[2..], 16).unwrap(),
+}
+
+FloatConst: String = {
+    r"[0-9]*\.[0-9]+[eE][+-]?[0-9]+" => String::from(<>),
+    r"[0-9]*\.[0-9]+" => String::from(<>),
+    r"[0-9]+\.?[eE][+-]?[0-9]+" => String::from(<>),
+    r"[0-9]+\." => String::from(<>), 
+    r"0[xX][0-9a-fA-F]*\.[0-9a-fA-F]+[pP][+-]?[0-9]+" => String::from(<>),
+    r"0[xX][0-9a-fA-F]+\.[pP][+-]?[0-9]+" => String::from(<>), 
+}
+
