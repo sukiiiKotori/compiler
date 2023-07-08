@@ -238,13 +238,9 @@ Hexadecimal: String = {
     r"0[xX][0-9a-fA-F]+" => String::from(<>),
 }
 
-Octonary: String = {
-    r"0[0-7]*" => String::from(<>),
-}
-
 IntConst: i32 = {
     r"[1-9][0-9]*" => i32::from_str_radix(<>, 10).unwrap(),
-    Octonary => i32::from_str_radix(&<>, 8).unwrap(),
+    r"0[0-7]*" => i32::from_str_radix(<>, 8).unwrap(),
     <hex: Hexadecimal> => i32::from_str_radix(&hex[2..], 16).unwrap(),
 }
 
