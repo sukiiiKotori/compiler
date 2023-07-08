@@ -1,15 +1,14 @@
-grammar;
+// 使用 LALRPOP 语法定义的语法规则，用于解析 SysY 编程语言的语法。
 
-use crate::ast::*;
-use crate::symbol::*;
-
+// 匹配空白字符
 match {
     r"\s*" => {},
-    r"//[^\n\r]*[\n\r]*" => {},
-    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => {},
+    r"//[^\n\r]*[\n\r]*" => {},  // 匹配单行注释
+    r"/\*[^*]*\*+(?:[^/*][^*]*\*+)*/" => {},  // 匹配多行注释
     _,
 }
 
+// SysY 语法规则，表示整个程序
 pub SysY: SysY = {
     <unit: CompUnit> <mut units: (CompUnit)*> => {
         units.insert(0, unit);
@@ -17,26 +16,31 @@ pub SysY: SysY = {
     },
 }
 
+// 标识符
 Ident: String = {
     r"[_a-zA-Z][_a-zA-Z0-9]*" => String::from(<>),
 }
 
+// 编译单元，可以是函数定义或声明
 CompUnit: CompUnit = {
-    FuncDef => CompUnit::FuncDef(<>),
-    Decl => CompUnit::Decl(<>),
+    FuncDef => CompUnit::FuncDef(<>),  // 函数定义
+    Decl => CompUnit::Decl(<>),  // 声明
 }
 
+// 函数定义
 FuncDef: FuncDef = {
     <func_type: Type> <id: Ident> "(" <params: FuncFParams?> ")" <block: Block> => FuncDef{
         func_type, id, params, block},
 }
 
+// 类型
 Type: Type = {
-    "void" => Type{ty: SymType::new(Width::Void, false)},
-    "int" => Type{ty: SymType::new(Width::I32, false)},
-    "float" => Type{ty: SymType::new(Width::Float, false)},
+    "void" => Type{ty: SymType::new(Width::Void, false)},  // void 类型
+    "int" => Type{ty: SymType::new(Width::I32, false)},  // int 类型
+    "float" => Type{ty: SymType::new(Width::Float, false)},  // float 类型
 }
 
+// 函数参数列表
 FuncFParams: Vec<FuncFParam> = {
     <param: FuncFParam> <mut params: ("," <FuncFParam>)*> => {
         params.insert(0, param);
@@ -44,22 +48,25 @@ FuncFParams: Vec<FuncFParam> = {
     },
 }
 
+// 函数参数
 FuncFParam: FuncFParam = {
-    <ty: Type> <id: Ident> => FuncFParam{ty, id, idx: vec!()},
+    <ty: Type> <id: Ident> => FuncFParam{ty, id, idx: vec!()},  // 不带维度的参数
     <ty: Type> <id: Ident> "[" "]" <exps: ("[" <Exp> "]")*> => {
         let mut idx: Vec<Index> = vec!(Index::Ptr(-1));
         for exp in exps.into_iter() {
             idx.push(Index::Exp(exp));
         }
         FuncFParam{ty, id, idx}
-    },
+    },  // 带有维度的参数
 }
 
+// 声明
 Decl: Decl = {
-    ConstDecl => Decl::ConstDecl(<>),
-    VarDecl => Decl::VarDecl(<>),
+    ConstDecl => Decl::ConstDecl(<>),  // 常量声明
+    VarDecl => Decl::VarDecl(<>),  // 变量声明
 }
 
+// 常量声明
 ConstDecl: ConstDecl = {
     "const" <ty: Type> <def: ConstDef> <mut defs: ("," <ConstDef>)*> ";" => {
         defs.insert(0, def);
@@ -70,12 +77,14 @@ ConstDecl: ConstDecl = {
     },
 }
 
+// 常量定义
 ConstDef: ConstDef = {
     <id: Ident> <dims: ("[" <Exp> "]")*> "=" <init: InitVal> => {
         ConstDef{id: id, dims: dims, init: init}
     },
 }
 
+// 变量声明
 VarDecl: VarDecl = {
     <ty: Type> <def: VarDef> <mut defs: ("," <VarDef>)*> ";" => {
         defs.insert(0, def);
@@ -86,103 +95,115 @@ VarDecl: VarDecl = {
     },
 }
 
+// 变量定义
 VarDef: VarDef = {
     <id: Ident> <dims: ("[" <Exp> "]")*> <init: ("=" <InitVal>)?> => {
         VarDef{id: id, dims: dims, init: init}
     },
 }
 
+// 初始化值
 InitVal: InitVal = {
-    Exp => InitVal::Exp(<>),
+    Exp => InitVal::Exp(<>),  // 表达式初始化值
     "{" "}" => {
-        InitVal::Arr(Box::new(vec!()))
+        InitVal::Arr(Box::new(vec!()))  // 空数组初始化值
     },
     "{" <init: InitVal> <mut inits: ("," <InitVal>)*> "}" => {
         inits.insert(0, init);
-        InitVal::Arr(Box::new(inits))
+        InitVal::Arr(Box::new(inits))  // 数组初始化值
     },
 }
 
+// 代码块
 Block: Block = {
     "{" <items: (<BlockItem>)*> "}" => Block{items},
 }
 
+// 代码块中的语句或声明
 BlockItem: BlockItem = {
-    <decl: Decl> => BlockItem::Decl(<>),
-    <stmt: Stmt> => BlockItem::Stmt(<>),
+    <decl: Decl> => BlockItem::Decl(<>),  // 声明
+    <stmt: Stmt> => BlockItem::Stmt(<>),  // 语句
 }
 
+// 语句
 Stmt: Stmt = {
-    MatchedStmt => <>,
-    OpenStmt => <>,
+    MatchedStmt => <>,  // 匹配语句
+    OpenStmt => <>,  // 开放语句
 }
 
+// 匹配语句
 MatchedStmt: Stmt = {
-    <val: LVal> "=" <exp: Exp> ";" => Stmt::Assign(Assign{val, exp}),
-    <exp: (Exp)?> ";" => Stmt::Exp(exp),
-    Block => Stmt::Block(<>),
-    "return" <val: (Exp)?> ";" => Stmt::Return(Return{<>}),
+    <val: LVal> "=" <exp: Exp> ";" => Stmt::Assign(Assign{val, exp}),  // 赋值语句
+    <exp: (Exp)?> ";" => Stmt::Exp(exp),  // 表达式语句
+    Block => Stmt::Block(<>),  // 代码块语句
+    "return" <val: (Exp)?> ";" => Stmt::Return(Return{<>}),  // 返回语句
     "if" "(" <exp: Exp> ")" <stmt1: MatchedStmt> "else" <stmt2: MatchedStmt> => {
         Stmt::If {
             exp: exp,
             stmt1: Box::new(stmt1),
             stmt2: Some(Box::new(stmt2)),
-        }
+        }  // if-else 语句
     },
-    "break" ";" => Stmt::Break,
-    "continue" ";" => Stmt::Continue,
+    "break" ";" => Stmt::Break,  // break 语句
+    "continue" ";" => Stmt::Continue,  // continue 语句
 }
 
+// 开放语句
 OpenStmt: Stmt = {
     "if" "(" <exp: Exp> ")" <stmt: Stmt> => {
         Stmt::If {
             exp: exp,
             stmt1: Box::new(stmt),
             stmt2: None,
-        }
+        }  // if 语句
     },
     "if" "(" <exp: Exp> ")" <stmt1: MatchedStmt> "else" <stmt2: OpenStmt> => {
         Stmt::If {
             exp: exp,
             stmt1: Box::new(stmt1),
             stmt2: Some(Box::new(stmt2)),
-        }
-    },
+        }  // if-else 语句
+   continued:
     "while" "(" <exp: Exp> ")" <stmt: Stmt> => {
         Stmt::While {
             exp: exp,
             stmt: Box::new(stmt),
-        }
+        }  // while 语句
     }
 }
 
+// 表达式
 Exp: Exp = <exp: LOrExp> => Exp{exp: Box::new(<>)};
 
+// 左值
 LVal: LVal = {
     <id: Ident> <idx: ("[" <Exp> "]")*> => {
         LVal{id: id, idx: idx}
     },
 }
 
+// 主表达式
 PrimaryExp: PrimaryExp = {
-    "(" <exp: Exp> ")" => PrimaryExp::Exp(<>),
-    <num: Number> => PrimaryExp::Number(<>),
-    <val: LVal> => PrimaryExp::LVal(<>),
+    "(" <exp: Exp> ")" => PrimaryExp::Exp(<>),  // 表达式
+    <num: Number> => PrimaryExp::Number(<>),  // 数字
+    <val: LVal> => PrimaryExp::LVal(<>),  // 左值
 };
 
+// 一元表达式
 UnaryExp: UnaryExp = {
-    <prim_exp: PrimaryExp> => UnaryExp::PrimExp(<>),
-    "+" <unary_exp: UnaryExp> => UnaryExp::Pos(Box::new(<>)),
-    "-" <unary_exp: UnaryExp> => UnaryExp::Neg(Box::new(<>)),
-    "!" <unary_exp: UnaryExp> => UnaryExp::Not(Box::new(<>)),
+    <prim_exp: PrimaryExp> => UnaryExp::PrimExp(<>),  // 主表达式
+    "+" <unary_exp: UnaryExp> => UnaryExp::Pos(Box::new(<>)),  // 正号表达式
+    "-" <unary_exp: UnaryExp> => UnaryExp::Neg(Box::new(<>)),  // 负号表达式
+    "!" <unary_exp: UnaryExp> => UnaryExp::Not(Box::new(<>)),  // 非表达式
     <id: Ident> "(" <params: (FuncRParams)?> ")" => {
         UnaryExp::Call{
             id,
             params,
         }
-    }
+    }  // 函数调用表达式
 };
 
+// 函数实参列表
 FuncRParams: Vec<Exp> = {
     <param: Exp> <mut params: ("," <Exp>)*> => {
         params.insert(0, param);
@@ -190,67 +211,77 @@ FuncRParams: Vec<Exp> = {
     }
 }
 
+// 乘法表达式
 MulExp: MulExp = {
-    <unary_exp: UnaryExp> => MulExp::UnaryExp(<>),
-    <exp1: MulExp> "*" <exp2: UnaryExp> => MulExp::Mul(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),
-    <exp1: MulExp> "/" <exp2: UnaryExp> => MulExp::Div(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),
-    <exp1: MulExp> "%" <exp2: UnaryExp> => MulExp::Mod(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <unary_exp: UnaryExp> => MulExp::UnaryExp(<>),  // 一元表达式
+    <exp1: MulExp> "*" <exp2: UnaryExp> => MulExp::Mul(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 乘法运算
+    <exp1: MulExp> "/" <exp2: UnaryExp> => MulExp::Div(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 除法运算
+    <exp1: MulExp> "%" <exp2: UnaryExp> => MulExp::Mod(MulExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 求余运算
 };
 
+// 加法表达式
 AddExp: AddExp = {
-    <mul_exp: MulExp> => AddExp::MulExp(<>),
-    <exp1: AddExp> "+" <exp2: MulExp> => AddExp::Add(AddExpBody{exp1: Box::new(exp1), exp2: exp2}),
-    <exp1: AddExp> "-" <exp2: MulExp> => AddExp::Sub(AddExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <mul_exp: MulExp> => AddExp::MulExp(<>),  // 乘法表达式
+    <exp1: AddExp> "+" <exp2: MulExp> => AddExp::Add(AddExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 加法运算
+    <exp1: AddExp> "-" <exp2: MulExp> => AddExp::Sub(AddExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 减法运算
 };
 
+// 关系表达式
 RelExp: RelExp = {
-    <add_exp: AddExp> => RelExp::AddExp(<>),
-    <exp1: RelExp> "<" <exp2: AddExp> => RelExp::Lt(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
-    <exp1: RelExp> ">" <exp2: AddExp> => RelExp::Gt(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
-    <exp1: RelExp> "<=" <exp2: AddExp> => RelExp::Le(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
-    <exp1: RelExp> ">=" <exp2: AddExp> => RelExp::Ge(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <add_exp: AddExp> => RelExp::AddExp(<>),  // 加法表达式
+    <exp1: RelExp> "<" <exp2: AddExp> => RelExp::Lt(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 小于运算
+    <exp1: RelExp> ">" <exp2: AddExp> => RelExp::Gt(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 大于运算
+    <exp1: RelExp> "<=" <exp2: AddExp> => RelExp::Le(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 小于等于运算
+    <exp1: RelExp> ">=" <exp2: AddExp> => RelExp::Ge(RelExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 大于等于运算
 };
 
+// 相等表达式
 EqExp: EqExp = {
-    <rel_exp: RelExp> => EqExp::RelExp(<>),
-    <exp1: EqExp> "==" <exp2: RelExp> => EqExp::EQ(EqExpBody{exp1: Box::new(exp1), exp2: exp2}),
-    <exp1: EqExp> "!=" <exp2: RelExp> => EqExp::NE(EqExpBody{exp1: Box::new(exp1), exp2: exp2}),
+    <rel_exp: RelExp> => EqExp::RelExp(<>),  // 关系表达式
+    <exp1: EqExp> "==" <exp2: RelExp> => EqExp::EQ(EqExpBody{exp1: Box::new(exp1), expcontinued:
+    2}),
+    <exp1: EqExp> "!=" <exp2: RelExp> => EqExp::NE(EqExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 不等于运算
 };
 
+// 逻辑与表达式
 LAndExp: LAndExp = {
-    <eq_exp: EqExp> => LAndExp::EqExp(<>),
-    <exp1: LAndExp> "&&" <exp2: EqExp> => LAndExp::And(Box::new(exp1), exp2),
+    <eq_exp: EqExp> => LAndExp::EqExp(<>),  // 相等表达式
+    <exp1: LAndExp> "&&" <exp2: EqExp> => LAndExp::And(Box::new(exp1), exp2),  // 逻辑与运算
 };
 
+// 逻辑或表达式
 LOrExp: LOrExp = {
-    <land_exp: LAndExp> => LOrExp::LAndExp(<>),
-    <exp1: LOrExp> "||" <exp2: LAndExp> => LOrExp::Or(Box::new(exp1), exp2),
+    <land_exp: LAndExp> => LOrExp::LAndExp(<>),  // 逻辑与表达式
+    <exp1: LOrExp> "||" <exp2: LAndExp> => LOrExp::Or(Box::new(exp1), exp2),  // 逻辑或运算
 }
 
+// 常量表达式
 ConstExp: Exp = Exp => <>;
 
+// 数字
 Number: Number = {
-    IntConst => Number::Int(<>),
-    FloatConst => Number::Float(<>),
+    IntConst => Number::Int(<>),  // 整数常量
+    FloatConst => Number::Float(<>),  // 浮点数常量
 }
 
-
-
+// 十六进制数
 Hexadecimal: String = {
     r"0[xX][0-9a-fA-F]+" => String::from(<>),
 }
 
+// 整数常量
 IntConst: i32 = {
-    r"[1-9][0-9]*" => i32::from_str_radix(<>, 10).unwrap(),
-    r"0[0-7]*" => i32::from_str_radix(<>, 8).unwrap(),
-    r"0[xX][0-9a-fA-F]+" => i32::from_str_radix(&<>[2..], 16).unwrap(),
+    r"[1-9][0-9]*" => i32::from_str_radix(<>, 10).unwrap(),  // 十进制整数
+    r"0[0-7]*" => i32::from_str_radix(<>, 8).unwrap(),  // 八进制整数
+    r"0[xX][0-9a-fA-F]+" => i32::from_str_radix(&<>[2..], 16).unwrap(),  // 十六进制整数
 }
 
+// 浮点数常量
 FloatConst: String = {
-    r"[0-9]*\.[0-9]+[eE][+-]?[0-9]+" => String::from(<>),
-    r"[0-9]*\.[0-9]+" => String::from(<>),
-    r"[0-9]+\.?[eE][+-]?[0-9]+" => String::from(<>),
-    r"[0-9]+\." => String::from(<>), 
-    r"0[xX][0-9a-fA-F]*\.[0-9a-fA-F]+[pP][+-]?[0-9]+" => String::from(<>),
-    r"0[xX][0-9a-fA-F]+\.[pP][+-]?[0-9]+" => String::from(<>), 
+    r"[0-9]*\.[0-9]+[eE][+-]?[0-9]+" => String::from(<>),  // 科学计数法浮点数
+    r"[0-9]*\.[0-9]+" => String::from(<>),  // 小数点浮点数
+    r"[0-9]+\.?[eE][+-]?[0-9]+" => String::from(<>),  // 科学计数法浮点数
+    r"[0-9]+\." => String::from(<>),  // 小数点浮点数
+    r"0[xX][0-9a-fA-F]*\.[0-9a-fA-F]+[pP][+-]?[0-9]+" => String::from(<>),  // 十六进制浮点数
+    r"0[xX][0-9a-fA-F]+\.[pP][+-]?[0-9]+" => String::from(<>),  // 十六进制浮点数
 }
