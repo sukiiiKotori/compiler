@@ -60,8 +60,8 @@ pub fn parse_float(s: &str) -> f32 {
                     integer = 0.0;
                 }
                 if w[1] != ""{// 0xaf.fep-4
-                    decimal = u64::from_str_radix(w[1], 16).unwrap() as f64 
-                    /16_f64.powi(s.len() as i32);
+                    decimal = (u64::from_str_radix(w[1], 16).unwrap() as f64) 
+                             /(16.0 as f64).powi(w[1].len() as i32);
                 } else {// 0x1af.p2
                     decimal = 0.0;
                 }

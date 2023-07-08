@@ -4,13 +4,13 @@
 
 // 检查是否为十进制数
 pub fn is_decimal(s: &str) -> bool {
-    s.to_string().parse::<i32>().is_ok()
+    s.to_string().parse::<i64>().is_ok()
 }
 
 // 检查是否为十六进制数
 pub fn is_hex(s: &str) -> bool {
     s.len() > 2 && (&s[0..2] == "0x" || &s[0..2] == "0X")
-        && i32::from_str_radix(&s[2..], 16).is_ok()
+        && u64::from_str_radix(&s[2..], 16).is_ok()
 }
 
 // 检查是否为立即数
