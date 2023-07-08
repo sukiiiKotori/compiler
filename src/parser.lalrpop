@@ -17,6 +17,10 @@ pub SysY: SysY = {
     },
 }
 
+Ident: String = {
+    r"[_a-zA-Z][_a-zA-Z0-9]*" => String::from(<>),
+}
+
 CompUnit: CompUnit = {
     FuncDef => CompUnit::FuncDef(<>),
     Decl => CompUnit::Decl(<>),
@@ -230,9 +234,7 @@ Number: Number = {
     FloatConst => Number::Float(<>),
 }
 
-Ident: String = {
-    r"[_a-zA-Z][_a-zA-Z0-9]*" => String::from(<>),
-}
+
 
 Hexadecimal: String = {
     r"0[xX][0-9a-fA-F]+" => String::from(<>),
@@ -241,7 +243,7 @@ Hexadecimal: String = {
 IntConst: i32 = {
     r"[1-9][0-9]*" => i32::from_str_radix(<>, 10).unwrap(),
     r"0[0-7]*" => i32::from_str_radix(<>, 8).unwrap(),
-    <hex: Hexadecimal> => i32::from_str_radix(&hex[2..], 16).unwrap(),
+    r"0[xX][0-9a-fA-F]+" => i32::from_str_radix(&<>[2..], 16).unwrap(),
 }
 
 FloatConst: String = {
@@ -252,4 +254,3 @@ FloatConst: String = {
     r"0[xX][0-9a-fA-F]*\.[0-9a-fA-F]+[pP][+-]?[0-9]+" => String::from(<>),
     r"0[xX][0-9a-fA-F]+\.[pP][+-]?[0-9]+" => String::from(<>), 
 }
-
