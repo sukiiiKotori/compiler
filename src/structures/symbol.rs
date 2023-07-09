@@ -1,3 +1,6 @@
+use crate::utils::float::parse_float;
+
+
 // 符号宽
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum SymbolWidth {
@@ -108,5 +111,24 @@ pub fn get_symbol_val(s_val: &SymbolVal) -> String {
         SymbolVal::I32(val) => val.to_string(),
         SymbolVal::Float(val) => val.to_string(),
         _ => panic!("Don't support"),
+    }
+}
+
+/// 根据符号的类型，检查值val是否为零
+pub fn num_is_zero(ty: &SymbolType, val: &String) -> bool {
+    match ty.width {
+        SymbolWidth::I1 => {
+            let num: i32 = val.parse().unwrap();
+            num == 0
+        },
+        SymbolWidth::I32 => {
+            let num: i32 = val.parse().unwrap();
+            num == 0
+        },
+        SymbolWidth::Float => {
+            let num: f32 = parse_float(val);
+            num == 0.0
+        },
+        _ => panic!("{:?} TODO", ty),
     }
 }

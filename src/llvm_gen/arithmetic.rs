@@ -12,30 +12,18 @@ use std::cmp::{
 };
 use std::convert::From;
 use crate::ast::*;
-use crate::structures::llvm_struct::{
-    LLVMProgram, 
-    InstructionType,
-};
+use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
-use crate::utils::float::{format_double, parse_float};
-use crate::llvm_gen::scopes::{Scopes, Labels};
-use crate::llvm_gen::generate::{Generate};
+use crate::llvm_gen::scopes::*;
+use crate::llvm_gen::generate::*;
 use crate::llvm_gen::symbol::*;
+use crate::utils::check::*;
+use crate::utils::float::*;
 
 /// 表达式计算结果类型，为不处于Generate Trait的函数服务
 pub type ExprOut = (SymbolType, String);
 /// 表达式计算结果类型封装为Result，为不处于Generate Trait的函数服务
 pub type ExprResult = Result<ExprOut, Box<dyn Error>>;
-
-/// 检查ty1和ty2是否都是常量
-pub fn all_is_const(ty1: &SymbolType, ty2: &SymbolType) -> bool {
-    return ty1.is_const && ty2.is_const;
-}
-
-/// 检查ty1和ty2是否都是整型数
-pub fn all_is_int(ty1: &SymbolType, ty2: &SymbolType) -> bool {
-    return ty1.width != SymbolWidth::Float && ty2.width != SymbolWidth::Float;
-}
 
 /// 计算常量T类型的num1和num2关于op算子的计算结果<br>
 /// T类型需要满足基本的算术Trait和比较Trait
