@@ -2,7 +2,6 @@ use crate::structures::llvm_struct::{LLVMProgram, InstructionType};
 use crate::structures::symbol::*;
 use crate::llvm_gen::scopes::Labels;
 use crate::utils::float::{format_double, parse_float};
-use crate::log_println;
 
 
 /// 检查数组/指针是否为同一类型
@@ -74,7 +73,6 @@ pub fn type_conver(program: &mut LLVMProgram,
         let ty_vec = vec!(&new_ty1, &new_ty2);
         let str_vec = vec!(cast_res.as_str(), value.as_str());
         program.push_instr(InstructionType::BitCast, str_vec, ty_vec);
-        log_println!("Warning: cast {} from {:?} to {:?}", value, ty1, ty2);
 
         return cast_res;
     }
