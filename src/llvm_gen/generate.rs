@@ -242,7 +242,7 @@ impl Generate for FuncDef {
                 let ty_vec = vec!(&i1_ty);
                 let str_vec = vec!(replace_phi.as_str(), "1");
                 program.insert_alloc(
-                    Instruction::make_instr(InstructionType::Alloca, str_vec, ty_vec),
+                    Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec),
                     "_entry"
                 );
             } else {
@@ -259,7 +259,7 @@ impl Generate for FuncDef {
                     let str_vec = vec!(label.as_str(), "4");
                     let type_vec = vec!(ty);
                     program.insert_alloc(
-                        Instruction::make_instr(InstructionType::Alloca, str_vec, type_vec),
+                        Instruction::make_instruction(InstructionType::Alloca, str_vec, type_vec),
                         "_entry"
                     );
 

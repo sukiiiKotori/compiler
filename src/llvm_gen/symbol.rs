@@ -107,7 +107,7 @@ pub fn type_conver(program: &mut LLVMProgram,
             } else if ty2.width == SymbolWidth::Float {
                 let label = labels.pop_num_str();
                 program.push_instr(
-                    InstructionType::I32Tofloat, 
+                    InstructionType::I32ToFloat, 
                     vec!(&label, &result),
                     vec!(&ty1, &ty2),
                 );
