@@ -3,6 +3,7 @@ mod structures;
 mod ast;
 mod llvm_gen;
 mod riscv_gen;
+mod llvm_opt;
 /*
 编译器设置选项
 */
