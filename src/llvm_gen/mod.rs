@@ -3,4 +3,5 @@ pub mod symbol;
 pub mod build;
 pub mod generate;
 pub mod decl;
-pub mod arith;
+pub mod arithmetic;
+pub mod bool;
