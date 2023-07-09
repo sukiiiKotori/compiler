@@ -12,7 +12,7 @@ use crate::utils::float::*;
 
 /// 计算常量T类型的num1和num2关于op算子的计算结果<br>
 /// T类型需要满足基本的算术Trait和比较Trait
-pub fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: &str) -> (SymbolWidth, T) {
+fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: &str) -> (SymbolWidth, T) {
     let res: T;
     if op == "+" {
         res = num1 + num2;
@@ -41,7 +41,7 @@ pub fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, 
         } else if op == ">=" {
             res = num1 >= num2; 
         } else if op == "&&" {
-            res = num1 != zero_t && num2 != zero_t;
+            res = num1 as bool && num2 as bool;
         } else if op == "||" {
             res = num1 != zero_t || num2 != zero_t;
         } else {
