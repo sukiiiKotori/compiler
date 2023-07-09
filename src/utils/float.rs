@@ -40,7 +40,7 @@ fn parse_ieee(hex_string_mem: &str) -> f32 {
     }
 }
 
-/// 解析符合ISO标准的C语言浮点数
+/// 解析sysY的浮点数（包括10进制浮点和16进制浮点）
 pub fn parse_float(s: &str) -> f32 {
     if s.contains("0x") || s.contains("0X") { // hex
         if s.contains("p") || s.contains("P") { // 0x(...)P/p
