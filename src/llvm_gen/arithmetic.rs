@@ -1,16 +1,6 @@
 use std::error::Error;
-use std::ops::{
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Rem,
-};
-use std::cmp::{
-    PartialEq,
-    PartialOrd,
-};
 use std::convert::From;
+use num_traits::Num;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
@@ -22,10 +12,7 @@ use crate::utils::float::*;
 
 /// 计算常量T类型的num1和num2关于op算子的计算结果<br>
 /// T类型需要满足基本的算术Trait和比较Trait
-pub fn operate_num<T>(num1: T, num2: T, op: &str) -> (SymbolWidth, T) 
-where
-    T: Add<Output=T>+Sub<Output=T>+Mul<Output=T>+Div<Output=T>+Rem<Output=T>+PartialEq+PartialOrd+From<i32>,
-{
+pub fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: &str) -> (SymbolWidth, T) {
     let res: T;
     if op == "+" {
         res = num1 + num2;
@@ -72,8 +59,8 @@ where
 /// 最后调用operate_num计算结果<br>
 pub fn operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
     if all_is_int(ty1, ty2) {
-        let num1:i32 = op1.parse().expect(&format!("Parse i32 {} failed", op1));
-        let num2:i32 = op2.parse().expect(&format!("Parse i32 {} failed", op2));
+        let num1 = op1.parse::<i32>().unwrap();
+        let num2 = op2.parse::<i32>().unwrap();
         let (width, res) = operate_num(num1, num2, op);
         if width == SymbolWidth::Void { // 由ty1和ty2决定结果类型
             if ty1.width > ty2.width {
