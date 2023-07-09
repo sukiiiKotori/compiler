@@ -4,6 +4,8 @@ use crate::structures::llvm_struct::*;
 use crate::llvm_gen::scopes::*;
 use crate::llvm_gen::build::*;
 
+use super::symbol::type_conver;
+
 // 获取某元素在多维数组中，实际偏移位置量
 fn get_pos(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {
     let mut sub_size = dims.iter().skip(1).fold(1, | res, &a | res * a);
@@ -115,6 +117,7 @@ fn traverse_array(
     }
 }
 
+// 数组声明
 fn decl_arr(
     program: &mut LLVMProgram,
     scopes: &mut Scopes,
@@ -125,5 +128,69 @@ fn decl_arr(
     types: &Vec<SymbolType>,
     vals: &Vec<String>,
 ) {
-    
+    let val_len = vals.len(); // 初始化值长度
+    // 生成数组类型
+    let ty_arr = SymbolType::new(SymbolWidth::Arr { tar: Box::new(ty.clone()), dims: dims.clone()}, false);
+    let mut val_init: Vec<String> = vals.iter().enumerate().map(|(cnt, val)| {
+        if types[cnt].width != SymbolWidth::Void {
+            type_conver(program, labels, val.clone(), &types[cnt], &ty)
+        } else {
+            val.clone()
+        }
+    }).collect();
+
+    // 作用域更新
+    if let Some(label) = scopes.push(labels, id.as_str(), &ty_arr, &SymbolVal::Void, None) {
+        // 如果是全局作用域，放到Program中
+        if scopes.is_global_scope() {
+            let init_types: Vec<&SymbolType> = types.iter().collect();
+            let init_vals: Vec<&String> = val_init.iter().collect();
+            program.push_global_var(&id, &ty_arr, init_types, init_vals);
+            return;
+        }
+
+        // 然后更新作用域
+        let str_vec = vec!(label.as_str(), "16");
+        let ty_vec = vec!(&ty_arr);
+        let settings = crate::get_settings();
+        if scopes.is_in_while() || settings.all_allocs_in_entry {
+            program.insert_alloc(
+                Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec), 
+                program.get_bb_label().as_str(),
+            )
+        } else {
+            program.push_instr(InstructionType::Alloca, str_vec, ty_vec);
+        }
+        
+        // 做类型转换，使用BitCase将label转换为一个数组指针类型
+        let res = labels.pop_num_str();
+        let ty_i8 = SymbolType::new(SymbolWidth::I8, false);    // label类型
+        let binary_ty = vec!(&ty_arr, &ty_i8);
+        let str_vec = vec!(res.as_str(), label.as_str());
+        program.push_instr(InstructionType::BitCast, str_vec, binary_ty);
+
+        // 数组初始化
+        let memset_size = dims.iter().fold(1, |acc, x| acc * x) * 4;
+        let memset_funcname = "@llvm.memset.p018.i64".to_string();
+        let str_vec = vec!("", memset_funcname.as_str(), res.as_str(), "0", memset_size.to_string().as_str(), "false");
+        // type向量是对应上面数据向量的类型
+        let ty_void = SymbolType::new(SymbolWidth::Void, false);
+        let ty_i1 = SymbolType::new(SymbolWidth::I1, false);
+        let ty_i64 = SymbolType::new(SymbolWidth::I64, false);
+        let ty_ptr_i8 = SymbolType::new(SymbolWidth::Arr{tar: Box::new(ty_i8.clone()), dims: vec!(-1)}, false);
+        let ty_vec = vec!(&ty_void, &ty_ptr_i8, &ty_i8, &ty_i64, &ty_i1);
+        program.push_instr(InstructionType::Call, str_vec, ty_vec);
+
+        let mut ins = vec!();
+        let mut pos = vec!();
+        // 遍历数组
+        let tra_flag = traverse_array(program, labels, &ty_arr, &label, types, &val_init, &mut ins, &mut pos);
+        if tra_flag {
+            for i in ins.into_iter() {
+                program.insert_instr(i);
+            }
+        }
+    } else {
+        panic!("{} has been declared!", id);
+    }
 }
