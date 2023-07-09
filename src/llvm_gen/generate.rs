@@ -7,7 +7,12 @@ use crate::llvm_gen::symbol::*;
 
 pub trait Generate {
     type Out;
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>>;
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>>;
 }
 
 /// 首先添加库函数的声明
@@ -15,58 +20,158 @@ pub trait Generate {
 impl Generate for SysY {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         let ty_void = SymbolType::new(SymbolWidth::Void, false);
         let ty_i32 = SymbolType::new(SymbolWidth::I32, false);
         let ty_i32_clone = ty_i32.clone();
-        let ty_i32_ptr = SymbolType::new(SymbolWidth::Arr{tar: Box::new(ty_i32_clone), dims: vec!(-1)}, false);
+        let ty_i32_ptr = SymbolType::new(
+            SymbolWidth::Arr{tar: Box::new(ty_i32_clone),dims: vec!(-1)},
+            false
+        );
         let ty_i8 = SymbolType::new(SymbolWidth::I8, false);
         let ty_i8_clone = ty_i8.clone();
-        let ty_i8_ptr = SymbolType::new(SymbolWidth::Arr{tar: Box::new(ty_i8_clone), dims: vec!(-1)}, false);
+        let ty_i8_ptr = SymbolType::new(
+            SymbolWidth::Arr{tar: Box::new(ty_i8_clone), dims: vec!(-1)},
+            false
+        );
         let ty_i64 = SymbolType::new(SymbolWidth::I64, false);
         let ty_i1 = SymbolType::new(SymbolWidth::I1, false);
         let ty_float = SymbolType::new(SymbolWidth::Float, false);
         let ty_float_clone = ty_float.clone();
-        let ty_float_ptr = SymbolType::new(SymbolWidth::Arr{tar: Box::new(ty_float_clone), dims: vec!(-1)}, false);
+        let ty_float_ptr = SymbolType::new(
+            SymbolWidth::Arr{tar: Box::new(ty_float_clone),dims: vec!(-1)},
+            false
+        );
 
         program.push_func_decl(&ty_i32, "getint", vec!());
-        scopes.push(labels, "getint", &ty_i32, &SymbolVal::Func(ty_i32.clone(), vec!()), None);
+        scopes.push(
+            labels,
+            "getint",
+            &ty_i32,
+            &SymbolVal::Func(ty_i32.clone(), vec!()),
+            None
+        );
 
         program.push_func_decl(&ty_i32, "getch", vec!());
-        scopes.push(labels, "getch", &ty_i32, &SymbolVal::Func(ty_i32.clone(), vec!()), None);
+        scopes.push(
+            labels,
+            "getch",
+            &ty_i32,
+            &SymbolVal::Func(ty_i32.clone(), vec!()),
+            None
+        );
 
         program.push_func_decl(&ty_i32, "getarray", vec!(&ty_i32_ptr));
-        scopes.push(labels, "getarray", &ty_i32, &SymbolVal::Func(ty_i32.clone(), vec!(ty_i32_ptr.clone())), None);
+        scopes.push(
+            labels,
+            "getarray",
+            &ty_i32,
+            &SymbolVal::Func(ty_i32.clone(),vec!(ty_i32_ptr.clone())),
+            None
+        );
 
         program.push_func_decl(&ty_float, "getfloat", vec!());
-        scopes.push(labels, "getfloat", &ty_float, &SymbolVal::Func(ty_float.clone(), vec!()), None);
+        scopes.push(
+            labels,
+            "getfloat",
+            &ty_float,
+            &SymbolVal::Func(ty_float.clone(), vec!()),
+            None
+        );
 
         program.push_func_decl(&ty_i32, "getfarray", vec!(&ty_float_ptr));
-        scopes.push(labels, "getfarray", &ty_i32, &SymbolVal::Func(ty_i32.clone(), vec!(ty_float_ptr.clone())), None);
+        scopes.push(
+            labels,
+            "getfarray",
+            &ty_i32,
+            &SymbolVal::Func(ty_i32.clone(), vec!(ty_float_ptr.clone())),
+            None
+        );
 
         program.push_func_decl(&ty_void, "putint", vec!(&ty_i32));                              
-        scopes.push(labels, "putint", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!(ty_i32.clone())), None);
+        scopes.push(
+            labels,
+            "putint",
+            &ty_void,
+            &SymbolVal::Func(ty_void.clone(), vec!(ty_i32.clone())),
+            None
+        );
 
         program.push_func_decl(&ty_void, "putch", vec!(&ty_i32));                              
-        scopes.push(labels, "putch", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!(ty_i32.clone())), None);
+        scopes.push(
+            labels,
+            "putch",
+            &ty_void,
+            &SymbolVal::Func(ty_void.clone(), vec!(ty_i32.clone())),
+            None
+        );
 
         program.push_func_decl(&ty_void, "putarray", vec!(&ty_i32, &ty_i32_ptr));
-        scopes.push(labels, "putarray", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!(ty_i32.clone(), ty_i32_ptr.clone())), None);
+        scopes.push(
+            labels,
+            "putarray",
+            &ty_void,
+            &SymbolVal::Func(ty_void.clone(),
+            vec!(ty_i32.clone(), ty_i32_ptr.clone())),
+            None
+        );
 
         program.push_func_decl(&ty_void, "putfloat", vec!(&ty_float));                              
-        scopes.push(labels, "putfloat", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!(ty_float.clone())), None);
+        scopes.push(
+            labels,
+            "putfloat",
+            &ty_void,
+            &SymbolVal::Func(ty_void.clone(), vec!(ty_float.clone())),
+            None
+        );
 
         program.push_func_decl(&ty_void, "putfarray", vec!(&ty_i32, &ty_float_ptr));
-        scopes.push(labels, "putfarray", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!(ty_i32.clone(), ty_float_ptr.clone())), None);
+        scopes.push(
+            labels,
+            "putfarray",
+            &ty_void,
+            &SymbolVal::Func(ty_void.clone(), vec!(ty_i32.clone(), ty_float_ptr.clone())),
+            None
+        );
 
         program.push_func_decl(&ty_void, "starttime", vec!());
-        scopes.push(labels, "starttime", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!()), None);
+        scopes.push(
+            labels,
+            "starttime",
+            &ty_void,
+            &SymbolVal::Func(ty_void.clone(), vec!()),
+            None
+        );
 
         program.push_func_decl(&ty_void, "stoptime", vec!());
-        scopes.push(labels, "stoptime", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!()), None);
+        scopes.push(
+            labels,
+            "stoptime",
+            &ty_void,
+            &SymbolVal::Func(ty_void.clone(), vec!()),
+            None
+        );
 
-        program.push_func_decl(&ty_void, "llvm.memset.p018.i64", vec!(&ty_i8_ptr, &ty_i8, &ty_i64, &ty_i1));
-        scopes.push(labels, "llvm.memset.p018.i64", &ty_void, &SymbolVal::Func(ty_void.clone(), vec!(ty_i8_ptr.clone(), ty_i8.clone(), ty_i64.clone(), ty_i1.clone())), None);
+        program.push_func_decl(
+            &ty_void,
+            "llvm.memset.p018.i64",
+            vec!(&ty_i8_ptr, &ty_i8, &ty_i64, &ty_i1)
+        );
+        scopes.push(
+            labels,
+            "llvm.memset.p018.i64",
+            &ty_void,
+            &SymbolVal::Func(
+                ty_void.clone(),
+                vec!(ty_i8_ptr.clone(),ty_i8.clone(), ty_i64.clone(), ty_i1.clone())
+            ),
+            None
+        );
 
         for unit in self.units.iter() {
             unit.generate(program, scopes, labels)?;
@@ -79,7 +184,12 @@ impl Generate for SysY {
 impl Generate for CompUnit {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         match self {
             CompUnit::FuncDef(func_def) => func_def.generate(program, scopes, labels),
             CompUnit::Decl(decl) => decl.generate(program, scopes, labels),
@@ -91,7 +201,12 @@ impl Generate for CompUnit {
 impl Generate for FuncDef {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         let func_type = self.func_type.generate()?;
         let mut all_info: Vec<(SymbolType, String, String)> = vec!();
         let mut label_info: Vec<(String, SymbolType)> = vec!();
@@ -106,24 +221,47 @@ impl Generate for FuncDef {
             }
         }
 
-        if let Some(label) = scopes.push(labels, self.id.as_str(), &func_type, &SymbolVal::Func(func_type.clone(), types), None) {
+        if let Some(label) = scopes.push(
+            labels,
+            self.id.as_str(),
+            &func_type,
+            &SymbolVal::Func(func_type.clone(), types),
+            None
+        ) {
             scopes.enter_function(&func_type);
             program.push_func(&func_type, label.as_str(), label_info);
 
             let i1_ty = SymbolType::new(SymbolWidth::I1, false);
-            if let Some(replace_phi) = scopes.push(labels, "replace_phi", &i1_ty, &SymbolVal::Void, None) {
+            if let Some(replace_phi) = scopes.push(
+                labels,
+                "replace_phi",
+                &i1_ty,
+                &SymbolVal::Void,
+                None
+            ) {
                 let ty_vec = vec!(&i1_ty);
                 let str_vec = vec!(replace_phi.as_str(), "1");
-                program.insert_alloc(Instruction::make_instr(InstructionType::Alloca, str_vec, ty_vec), "_entry");
+                program.insert_alloc(
+                    Instruction::make_instr(InstructionType::Alloca, str_vec, ty_vec),
+                    "_entry"
+                );
             } else {
                 panic!("alloc replace_phi failed");
             }
 
             for (ty, id, last_label) in all_info.iter() {
-                if let Some(label) = scopes.push(labels, id.as_str(), &ty, &SymbolVal::Void, None) {
+                if let Some(label) = scopes.push(
+                    labels,
+                    id.as_str(),
+                    &ty, &SymbolVal::Void,
+                    None
+                ) {
                     let str_vec = vec!(label.as_str(), "4");
                     let type_vec = vec!(ty);
-                    program.insert_alloc(Instruction::make_instr(InstructionType::Alloca, str_vec, type_vec), "_entry");
+                    program.insert_alloc(
+                        Instruction::make_instr(InstructionType::Alloca, str_vec, type_vec),
+                        "_entry"
+                    );
 
                     let str_vec = vec!(last_label.as_str(), label.as_str(), "4");
                     let type_vec = vec!(ty);
@@ -153,7 +291,12 @@ impl Type {
 impl Generate for FuncFParam {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         let ty = self.ty.generate()?;
         if self.idx.is_empty() {
             Ok((ty, String::from(&self.id)))
@@ -169,7 +312,10 @@ impl Generate for FuncFParam {
                     Index::Ptr(dim) => dims.push(dim.clone()),
                 }
             }
-            let arr_ty = SymbolType::new(SymbolWidth::Arr{tar: Box::new(ty), dims: dims}, false);
+            let arr_ty = SymbolType::new(
+                SymbolWidth::Arr{tar: Box::new(ty), dims: dims},
+                false
+            );
             Ok((arr_ty, String::from(&self.id)))
         }
     }
@@ -179,7 +325,12 @@ impl Generate for FuncFParam {
 impl Generate for Block {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         for item in self.items.iter() {
             item.generate(program, scopes, labels)?;
         }
@@ -191,7 +342,12 @@ impl Generate for Block {
 impl Generate for BlockItem {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         match self {
             BlockItem::Decl(decl) => decl.generate(program, scopes, labels),
             BlockItem::Stmt(stmt) => stmt.generate(program, scopes, labels),
@@ -204,7 +360,12 @@ impl Generate for BlockItem {
 impl Generate for Stmt {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         match self {
             Stmt::Assign(assign) => assign.generate(program, scopes, labels),
             Stmt::Exp(exp_option) => {
@@ -253,7 +414,13 @@ impl Generate for Stmt {
             },
             Stmt::If{exp, stmt1, stmt2} => {
                 let (sym_type, res) = exp.generate(program, scopes, labels)?;
-                let res = type_conver(program, labels, res, &sym_type, &SymbolType::new(SymbolWidth::I1, false));
+                let res = type_conver(
+                    program,
+                    labels,
+                    res,
+                    &sym_type,
+                    &SymbolType::new(SymbolWidth::I1, false)
+                );
 
                 if let Some(false_stmt) = stmt2 {
                     let if_then = labels.pop_block("if_then");
@@ -312,7 +479,13 @@ impl Generate for Stmt {
                 // while_entry
                 program.push_bb(while_entry.as_str(), scopes);
                 let (ty, res) = exp.generate(program, scopes, labels)?;
-                let cond = type_conver(program, labels, res, &ty, &SymbolType::new(SymbolWidth::I1, false));
+                let cond = type_conver(
+                    program,
+                    labels,
+                    res,
+                    &ty,
+                    &SymbolType::new(SymbolWidth::I1, false)
+                );
                 
                 let ty_vec = vec!();
                 let str_vec = vec!(cond.as_str(), while_body.as_str(), while_end.as_str());
@@ -340,7 +513,12 @@ impl Generate for Stmt {
 impl Generate for Assign {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         let (ty1, label1) = self.val.generate(program ,scopes, labels)?;
         let (ty2, label2) = self.exp.generate(program, scopes, labels)?;
         let label2 = type_conver(program, labels, label2, &ty2, &ty1);
@@ -359,7 +537,12 @@ impl Generate for Assign {
 impl Generate for Return {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels
+    ) -> Result<Self::Out, Box<dyn Error>> {
         let func_type = scopes.get_curr_func_type().expect("Should not appear");
         if let Some(exp) = &self.val {
             let (ty, exp_val) = exp.generate(program, scopes, labels)?;
