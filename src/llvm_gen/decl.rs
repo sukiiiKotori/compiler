@@ -2,6 +2,7 @@ use std::error::Error;
 use crate::structures::symbol::*;
 use crate::structures::llvm_struct::*;
 use crate::llvm_gen::scopes::*;
+use crate::llvm_gen::build::*;
 
 // 获取某元素在多维数组中，实际偏移位置量
 fn get_pos(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {
@@ -56,7 +57,7 @@ fn traverse_array(
                     let arr_val = get_val(vals, elem_pos);
                     let str_vec = vec![arr_val.as_str(), label.as_str(), "4"];
                     // 生成store指令
-                    ins.push(Instruction::make_instr(InstructionType::Store, str_vec, ty_vec));
+                    ins.push(Instruction::make_instruction(InstructionType::Store, str_vec, ty_vec));
                 } else {
                     flag = false;
                 }
@@ -87,23 +88,23 @@ fn traverse_array(
                     let ty_vec = vec![&left_arr];
                     let ptr = labels.pop_num_str();
                     let mut str_vec = vec![ptr.as_str(), label.as_str()];
-                    let idx = cnt.to_string();
+                    let idx = cnt.to_string();      // 当前维度的下标
                     str_vec.push("0");
                     str_vec.push(idx.as_str());
 
-                    let ins_len = ins.len();
-                    pos.push(cnt);
+                    pos.push(cnt);                          // 放入当前维度下标
 
+                    // 递归继续遍历
                     if traverse_array(program, labels, ty, &ptr, types, vals, ins, pos) {
                         flag = true;
-                        ins.insert(
-                            ins_len,
-                            Instruction::make_instr(InstructionType::GetElemPtr, str_vec, ty_vec),
+                        ins.push(
+                            Instruction::make_instruction(InstructionType::GetElemPtr, str_vec, ty_vec),
                         );
                     } else {
                         labels.recover_num();
                     }
-
+                    
+                    // 递归完毕，弹出当前维度下标，循环遍历下一个下标
                     pos.pop();
                 }
 
@@ -114,3 +115,15 @@ fn traverse_array(
     }
 }
 
+fn decl_arr(
+    program: &mut LLVMProgram,
+    scopes: &mut Scopes,
+    labels: &mut Labels,
+    id: &String,
+    ty: &SymbolType,
+    dims: &Vec<i32>,
+    types: &Vec<SymbolType>,
+    vals: &Vec<String>,
+) {
+    
+}
