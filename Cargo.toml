@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 lalrpop-util = { version = "0.20.0", features = ["lexer"] }
 lazy_static = "1.4.0"
+num-traits = "0.2"
 
 [build-dependencies]
 lalrpop = "0.20.0"
