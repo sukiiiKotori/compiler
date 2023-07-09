@@ -13,50 +13,56 @@ use crate::llvm_gen::generate::{Generate};
 use crate::llvm_gen::symbol::*;
 
 impl RelExpBody {
-
-    /// 相对运算的运算主体，是相对运算表达式RelExp的抽象结果<br>
+    /// 相对运算的运算主体，是相对运算表达式RelExp的抽象结果
+    ///
     /// 从RelExp接受算子，对运算数进行常量检查、类型比较，最终计算出结果或者生成对应指令
-    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: String) -> Result<(SymbolType, String), Box<dyn Error>> {
+    fn gen(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels,
+        op_ty: String,
+    ) -> Result<(SymbolType, String), Box<dyn Error>> {
+        // 生成第一个表达式的代码和结果
         let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
+
+        // 生成第二个表达式的代码和结果
         let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
 
+        // 如果两个表达式都是常量，则直接计算结果
         if all_is_const(&ty1, &ty2) {
             if op_ty == "slt" {
                 return operate(&ty1, &op1, &ty2, &op2, "<");
-            } else if op_ty == "sgt"{
+            } else if op_ty == "sgt" {
                 return operate(&ty1, &op1, &ty2, &op2, ">");
-            } else if op_ty == "sle"{
+            } else if op_ty == "sle" {
                 return operate(&ty1, &op1, &ty2, &op2, "<=");
             } else {
                 return operate(&ty1, &op1, &ty2, &op2, ">=");
             }
         }
 
+        // 进行类型比较，并获取比较结果的标签
         let (ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2.clone(), op2);
         let result = labels.pop_num_str();
 
-        let str_vec = vec!(
+        // 构建指令所需的字符串向量和类型向量
+        let str_vec = vec![
             op_ty.as_str(),
             result.as_str(),
             op1.as_str(),
             op2.as_str(),
-        );
-        let ty_vec = vec!(&ty1);
+        ];
+        let ty_vec = vec![&ty1];
         let is_float = ty1.width == SymbolWidth::Float;
-    
+
+        // 根据类型选择相应的指令类型，并将指令添加到程序中
         if is_float {
-            program.push_instr(
-                InstructionType::Fcmp,
-                str_vec,
-                ty_vec,
-            );
+            program.push_instr(InstructionType::Fcmp, str_vec, ty_vec);
         } else {
-            program.push_instr(
-                InstructionType::Cmp,
-                str_vec,
-                ty_vec,
-            );
+            program.push_instr(InstructionType::Cmp, str_vec, ty_vec);
         }
+
         Ok((SymbolType::new(SymbolWidth::I1, false), result))
     }
 }
@@ -65,7 +71,13 @@ impl RelExpBody {
 impl Generate for RelExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels,
+    ) -> Result<Self::Out, Box<dyn Error>> {
+        // 根据不同的 RelExp 枚举类型，调用对应的生成方法
         match self {
             RelExp::AddExp(exp) => exp.generate(program, scopes, labels),
             RelExp::Lt(body) => body.gen(program, scopes, labels, String::from("slt")),
@@ -77,13 +89,23 @@ impl Generate for RelExp {
 }
 
 impl EqExpBody {
-
-    /// 等于运算的运算主体，是等于/不等表达式EqExp的抽象结果<br>
+    /// 等于运算的运算主体，是等于/不等表达式EqExp的抽象结果
+    ///
     /// 从EqExp接受算子，对运算数进行常量检查、类型比较，最终计算出结果或者生成对应指令
-    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: String) -> Result<(SymbolType, String), Box<dyn Error>> {
+    fn gen(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels,
+        op_ty: String,
+    ) -> Result<(SymbolType, String), Box<dyn Error>> {
+        // 生成第一个表达式的代码和结果
         let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
+
+        // 生成第二个表达式的代码和结果
         let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
 
+        // 如果两个表达式都是常量，则直接计算结果
         if all_is_const(&ty1, &ty2) {
             if op_ty == "ne" {
                 return operate(&ty1, &op1, &ty2, &op2, "!=");
@@ -92,26 +114,27 @@ impl EqExpBody {
             }
         }
 
+        // 进行类型比较，并获取比较结果的标签
         let (ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2.clone(), op2);
         let result = labels.pop_num_str();
 
-        let str_vec = vec!(op_ty.as_str(), result.as_str(), op1.as_str(), op2.as_str());
-        let ty_vec = vec!(&ty1);
+        // 构建指令所需的字符串向量和类型向量
+        let str_vec = vec![
+            op_ty.as_str(),
+            result.as_str(),
+            op1.as_str(),
+            op2.as_str(),
+        ];
+        let ty_vec = vec![&ty1];
         let is_float = ty1.width == SymbolWidth::Float;
 
+        // 根据类型选择相应的指令类型，并将指令添加到程序中
         if is_float {
-            program.push_instr(
-                InstructionType::Fcmp,
-                str_vec,
-                ty_vec,
-            );
+            program.push_instr(InstructionType::Fcmp, str_vec, ty_vec);
         } else {
-            program.push_instr(
-                InstructionType::Cmp,
-                str_vec,
-                ty_vec,
-            );
+            program.push_instr(InstructionType::Cmp, str_vec, ty_vec);
         }
+
         Ok((SymbolType::new(SymbolWidth::I1, false), result))
     }
 }
@@ -120,7 +143,13 @@ impl EqExpBody {
 impl Generate for EqExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(
+        &self,
+        program: &mut LLVMProgram,
+        scopes: &mut Scopes,
+        labels: &mut Labels,
+    ) -> Result<Self::Out, Box<dyn Error>> {
+        // 根据不同的 EqExp 枚举类型，调用对应的生成方法
         match self {
             EqExp::RelExp(exp) => exp.generate(program, scopes, labels),
             EqExp::EQ(body) => body.gen(program, scopes, labels, String::from("eq")),
