@@ -9,11 +9,8 @@ use crate::get_settings;
 use crate::structures::symbol::*;
 use crate::structures::llvm_struct::*;
 use crate::llvm_gen::scopes::*;
-use crate::llvm_gen::build::*;
 use crate::llvm_gen::generate::*;
 use crate::llvm_gen::symbol::*;
-
-use super::generate;
 
 // 获取某元素在多维数组中，实际偏移位置量
 fn get_pos(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {
@@ -165,7 +162,7 @@ fn decl_arr(
         if scopes.is_in_while() || settings.all_allocs_in_entry {
             program.insert_alloc(
                 Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec), 
-                program.get_bb_label().as_str(),
+                program.get_block_label().as_str(),
             )
         } else {
             program.push_instr(InstructionType::Alloca, str_vec, ty_vec);
@@ -248,8 +245,8 @@ impl Generate for ConstDecl {
                 }
                 
                 let res = type_conver(program, labels, init_val[0].clone(), &init_ty[0], &ty);
-                let sym_val = make_symbol_val(&ty, &res);
-                if scopes.push(labels, &id, &ty, &sym_val, None).is_none() {
+                let symbol_val = make_symbol_val(&ty, &res);
+                if scopes.push(labels, &id, &ty, &symbol_val, None).is_none() {
                     panic!("{} has been defined", id);
                 }
             }
@@ -368,6 +365,7 @@ impl InitVal {
     }
 }
 
+// 变量声明
 impl Generate for VarDecl {
     type Out = ();
 
@@ -375,72 +373,80 @@ impl Generate for VarDecl {
         let mut ty = self.ty.generate()?;
         ty.is_const = false;
 
-        for def in self.defs.iter() {
+        // 遍历定义
+        for def in &self.defs {
             let (id, init_ty, init_val, dims) = def.generate(program, scopes, labels)?;
-            let is_arr = !dims.is_empty();
-            let has_init = !init_val.is_empty();
 
-            let sym_val: SymbolVal;
-            let init_len = init_val.len();
-
-            if is_arr {
+            // 数组
+            if !dims.is_empty() {
+                // 声明数组
                 decl_arr(program, scopes, labels, &id, &ty, &dims, &init_ty, &init_val);
+                // 局部
                 if !scopes.is_global_scope() {
-                    program.push_comment(String::from("\n").as_str());
+                    program.push_comment("\n");
                 }
                 continue;
-            } else {
-                if has_init {
-                    let res = type_conver(program, labels, init_val[0].clone(), &init_ty[0], &ty);
-                    sym_val = make_symbol_val(&ty, &res);
-                } else {
-                    sym_val = SymbolVal::Void;
-                }
             }
+            
+            // 是否初始化，如果初始化，转换成当前类型，否则为Void
+            let symbol_val = if !init_val.is_empty() {
+                let res = type_conver(program, labels, init_val[0].clone(), &init_ty[0], &ty);
+                make_symbol_val(&ty, &res)
+            } else {
+                SymbolVal::Void
+            };
 
-            if let Some(label) = scopes.push(labels, id.as_str(), &ty, &sym_val, None) {
-                if scopes.is_global_scope() { // 全局变量
-                    if init_len == 0 {
-                        program.push_global_var(&id, &ty, vec!(), vec!());
+
+            if let Some(label) = scopes.push(labels, id.as_str(), &ty, &symbol_val, None) {
+                // 判断是全局变量还是局部变量
+                if scopes.is_global_scope() {
+                    // 判断是否初始化
+                    if init_val.is_empty() {
+                        program.push_global_var(&id, &ty, Vec::new(), Vec::new());
                     } else {
-                        match &sym_val {
-                            SymbolVal::I32(init) => program.push_global_var(&id, &ty, vec!(&SymbolType::new(SymbolWidth::I32, false)), vec!(init)),
-                            SymbolVal::Float(init) => program.push_global_var(&id, &ty, vec!(&SymbolType::new(SymbolWidth::Float, false)), vec!(init)),
-                            _ => panic!("{:?} TODO", sym_val),
-                        }
+                        let (symbol_width, init) = match &symbol_val {
+                            SymbolVal::I32(init) => (SymbolWidth::I32, init),
+                            SymbolVal::Float(init) => (SymbolWidth::Float, init),
+                            _ => panic!("{:?} is not supported!", symbol_val),
+                        };
+                        program.push_global_var(&id, &ty, vec!(&SymbolType::new(symbol_width, false)), vec!(init));
                     }
-                } else { // 局部变量
+                } else {
                     let str_vec = vec!(label.as_str(), "4");
                     let ty_vec = vec!(&ty);
-                    let config = get_settings();
-                    if scopes.is_in_while() || config.all_allocs_in_entry {
-                        let bb_label = program.get_bb_label();
-                        program.insert_alloc(Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec), bb_label.as_str());
+                    let settings = get_settings();
+
+                    if scopes.is_in_while() || settings.all_allocs_in_entry {
+                        let block_label = program.get_block_label();
+                        program.insert_alloc(
+                            Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec),
+                            block_label.as_str()
+                        );
                     } else {
                         program.push_instr(InstructionType::Alloca, str_vec, ty_vec);
                     }
 
-                    if has_init { // 带初值的一般变量
-                        let val = match &sym_val {
+                    // 如果初始化
+                    if !init_val.is_empty() {
+                        let val = match &symbol_val {
                             SymbolVal::I32(val) => val,
                             SymbolVal::Float(val) => val,
-                            _ => panic!("{:?} TODO", sym_val),
+                            _ => panic!("{:?} is not supported", symbol_val),
                         };
-                        let str_vec = vec!(val.as_str(), label.as_str(), "4");
-                        let type_vec = vec!(&ty);
-                        program.push_instr(InstructionType::Store, str_vec, type_vec);
-                        program.push_comment(String::from("\n").as_str());
-                    } // has_init
-                } // is_global
+                        let str_vec = vec![val.as_str(), label.as_str(), "4"];
+                        program.push_instr(InstructionType::Store, str_vec, ty_vec);
+                        program.push_comment("\n");
+                    }
+                }
             } else {
-                panic!("Multi definition of {}", id);
-            } // let Some(label)
-        } // for def
-        return Ok(());
+                panic!("{} has been defined!", id);
+            }
+        }
+        Ok(())
     }
 }
 
-/// 变量定义，与常量定义基本一致
+/// 变量定义
 impl Generate for VarDef {
     type Out = (String, Vec<SymbolType>, Vec<String>, Vec<i32>);
 
@@ -451,6 +457,7 @@ impl Generate for VarDef {
             dims.push(val.parse().expect(&format!("{} is not integer", val)));
         }
 
+        // 是否初始化
         if let Some(init) = &self.init {
             if !scopes.is_global_scope() {
                 program.push_comment(format!("; init {}\n", self.id).as_str());

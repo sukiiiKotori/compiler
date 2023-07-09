@@ -210,7 +210,7 @@ impl Generate for LAndExp {
                 } else {
                     let and_true = labels.pop_block("and_true");
                     let and_end = labels.pop_block("and_end");
-                    let this_bb = program.get_bb_label();
+                    let this_bb = program.get_block_label();
 
                     // this_bb     
                     if ty1.width != boolean {
@@ -258,7 +258,7 @@ impl Generate for LAndExp {
                     let str_vec = vec!(op2.as_str(), "%replace_phi_0", "1");
                     program.push_instr(InstructionType::Store, str_vec, type_vec);
 
-                    let second_bb = program.get_bb_label();
+                    let second_bb = program.get_block_label();
                     let ty_vec = vec!();
                     let str_vec = vec!("", and_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
@@ -331,7 +331,7 @@ impl Generate for LOrExp {
                 } else {
                     let or_false = labels.pop_block("or_false");
                     let or_end = labels.pop_block("or_end");
-                    let this_bb = program.get_bb_label();
+                    let this_bb = program.get_block_label();
 
                     // this_bb     
                     if ty1.width != boolean {
@@ -382,7 +382,7 @@ impl Generate for LOrExp {
                         program.push_instr(InstructionType::Store, str_vec, type_vec);
                     }
 
-                    let second_bb = program.get_bb_label();
+                    let second_bb = program.get_block_label();
                     let ty_vec = vec!();
                     let str_vec = vec!("", &or_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
