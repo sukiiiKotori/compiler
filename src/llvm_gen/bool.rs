@@ -1,4 +1,5 @@
 use std::error::Error;
+use crate::get_settings;
 use crate::ast::*;
 use crate::structures::llvm_struct::{
     LLVMProgram, 
@@ -194,7 +195,7 @@ impl Generate for LAndExp {
                         op1 = new_op1;
                     }
 
-                    let config = get_config_manager();
+                    let config = get_settings();
                     let use_phi = config.use_phi;
                     let i1_ty = SymbolType::new(SymbolWidth::I1, false);
                     if !use_phi {
@@ -315,7 +316,7 @@ impl Generate for LOrExp {
                         op1 = new_op1;
                     }
 
-                    let config = get_config_manager();
+                    let config = get_settings();
                     let use_phi = config.use_phi;
                     let i1_ty = SymbolType::new(SymbolWidth::I1, false);
                     if !use_phi {
