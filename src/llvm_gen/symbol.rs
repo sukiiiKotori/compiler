@@ -1,7 +1,8 @@
 use crate::structures::llvm_struct::{LLVMProgram, InstructionType};
 use crate::structures::symbol::*;
 use crate::llvm_gen::scopes::Labels;
-use crate::untils::float::{format_double, parse_float};
+use crate::utils::float::{format_double, parse_float};
+use crate::log_println;
 
 
 /// 检查数组/指针是否为同一类型
@@ -35,7 +36,11 @@ fn array_is_equal(arr1: &SymbolType, arr2: &SymbolType) -> bool {
 
 /// 检查ty是否为数组/指针
 fn is_array(ty: &SymbolType) -> bool {
-    Width::Arr{tar: _, dims: _} == ty.width
+    if let SymbolWidth::Arr{tar: _, dims: _} = ty.width {
+        true
+    } else {
+        false
+    }
 }
 
 /// 常量和变量的类型转换
@@ -47,7 +52,7 @@ pub fn type_conver(program: &mut LLVMProgram,
         return value;
     }
     // 处理数组/指针情况
-    if let (Width::Arr{tar: tar1, dims: dims1}, Width::Arr{tar: tar2, dims: dims2}) = (&ty1.width, &ty2.width) {
+    if let (SymbolWidth::Arr{tar: tar1, dims: dims1}, SymbolWidth::Arr{tar: tar2, dims: dims2}) = (&ty1.width, &ty2.width) {
         if array_is_equal(ty1, ty2) {
             return value;
         }
@@ -62,8 +67,8 @@ pub fn type_conver(program: &mut LLVMProgram,
         }
         dims1.remove(0);
         dims2.remove(0);
-        let new_ty1 = SymbolType::new(Width::Arr{tar: tar1.clone(), dims: dims1}, false);
-        let new_ty2 = SymbolType::new(Width::Arr{tar: tar2.clone(), dims: dims2}, false);
+        let new_ty1 = SymbolType::new(SymbolWidth::Arr{tar: tar1.clone(), dims: dims1}, false);
+        let new_ty2 = SymbolType::new(SymbolWidth::Arr{tar: tar2.clone(), dims: dims2}, false);
 
         let cast_res = labels.pop_num_str();
         let ty_vec = vec!(&new_ty1, &new_ty2);
@@ -81,19 +86,19 @@ pub fn type_conver(program: &mut LLVMProgram,
             let mut result = value;
             if is_array(ty1) {
                 panic!("Should not appear @ llvm_gen/symbol.rs:type_conver 1");
-            } else if ty1.width == Width::Float {
+            } else if ty1.width == SymbolWidth::Float {
                 let label = labels.pop_num_str();
                 program.push_instr(
-                    InstructionType::Fptosi, 
+                    InstructionType::FloatToI32, 
                     vec!(&label, &result),
                     vec!(&ty1, &ty2),
                 );
                 result = label;
-            } else if ty2.width == Width::I1 {
+            } else if ty2.width == SymbolWidth::I1 {
                 let ty_vec = vec!(ty1);
                 let label = labels.pop_num_str();
                 let str_vec = vec!("ne", label.as_str(), "0", result.as_str());
-                program.push_instr(InstructionType::Icmp, str_vec, ty_vec);
+                program.push_instr(InstructionType::Cmp, str_vec, ty_vec);
                 result = label;
             }
             result
@@ -101,10 +106,10 @@ pub fn type_conver(program: &mut LLVMProgram,
             let mut result = value;
             if is_array(ty2) {
                 panic!("Should not appear @ llvm_gen/symbol.rs:type_conver 2");
-            } else if ty2.width == Width::Float {
+            } else if ty2.width == SymbolWidth::Float {
                 let label = labels.pop_num_str();
                 program.push_instr(
-                    InstructionType::Sitofp, 
+                    InstructionType::I32Tofloat, 
                     vec!(&label, &result),
                     vec!(&ty1, &ty2),
                 );
@@ -112,7 +117,7 @@ pub fn type_conver(program: &mut LLVMProgram,
             } else {
                 let label = labels.pop_num_str();
                 program.push_instr(
-                    InstructionType::Zext, 
+                    InstructionType::ZeroExt, 
                     vec!(&label, &result),
                     vec!(&ty1, &ty2),
                 );
@@ -124,11 +129,11 @@ pub fn type_conver(program: &mut LLVMProgram,
         if ty1.width > ty2.width {
             if is_array(ty1) {
                 panic!("Should not appear @ llvm_gen/symbol.rs:type_conver 3");
-            } else if ty1.width == Width::Float {
+            } else if ty1.width == SymbolWidth::Float {
                 let num: f32 = parse_float(value.as_str());
                 let int_num: i32 = num as i32;
                 int_num.to_string()
-            } else if ty2.width == Width::I1 {
+            } else if ty2.width == SymbolWidth::I1 {
                 let num: i32 = value.parse().unwrap();
                 let bool_num = (num != 0) as i32;
                 bool_num.to_string()
@@ -138,7 +143,7 @@ pub fn type_conver(program: &mut LLVMProgram,
         } else {
             if is_array(ty2) {
                 panic!("Should not appear @ llvm_gen/symbol.rs:type_conver 4");
-            } else if ty2.width == Width::Float {
+            } else if ty2.width == SymbolWidth::Float {
                 let result: i32 = value.parse().unwrap();
                 format_double(parse_float(result.to_string().as_str()))
             } else {

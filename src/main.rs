@@ -1,4 +1,4 @@
-mod untils;
+mod utils;
 mod structures;
 mod ast;
 mod llvm_gen;
@@ -22,20 +22,6 @@ static SETTINGS: Settings = Settings {
 };
 pub fn get_settings() -> &'static Settings {
     &SETTINGS
-}
-
-#[macro_export]
-macro_rules! log_println {
-    () => {
-        if get_settings().log {
-            (println!());
-        }
-    };
-    ($($arg:tt)*) => {
-        if get_settings().log {
-            (println!($($arg)*));
-        }
-    };
 }
 
 

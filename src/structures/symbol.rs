@@ -1,14 +1,17 @@
 // 符号宽
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum SymbolWidth {
     Void,
+    I1,
+    I8,
     I32,
+    I64,
     Float,
     Arr{tar: Box<SymbolType>, dims: Vec<i32>}, 
 }
 
 // 符号类型
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct SymbolType {
     pub width: SymbolWidth,
     pub is_const : bool,
@@ -55,7 +58,10 @@ impl SymbolWidth {
     pub fn get_type(&self) -> String {
         match self {
             SymbolWidth::Void => "void".to_string(),
+            SymbolWidth::I1 => "i1".to_string(),
+            SymbolWidth::I8 => "i8".to_string(),
             SymbolWidth::I32 => "i32".to_string(),
+            SymbolWidth::I64 => "i64".to_string(),
             SymbolWidth::Float => "float".to_string(),
             SymbolWidth::Arr{tar, dims} => {
                 let name = tar.get_type();
