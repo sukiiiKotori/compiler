@@ -24,7 +24,6 @@ pub fn get_settings() -> &'static Settings {
     &SETTINGS
 }
 
-
 fn main() {
     println!("Hello, world!");
 }
