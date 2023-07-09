@@ -1,16 +1,13 @@
 use std::error::Error;
 use crate::get_settings;
 use crate::ast::*;
-use crate::structures::llvm_struct::{
-    LLVMProgram, 
-    InstructionType,
-};
+use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
-
 use crate::llvm_gen::arithmetic::*;
-use crate::llvm_gen::scopes::{Scopes, Labels};
-use crate::llvm_gen::generate::{Generate};
+use crate::llvm_gen::scopes::*;
+use crate::llvm_gen::generate::*;
 use crate::llvm_gen::symbol::*;
+use crate::utils::check::*;
 
 impl RelExpBody {
     /// 相对运算的运算主体，是相对运算表达式RelExp的抽象结果

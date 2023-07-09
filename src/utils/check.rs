@@ -1,6 +1,6 @@
-/*
-检查数据类型
-*/
+//检查工具
+
+use crate::structures::symbol::*;
 
 // 检查是否为十进制数
 pub fn is_decimal(s: &str) -> bool {
@@ -36,3 +36,12 @@ pub fn inside_imm_range(s: &str) -> bool {
     num >= -2048 && num < 2048
 }
 
+/// 检查ty1和ty2是否都是常量
+pub fn all_is_const(ty1: &SymbolType, ty2: &SymbolType) -> bool {
+    return ty1.is_const && ty2.is_const;
+}
+
+/// 检查ty1和ty2是否都是整型数
+pub fn all_is_int(ty1: &SymbolType, ty2: &SymbolType) -> bool {
+    return ty1.width != SymbolWidth::Float && ty2.width != SymbolWidth::Float;
+}
