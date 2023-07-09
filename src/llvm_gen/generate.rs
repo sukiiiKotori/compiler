@@ -543,7 +543,9 @@ impl Generate for Return {
         scopes: &mut Scopes,
         labels: &mut Labels
     ) -> Result<Self::Out, Box<dyn Error>> {
-        let func_type = scopes.get_curr_func_type().expect("Should not appear");
+        let func_type = scopes.get_current_function_type().expect(
+            "Should not appear @ llvm_gen/generate.rs impl Generate for Return "
+        );
         if let Some(exp) = &self.val {
             let (ty, exp_val) = exp.generate(program, scopes, labels)?;
             let ret_val: String;
@@ -551,12 +553,12 @@ impl Generate for Return {
 
             let str_vec = vec!(ret_val.as_str());
             let ty_vec = vec!(&func_type);
-            program.push_ter_instr(InstructionType::Return, str_vec, ty_vec);
+            program.push_ter_instr(InstructionType::Ret, str_vec, ty_vec);
             Ok(())
         } else {
             let str_vec = vec!();
             let ty_vec = vec!(&func_type);
-            program.push_ter_instr(InstructionType::Return, str_vec, ty_vec);
+            program.push_ter_instr(InstructionType::Ret, str_vec, ty_vec);
             Ok(())
         }
     }
