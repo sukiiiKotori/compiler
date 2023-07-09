@@ -1,5 +1,141 @@
 use crate::structures::symbol::*;
 
+/*
+     +----------------------+
+     |    LLVMProgram       |
+     +----------------------+
+     |  global_var: Vector  |
+     |  func_decl: Vector   |
+     |  func_def: Vector    |
+     +----------------------+
+            ^
+            |
+            |
++-----------------------+
+|       GlobalVar        |
++-----------------------+
+|  var_name: String     |
+|  var_type: SymbolType |
+|  init_num: Vector     |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|       InitNumber       |
++-----------------------+
+|  init_type: SymbolType |
+|  init_val: String      |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|       FuncDecl         |
++-----------------------+
+|  func_name: String    |
+|  func_type: SymbolType |
+|  param_types: Vector  |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|       FuncDef          |
++-----------------------+
+|  func_name: String    |
+|  func_type: SymbolType |
+|  params: Vector       |
+|  blocks: Vector       |
+|  local_vars: Vector   |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|        Param           |
++-----------------------+
+|  param_name: String   |
+|  param_type: SymbolType |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|        Block           |
++-----------------------+
+|  block_label: String  |
+|  phi_ins: Vector      |
+|  nor_ins: Vector      |
+|  ter_ins: Option      |
+|  ins_num: Integer     |
+|  depth: Integer       |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|      LocalVar          |
++-----------------------+
+|  ins: Instruction    |
+|  label: String       |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|     Instruction        |
++-----------------------+
+|  Add: BinaryOp       |
+|  Sub: BinaryOp       |
+|  Mul: BinaryOp       |
+|  Sdiv: BinaryOp      |
+|  Srem: BinaryOp      |
+|  Fadd: BinaryOp      |
+|  Fsub: BinaryOp      |
+|  Fmul: BinaryOp      |
+|  Fdiv: BinaryOp      |
+|  ZeroExt: CastOp     |
+|  I32ToFloat: CastOp  |
+|  FloatToI32: CastOp  |
+|  Cmp: BinaryOp       |
+|  Fcmp: BinaryOp      |
+|  Phi: Tuple          |
+|  Alloca: Tuple       |
+|  Store: Tuple        |
+|  Load: Tuple         |
+|  Call: Tuple         |
+|  GetElemPtr: Tuple   |
+|  BitCast: Tuple      |
+|  Comment: Tuple      |
+|  Ret: Tuple          |
+|  Br: Tuple           |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|       BinaryOp         |
++-----------------------+
+|  res: String         |
+|  op_type: SymbolType |
+|  op1: String         |
+|  op2: String         |
++-----------------------+
+            ^
+            |
+            |
++-----------------------+
+|         CastOp          |
++-----------------------+
+|  res: String         |
+|  type_1: SymbolType  |
+|  type_2: SymbolType  |
+|  val: String         |
++-----------------------+
+
+ */
+
 /// LLVM程序
 #[derive(Debug, Default)]
 pub struct LLVMProgram {
