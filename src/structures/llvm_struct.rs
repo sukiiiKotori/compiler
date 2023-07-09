@@ -54,7 +54,7 @@ pub struct Block {
     pub block_label: String,        // 标签
     pub phi_ins: Vec<Instruction>,  // phi指令
     pub nor_ins: Vec<Instruction>,  // 一般指令
-    pub fin_ins: Vec<Instruction>,  // 终结指令
+    pub ter_ins: Option<Instruction>,  // 终结指令
     pub ins_num: usize,             // 此基本块之前的所有基本块的指令数量
     pub depth: usize,               // 此基本块的循环嵌套深度
 }
@@ -118,7 +118,7 @@ pub enum InstructionType {
     Fmul,
     Fdiv,
     ZeroExt,
-    I32Tofloat,
+    I32ToFloat,
     FloatToI32,
     Cmp,
     Fcmp,
