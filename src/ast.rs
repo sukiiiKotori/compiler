@@ -1,4 +1,4 @@
-use crate::symbol::*;
+use crate::structures::symbol::*;
 
 // SysY开始
 #[derive(Debug)]

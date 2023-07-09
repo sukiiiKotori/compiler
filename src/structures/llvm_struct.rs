@@ -1,7 +1,7 @@
-use crate::symbol::*;
+use crate::structures::symbol::*;
 
 // llvm程序开始
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct LLVMProgram {
     pub global_var: Vec<GlobalVar>,
     pub func_decl: Vec<FuncDecl>,
@@ -135,7 +135,7 @@ pub enum InstructionType {
 }
 
 // 二元操作
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BinaryOp {
     pub res: String,
     pub op_type: SymbolType,
@@ -144,7 +144,7 @@ pub struct BinaryOp {
 }
 
 // 转换操作
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct CastOp {
     pub res: String,
     pub type_1: SymbolType,
@@ -154,32 +154,18 @@ pub struct CastOp {
 
 impl LLVMProgram {
     pub fn new() -> Self {
-        LLVMProgram {
-            global_var: Vec::new(),
-            func_decl: Vec::new(),
-            func_def: Vec::new(),
-        }
+        Self::default()
     }
 }
 
 impl BinaryOp {
     pub fn new() -> Self {
-        BinaryOp {
-            res: "".to_string(),
-            op_type: SymbolType::new(SymbolWidth::Void, true),
-            op1: "".to_string(),
-            op2: "".to_string(),
-        }
+        Self::default()
     }
 }
 
 impl CastOp {
     pub fn new() -> Self {
-        CastOp {
-            res: "".to_string(),
-            type_1: SymbolType::new(SymbolWidth::Void, true),
-            type_2: SymbolType::new(SymbolWidth::Void, true),
-            val: "".to_string(),
-        }
+        Self::default()
     }
 }

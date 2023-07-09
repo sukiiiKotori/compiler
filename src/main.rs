@@ -1,9 +1,8 @@
-mod float;
-mod check;
-mod symbol;
+mod utils;
+mod structures;
 mod ast;
-mod llvm_struct;
-
+mod llvm_gen;
+mod riscv_gen;
 /*
 编译器设置选项
 */
@@ -24,21 +23,6 @@ static SETTINGS: Settings = Settings {
 pub fn get_settings() -> &'static Settings {
     &SETTINGS
 }
-
-#[macro_export]
-macro_rules! log_println {
-    () => {
-        if get_settings().log {
-            (println!());
-        }
-    };
-    ($($arg:tt)*) => {
-        if get_settings().log {
-            (println!($($arg)*));
-        }
-    };
-}
-
 
 fn main() {
     println!("Hello, world!");

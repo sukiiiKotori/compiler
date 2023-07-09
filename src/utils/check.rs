@@ -31,7 +31,7 @@ pub fn is_temp_opr(s: &str) -> bool {
 // 检查立即数是否在十二位整型数的表示范围内
 pub fn inside_imm_range(s: &str) -> bool {
     // 先检查是否为isize
-    let num = s.parse::<isize>().expect(&format!("{} parsing isize failed", s));
+    let num = s.parse::<isize>().unwrap();
     // 再检查是否在12位整数表示范围内
     num >= -2048 && num < 2048
 }

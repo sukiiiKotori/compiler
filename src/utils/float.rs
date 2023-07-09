@@ -24,7 +24,7 @@ pub fn double_to_float(double: &str) -> String {
 }
 
 /// 把IEEE754标准表示的单精度或双精度浮点转换为f32
-fn parse_IEEE(hex_string_mem: &str) -> f32 {
+fn parse_ieee(hex_string_mem: &str) -> f32 {
     if hex_string_mem.len() == 10 { // 2(0x)+8(8*4=32)
         let num32 = u32::from_str_radix(&hex_string_mem[2..], 16).unwrap();
         unsafe {
@@ -82,7 +82,7 @@ pub fn parse_float(s: &str) -> f32 {
             }
         } 
         else { // IEEE
-            parse_IEEE(s)
+            parse_ieee(s)
         }
     } else { // dec
         f32::from_str(s).unwrap()
