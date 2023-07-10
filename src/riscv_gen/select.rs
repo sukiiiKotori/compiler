@@ -92,7 +92,7 @@ impl FuncDef {
 
         let mut int_cnt = 0;
         let mut float_cnt = 0;
-        for fparam in self.fparams.iter() {
+        for fparam in self.params.iter() {
             if fparam.param_type.width == SymbolWidth::Float {
                 if float_cnt >= FUNC_ARG.len() {
                     stack.push_param(fparam.param_name.as_str(), fparam.param_type.get_width() as isize);
@@ -120,20 +120,20 @@ impl FuncDef {
     }
 }
 
-impl BasicBlock {
+impl Block {
     pub fn select_asm(&self, asm: &mut RiscV, next_block: Option<&str>, func_label: &str, select_cnt: &mut usize) {
         let this_label = String::from(func_label)+"."+self.block_label.as_str();
         asm.push_block(this_label.as_str(), self.depth);
 
-        if !self.phi_instr.is_empty() {
+        if !self.phi_ins.is_empty() {
             panic!("Do not support emitting LLVM IR with phi instr");
         }
 
-        for instr in self.instrs.iter() {
+        for instr in self.nor_ins.iter() {
             instr.select_asm(asm, select_cnt);
         }
         
-        if let Some(ter) = &self.ter_instr {
+        if let Some(ter) = &self.ter_ins {
             if let Instruction::Br(cond, label1, label2) = ter {
                 if let (Some(cond), Some(label2)) = (cond, label2) { // 有条件跳转
                     if let Some(next_block) = next_block { // 取出下一个block的标签
