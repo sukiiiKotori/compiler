@@ -9,11 +9,11 @@ use crate::riscv_gen::reg::{
 
 #[derive(Debug)]
 pub struct StackSlot {
-    pub frame_size: isize,                         // 最终栈槽的大小
-    pub map: HashMap<String, isize>,        // 最终的映射关系
-    pub pushed: HashSet<String>,            // 已加入到栈槽的变量
+    pub frame_size: isize,                // 最终栈槽的大小
+    pub map: HashMap<String, isize>,      // 最终的映射关系
+    pub pushed: HashSet<String>,          // 已加入到栈槽的变量
     pub param_slot: Vec<(String, isize)>, // 存储参数的槽
-    pub normal_slot: Vec<(String, isize)>,  // 存储变量和虚拟寄存器的槽
+    pub normal_slot: Vec<(String, isize)>,// 存储变量和虚拟寄存器的槽
 }
 
 impl StackSlot {
@@ -122,7 +122,7 @@ impl AsmFunc {
     } // fn
     
     fn map_addr(&mut self) {
-        use crate::util::inside_imm_range;
+        use crate::utils::check::inside_imm_range;
 
         for block in self.blocks.iter_mut() {
             let len = block.instrs.len();
