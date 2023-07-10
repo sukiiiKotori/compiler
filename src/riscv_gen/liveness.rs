@@ -24,7 +24,7 @@ impl AsmFunc {
         traversed.insert(0);
         let first_bb = self.blocks.get(0).unwrap();
         res.push(0);
-        let dsts = first_bb.sux.iter().collect::<Vec<_>>(); 
+        let dsts = first_bb.successor.iter().collect::<Vec<_>>(); 
         if !dsts.is_empty() {
             que.push((0, dsts, 0));
         }
@@ -42,7 +42,7 @@ impl AsmFunc {
                 traversed.insert(*this_id);
                 let this_bb = self.blocks.get(*this_id).unwrap();
                 res.push(*this_id);
-                let dsts = this_bb.sux.iter().collect::<Vec<_>>();
+                let dsts = this_bb.successor.iter().collect::<Vec<_>>();
                 if !dsts.is_empty() {
                     que.push((*this_id, dsts, 0));
                 }
@@ -303,7 +303,7 @@ impl Liveness<'_> {
             .rev()
             .for_each(|idx| {
                 let this_bb = self.target.blocks.get(*idx).unwrap();
-                let new_live_out = this_bb.sux.iter().collect::<Vec<_>>().into_iter()
+                let new_live_out = this_bb.successor.iter().collect::<Vec<_>>().into_iter()
                     .fold(self.block_info.get_mut(&idx).unwrap().live_out.clone(),
                         |acc, s| {
                             let idx = self.block_idx.get(s.as_str()).unwrap();
