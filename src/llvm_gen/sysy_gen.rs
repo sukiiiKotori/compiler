@@ -40,7 +40,7 @@ impl Generate for SysY {
             false
         );
         let ty_i64 = SymbolType::new(SymbolWidth::I64, false);
-        let ty_i1 = SymbolType::new(SymbolWidth::I1, false);
+        let ty_i1 = SymbolType::new(SymbolWidth::Bool, false);
         let ty_float = SymbolType::new(SymbolWidth::Float, false);
         let ty_float_clone = ty_float.clone();
         let ty_float_ptr = SymbolType::new(
@@ -231,7 +231,7 @@ impl Generate for FuncDef {
             scopes.enter_function(&func_type);
             program.push_func(&func_type, label.as_str(), label_info);
 
-            let i1_ty = SymbolType::new(SymbolWidth::I1, false);
+            let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
             if let Some(replace_phi) = scopes.push(
                 labels,
                 "replace_phi",
@@ -419,7 +419,7 @@ impl Generate for Stmt {
                     labels,
                     res,
                     &sym_type,
-                    &SymbolType::new(SymbolWidth::I1, false)
+                    &SymbolType::new(SymbolWidth::Bool, false)
                 );
 
                 if let Some(false_stmt) = stmt2 {
@@ -484,7 +484,7 @@ impl Generate for Stmt {
                     labels,
                     res,
                     &ty,
-                    &SymbolType::new(SymbolWidth::I1, false)
+                    &SymbolType::new(SymbolWidth::Bool, false)
                 );
                 
                 let ty_vec = vec!();
@@ -564,3 +564,10 @@ impl Generate for Return {
     }
 }
 
+impl Generate for Exp {
+    type Out = (SymbolType, String);
+    /// 递归
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+        self.exp.generate(program, scopes, labels)
+    }
+}

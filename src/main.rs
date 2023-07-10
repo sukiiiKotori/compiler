@@ -5,7 +5,6 @@ mod llvm_gen;
 mod riscv_gen;
 mod llvm_opt;
 
-use std::io;
 use std::fs;
 use std::env::args;
 use std::fs::read_to_string;

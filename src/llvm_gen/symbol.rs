@@ -92,7 +92,7 @@ pub fn type_conver(program: &mut LLVMProgram,
                     vec!(&ty1, &ty2),
                 );
                 result = label;
-            } else if ty2.width == SymbolWidth::I1 {
+            } else if ty2.width == SymbolWidth::Bool {
                 let ty_vec = vec!(ty1);
                 let label = labels.pop_num_str();
                 let str_vec = vec!("ne", label.as_str(), "0", result.as_str());
@@ -131,7 +131,7 @@ pub fn type_conver(program: &mut LLVMProgram,
                 let num: f32 = parse_float(value.as_str());
                 let int_num: i32 = num as i32;
                 int_num.to_string()
-            } else if ty2.width == SymbolWidth::I1 {
+            } else if ty2.width == SymbolWidth::Bool {
                 let num: i32 = value.parse().unwrap();
                 let bool_num = (num != 0) as i32;
                 bool_num.to_string()

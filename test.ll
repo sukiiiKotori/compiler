@@ -1,3 +1,5 @@
+@A = global[3 x [2 x [5 x i32]]]  zeroinitializer
+
 declare i32 @getint()
 declare i32 @getch()
 declare i32 @getarray(i32* noundef)
@@ -36,24 +38,16 @@ _entry:
 define i32 @main() {
 _entry:
   %replace_phi_0 = alloca i1, align 1
-  %f1_0 = alloca float, align 4
-  %f2_0 = alloca float, align 4
-  %f_0 = alloca float, align 4
 
-; init f1
-  store float 0x400921FB60000000, float* %f1_0, align 4
-
-; init f2
-  store float 0x4003333340000000, float* %f2_0, align 4
-
-; init f
-  %0 = load float, float* %f1_0, align 4
-  %1 = load float, float* %f2_0, align 4
-  %2 = call float @add(float noundef %0, float noundef %1)
-  %3 = load float, float* %f2_0, align 4
-  %4 = call float @add(float noundef %2, float noundef %3)
-  store float %4, float* %f_0, align 4
-
+  %0 = getelementptr inbounds [3 x [2 x [5 x i32]]], [3 x [2 x [5 x i32]]]* @A, i32 0, i32 2
+  %1 = getelementptr inbounds [2 x [5 x i32]], [2 x [5 x i32]]* %0, i32 0, i32 1
+  %2 = getelementptr inbounds [5 x i32], [5 x i32]* %1, i32 0, i32 2
+  %3 = getelementptr inbounds [3 x [2 x [5 x i32]]], [3 x [2 x [5 x i32]]]* @A, i32 0, i32 1
+  %4 = getelementptr inbounds [2 x [5 x i32]], [2 x [5 x i32]]* %3, i32 0, i32 2
+  %5 = getelementptr inbounds [5 x i32], [5 x i32]* %4, i32 0, i32 2
+  %6 = load i32, i32* %5, align 4
+  %7 = add i32 188, %6
+  store i32 %7, i32* %2, align 4
   ret i32 0
 
 }

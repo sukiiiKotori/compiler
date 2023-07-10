@@ -3,11 +3,50 @@ use crate::get_settings;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
-use crate::llvm_gen::arithmetic_gen::*;
 use crate::llvm_gen::scopes::*;
 use crate::llvm_gen::sysy_gen::*;
 use crate::llvm_gen::symbol::*;
 use crate::utils::check::*;
+use crate::utils::float::*;
+
+fn logic_operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
+    if all_is_int(ty1, ty2) {
+        let num1 = op1.parse::<i32>().unwrap();
+        let num2 = op2.parse::<i32>().unwrap();
+        let res = i32::from(
+            match op {
+                "==" => num1 == num2,
+                "!=" => num1 != num2,
+                "<"  => num1 <  num2,
+                ">"  => num1 >  num2,
+                "<=" => num1 <= num2,
+                ">=" => num1 >= num2,
+                "||" => (num1 != 0) || (num2 != 0),
+                "&&" => (num1 != 0) && (num2 != 0),
+                _ => panic!("Don't support!"),
+            }
+        );
+        Ok((SymbolType::new(SymbolWidth::Bool, true), res.to_string()))
+    } else {
+        let num1 = parse_float(op1) as f64;
+        let num2 = parse_float(op2) as f64;
+        let res = f64::from(
+            match op {
+                "==" => num1 == num2,
+                "!=" => num1 != num2,
+                "<"  => num1 <  num2,
+                ">"  => num1 >  num2,
+                "<=" => num1 <= num2,
+                ">=" => num1 >= num2,
+                "||" => (num1 != 0.0) || (num2 != 0.0),
+                "&&" => (num1 != 0.0) && (num2 != 0.0),
+                _ => panic!("Don't support!"),
+            }
+        );
+        Ok((SymbolType::new(SymbolWidth::Bool, true), res.to_string()))
+    }
+}
+
 
 impl RelExpBody {
     /// 相对运算的运算主体，是相对运算表达式RelExp的抽象结果
@@ -26,16 +65,16 @@ impl RelExpBody {
         // 生成第二个表达式的代码和结果
         let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
 
-        // 如果两个表达式都是常量，则直接计算结果
+        // 进行常量折叠
         if all_is_const(&ty1, &ty2) {
             if op_ty == "slt" {
-                return operate(&ty1, &op1, &ty2, &op2, "<");
+                return logic_operate(&ty1, &op1, &ty2, &op2, "<");
             } else if op_ty == "sgt" {
-                return operate(&ty1, &op1, &ty2, &op2, ">");
+                return logic_operate(&ty1, &op1, &ty2, &op2, ">");
             } else if op_ty == "sle" {
-                return operate(&ty1, &op1, &ty2, &op2, "<=");
+                return logic_operate(&ty1, &op1, &ty2, &op2, "<=");
             } else {
-                return operate(&ty1, &op1, &ty2, &op2, ">=");
+                return logic_operate(&ty1, &op1, &ty2, &op2, ">=");
             }
         }
 
@@ -60,7 +99,7 @@ impl RelExpBody {
             program.push_instr(InstructionType::Cmp, str_vec, ty_vec);
         }
 
-        Ok((SymbolType::new(SymbolWidth::I1, false), result))
+        Ok((SymbolType::new(SymbolWidth::Bool, false), result))
     }
 }
 
@@ -105,9 +144,9 @@ impl EqExpBody {
         // 如果两个表达式都是常量，则直接计算结果
         if all_is_const(&ty1, &ty2) {
             if op_ty == "ne" {
-                return operate(&ty1, &op1, &ty2, &op2, "!=");
+                return logic_operate(&ty1, &op1, &ty2, &op2, "!=");
             } else {
-                return operate(&ty1, &op1, &ty2, &op2, "==");
+                return logic_operate(&ty1, &op1, &ty2, &op2, "==");
             }
         }
 
@@ -132,7 +171,7 @@ impl EqExpBody {
             program.push_instr(InstructionType::Cmp, str_vec, ty_vec);
         }
 
-        Ok((SymbolType::new(SymbolWidth::I1, false), result))
+        Ok((SymbolType::new(SymbolWidth::Bool, false), result))
     }
 }
 
@@ -172,7 +211,7 @@ impl Generate for LAndExp {
             LAndExp::EqExp(exp) => exp.generate(program, scopes, labels),
             LAndExp::And(exp1, exp2) => {
                 // 计算LHS
-                let boolean = SymbolWidth::I1;
+                let boolean = SymbolWidth::Bool;
                 let (ty1, mut op1) = exp1.generate(program, scopes, labels)?;
 
                 if ty1.is_const {
@@ -206,7 +245,7 @@ impl Generate for LAndExp {
                             is_const = false;
                         } // ty2 const else
                     }
-                    Ok((SymbolType::new(SymbolWidth::I1, is_const), res))
+                    Ok((SymbolType::new(SymbolWidth::Bool, is_const), res))
                 } else {
                     let and_true = labels.pop_block("and_true");
                     let and_end = labels.pop_block("and_end");
@@ -223,7 +262,7 @@ impl Generate for LAndExp {
 
                     let config = get_settings();
                     let use_phi = config.use_phi;
-                    let i1_ty = SymbolType::new(SymbolWidth::I1, false);
+                    let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
                     if !use_phi {
                         let type_vec = vec!(&i1_ty);
                         let str_vec = vec!(op1.as_str(), "%replace_phi_0", "1");
@@ -267,7 +306,7 @@ impl Generate for LAndExp {
                     program.push_bb(and_end.as_str(), scopes);
 
                     let result = labels.pop_num_str();
-                    let i1_ty = SymbolType::new(SymbolWidth::I1, false);
+                    let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
                     if use_phi {
                         let ty_vec = vec!(&i1_ty);
                         let str_vec = vec!(result.as_str(), "0", this_bb.as_str(), op2.as_str(), second_bb.as_str());
@@ -293,7 +332,7 @@ impl Generate for LOrExp {
             LOrExp::LAndExp(exp) => exp.generate(program, scopes, labels),
             LOrExp::Or(exp1, exp2) => {
                 // 计算LHS
-                let boolean = SymbolWidth::I1;
+                let boolean = SymbolWidth::Bool;
                 let (ty1, mut op1) = exp1.generate(program, scopes, labels)?;
 
                 if ty1.is_const {
@@ -327,7 +366,7 @@ impl Generate for LOrExp {
                             is_const = false;
                         } // ty2 const else
                     }
-                    Ok((SymbolType::new(SymbolWidth::I1, is_const), res))
+                    Ok((SymbolType::new(SymbolWidth::Bool, is_const), res))
                 } else {
                     let or_false = labels.pop_block("or_false");
                     let or_end = labels.pop_block("or_end");
@@ -344,7 +383,7 @@ impl Generate for LOrExp {
 
                     let config = get_settings();
                     let use_phi = config.use_phi;
-                    let i1_ty = SymbolType::new(SymbolWidth::I1, false);
+                    let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
                     if !use_phi {
                         let type_vec = vec!(&i1_ty);
                         let str_vec = vec!(op1.as_str(), "%replace_phi_0", "1");
@@ -368,7 +407,7 @@ impl Generate for LOrExp {
                         } else {
                             op2 = String::from("0");
                         }
-                    } if ty2.width != SymbolWidth::I1 {
+                    } if ty2.width != SymbolWidth::Bool {
                         let new_op2 = labels.pop_num_str(); 
                         let str_vec = vec!("ne", new_op2.as_str(), "0", op2.as_str());
                         let type_vec = vec!(&ty2);
@@ -390,7 +429,7 @@ impl Generate for LOrExp {
                     program.push_bb(or_end.as_str(), scopes);
 
                     let result = labels.pop_num_str();
-                    let i1_ty = SymbolType::new(SymbolWidth::I1, false);
+                    let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
                     if use_phi { 
                         let ty_vec = vec!(&i1_ty);
                         let str_vec = vec!(result.as_str(), "1", this_bb.as_str(), op2.as_str(), second_bb.as_str());

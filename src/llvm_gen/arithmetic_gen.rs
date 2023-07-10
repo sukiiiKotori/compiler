@@ -1,6 +1,5 @@
 use std::error::Error;
 use std::convert::From;
-use num_traits::Num;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
@@ -10,127 +9,69 @@ use crate::llvm_gen::symbol::*;
 use crate::utils::check::*;
 use crate::utils::float::*;
 
-/// 计算常量T类型的num1和num2关于op算子的计算结果<br>
-/// T类型需要满足基本的算术Trait和比较Trait
-fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: &str) -> (SymbolWidth, T) {
-    /* match op {
-        "+" => (false, num1 + num2),
-        "-" => (false, num1 - num2),
-        "*" => (false, num1 * num2),
-        "/" => (false, num1 / num2),
-        "%" => (false, num1 % num2),
-
-    } */
-    
-    
-    
-    let res: T;
-
-
-    if op == "+" {
-        res = num1 + num2;
-    } else if op == "-" {
-        res = num1 - num2;
-    } else if op == "*" {
-        res = num1 * num2;
-    } else if op == "/" {
-        res = num1 / num2;
-    } else if op == "%" {
-        res = num1 % num2;
-    } else { // Boolean expression
-        let res: bool;
-        if op == "==" {
-            res = num1 == num2;
-        } else if op == "!=" {
-            res = num1 != num2; 
-        } else if op == "<" {
-            res = num1 < num2;
-        } else if op == ">" {
-            res = num1 > num2;
-        } else if op == "<=" {
-            res = num1 <= num2; 
-        } else if op == ">=" {
-            res = num1 >= num2; 
-        } else if op == "&&" {
-            res = num1 != T::from(0) && num2 != T::from(0);
-        } else if op == "||" {
-            res = num1 != T::from(0) || num2 != T::from(0);
-        } else {
-            res = false;
-        }
-        let res = i32::from(res);
-        return (SymbolWidth::I1, T::from(res));
-    }
-    (SymbolWidth::Void, res)
-}
-
-/// 计算常量<br>
-/// 首先检查是否有浮点数<br>
-/// 然后进行解析<br>
-/// 最后调用operate_num计算结果<br>
-pub fn operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
+/// 完成优化：常量折叠
+fn arithetic_operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
     if all_is_int(ty1, ty2) {
+        //操作数均为i32，无需进行类型提升。
         let num1 = op1.parse::<i32>().unwrap();
         let num2 = op2.parse::<i32>().unwrap();
-        let (width, res) = operate_num(num1, num2, op);
-        if width == SymbolWidth::Void { // 由ty1和ty2决定结果类型
-            if ty1.width > ty2.width {
-                Ok((SymbolType::new(ty1.width.clone(), true), res.to_string()))
-            } else {
-                Ok((SymbolType::new(ty2.width.clone(), true), res.to_string()))
-            }
-        } else {
-            Ok((SymbolType::new(width, true), res.to_string()))
-        }
+        let res = match op {
+            "+" => num1 + num2,
+            "-" => num1 - num2,
+            "*" => num1 * num2,
+            "/" => num1 / num2,
+            "%" => num1 % num2,
+            _ => panic!("Don't support!"),
+        };
+        //均为i32，无需隐式类型转换，任选一个的类型传入即可
+        Ok((SymbolType::new(ty1.width.clone(), true), res.to_string()))  
     } else {
+        //parse_float函数可以同时解析i32和f32，并且把类型全都提升为f32。
+        //若想获取原始数据类型，直接判断`width`即可。
         let num1 = parse_float(op1) as f64;
         let num2 = parse_float(op2) as f64;
-        let (width, res) = operate_num(num1, num2, op);
-        if width == SymbolWidth::Void {
-            if ty1.width > ty2.width {
-                Ok((SymbolType::new(ty1.width.clone(), true), format_double(res as f32)))
-            } else {
-                Ok((SymbolType::new(ty2.width.clone(), true), format_double(res as f32)))
-            }
+        let res = match op {
+            "+" => num1 + num2,
+            "-" => num1 - num2,
+            "*" => num1 * num2,
+            "/" => num1 / num2,
+            "%" => num1 % num2,
+            _ => panic!("Don't support!"),
+        };
+        //实现：隐式类型转换——类型提升。提升顺序：int->float
+        if ty1.width > ty2.width {
+            Ok((SymbolType::new(ty1.width.clone(), true), format_double(res as f32)))
         } else {
-            Ok((SymbolType::new(width, true), res.to_string()))
+            Ok((SymbolType::new(ty2.width.clone(), true), format_double(res as f32)))
         }
     }
 }
 
-impl Generate for Exp {
-    type Out = (SymbolType, String);
-    
-    /// 调用exp成员进行generate
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
-        self.exp.generate(program, scopes, labels)
-    }
-}
-
-/// 对于整型数，直接将其从i32转换为String<br>
-/// 对于浮点数，调用parse_float从String获取f32，然后调用format_double将其打印为符合LLVM的16进制64位浮点数格式<br>
+/// i32直接调用库函数解析
+/// float则需要将其规格化为IEEE754 Double，长度变为64bit
 impl Generate for Number {
     type Out = (SymbolType, String);
 
     fn generate(&self, _program: &mut LLVMProgram, _scopes: &mut Scopes, _labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
         match self {
-            Number::Int(num) => Ok((SymbolType::new(SymbolWidth::I32, true), num.to_string())),
+            Number::Int(num) => Ok(
+                (SymbolType::new(SymbolWidth::I32, true), 
+                num.to_string())
+            ),
             Number::Float(num) => Ok(
-                (
-                    SymbolType::new(SymbolWidth::Float, true), 
-                    format_double(parse_float(num.as_str()))
-                )
+                (SymbolType::new(SymbolWidth::Float, true), 
+                format_double(parse_float(num)))
             ),
         }
     }
 }
 
 impl LVal {
-    /// 从维度dims中跳过skip_num的元素，然后将剩余元素收集作为剩下的维度
+    /// 从维度dims中跳过skip_num个元素，然后将剩余元素收集作为剩下的维度
     fn get_left_dims(dims: &Vec<i32>, skip_num: usize) -> Vec<i32> {
         dims.iter()
             .skip(skip_num)
-            .map(|x| x.clone())
+            .map(|x| *x)
             .collect()
     }
 
@@ -149,9 +90,9 @@ impl LVal {
         let left_arr = SymbolType::new(SymbolWidth::Arr{tar: tar.clone(), dims: left_dims},false);
         let ty_vec = vec!(&left_arr); 
         let new_ptr = labels.pop_num_str();
-        let mut str_vec = vec!(new_ptr.as_str(), last_ptr.as_str());
+        let mut str_vec: Vec<&str> = vec!(&new_ptr, &last_ptr);
         for i in idx.iter() {
-            str_vec.push(i.as_str());
+            str_vec.push(i);
         }
         program.push_instr(InstructionType::GetElemPtr, str_vec, ty_vec);
         new_ptr 
@@ -231,7 +172,7 @@ impl Generate for LVal {
                             idx.push(zero.clone());
                         }
                         if !self.idx.is_empty() {
-                        let (exp_ty, exp_val) = self.idx[cnt].generate(program, scopes, labels)?;
+                            let (exp_ty, exp_val) = self.idx[cnt].generate(program, scopes, labels)?;
                             let dst_ty = SymbolType::new(SymbolWidth::I32, false);
                             let this_idx = type_conver(program, labels, exp_val, &exp_ty, &dst_ty);
                             idx.push(this_idx);
@@ -312,16 +253,15 @@ impl Generate for UnaryExp {
                     let res: String;
                     match ty.width {
                         SymbolWidth::I32 => {
-                            let num: i32 = op2.parse().expect(&format!("Parse i32 {} failed", op2));
-                            let num = -num;
+                            let num = - op2.parse::<i32>().unwrap();
                             res = num.to_string();
                         },
                         SymbolWidth::Float => {
-                            let num: f32 = parse_float(op2.as_str());
+                            let num: f32 = parse_float(&op2);
                             let num = -num;
                             res = format_double(num);
                         },
-                        SymbolWidth::I1 => {
+                        SymbolWidth::Bool => {
                             let num: i32 = op2.parse().expect(&format!("Parse i32 {} failed", op2));
                             let num = -num;
                             res = num.to_string();
@@ -370,12 +310,12 @@ impl Generate for UnaryExp {
                             let num = (num == 0.0) as i32;
                             res = format_double(num as f32);
                         },
-                        SymbolWidth::I1 => {
+                        SymbolWidth::Bool => {
                             let num: i32 = op2.parse().expect(&format!("Parse i32 {} failed", op2));
                             let num = (num == 0) as i32;
                             res = num.to_string();
                         },
-                        _ => panic!("TODO"),
+                        _ => panic!("Don't support!"),
                     }
                     return Ok((ty, res));
                 }
@@ -386,7 +326,7 @@ impl Generate for UnaryExp {
                 } else {
                     program.push_instr(InstructionType::Cmp, vec!(&String::from("eq"), &result, &String::from("0"), &op2), vec!(&ty));
                 }
-                Ok((SymbolType::new(SymbolWidth::I1, false), result))
+                Ok((SymbolType::new(SymbolWidth::Bool, false), result))
             },
             UnaryExp::Call{id, params} => {
                 let func = scopes.get_function(id.as_str()).expect(format!("Undefined function {}", id).as_str());
@@ -462,7 +402,7 @@ impl MulExpBody {
         let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
 
         if all_is_const(&ty1, &ty2) {
-            return operate(&ty1, &op1, &ty2, &op2, op_ty.as_str());
+            return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty.as_str());
         }
 
         let (mut ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2, op2);
@@ -473,8 +413,7 @@ impl MulExpBody {
             op2.as_str(),
         );
         let ty_vec = vec!(&ty1);
-        let is_float = ty1.width == SymbolWidth::Float;
-        if is_float {
+        if ty1.width == SymbolWidth::Float {
             match op_ty.as_str() {
                 "*" => program.push_instr(
                     InstructionType::Fmul,
@@ -536,7 +475,7 @@ impl AddExpBody {
         let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
 
         if all_is_const(&ty1, &ty2) {
-            return operate(&ty1, &op1, &ty2, &op2, op_ty.as_str());
+            return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty.as_str());
         }
 
         let (mut ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2, op2);
@@ -582,7 +521,7 @@ impl AddExpBody {
     }
 }
 
-/// 根据自身的枚举类型，生成对应算子，传入计算主体，返回其结果
+/// for Add
 impl Generate for AddExp {
     type Out = (SymbolType, String);
 

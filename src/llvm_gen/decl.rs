@@ -182,7 +182,7 @@ fn decl_arr(
         let str_vec = vec!("", memset_funcname.as_str(), res.as_str(), "0", &memset_size_string, "false");
         // type向量是对应上面数据向量的类型
         let ty_void = SymbolType::new(SymbolWidth::Void, false);
-        let ty_i1 = SymbolType::new(SymbolWidth::I1, false);
+        let ty_i1 = SymbolType::new(SymbolWidth::Bool, false);
         let ty_i64 = SymbolType::new(SymbolWidth::I64, false);
         let ty_ptr_i8 = SymbolType::new(SymbolWidth::Arr{tar: Box::new(ty_i8.clone()), dims: vec!(-1)}, false);
         let ty_vec = vec!(&ty_void, &ty_ptr_i8, &ty_i8, &ty_i64, &ty_i1);

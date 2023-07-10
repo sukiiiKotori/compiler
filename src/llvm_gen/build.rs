@@ -129,12 +129,12 @@ impl LLVMProgram {
         curr_bb_mut.nor_ins.push(instr);
     }
 
-    pub fn insert_alloc(&mut self, alloc: Instruction, block_label: &str) {
+    pub fn insert_alloc(&mut self, alloc: Instruction, bb_label: &str) {
         let curr_func = self.curr_func().expect(&format!("Push instr {:?} in void func", alloc));
         curr_func.local_vars.push(
             LocalVar { 
                 ins: alloc, 
-                label: block_label.to_string() 
+                label: bb_label.to_string() 
             }
         );
     }
