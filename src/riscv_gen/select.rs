@@ -2,8 +2,8 @@ use crate::utils::check::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
-use super::build::{NORMAL_WIDTH, PTR_WIDTH};
-use super::reg::{FUNC_ARG, FLOAT_FUNC_ARG};
+use crate::riscv_gen::build::{NORMAL_WIDTH, PTR_WIDTH};
+use crate::riscv_gen::reg::{FUNC_ARG, FLOAT_FUNC_ARG};
 
 pub const FLOAT_PREFIX: &str = "f";
 
