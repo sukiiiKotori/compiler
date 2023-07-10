@@ -41,9 +41,9 @@ fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: 
         } else if op == ">=" {
             res = num1 >= num2; 
         } else if op == "&&" {
-            res = num1 as bool && num2 as bool;
+            res = (num1 != zero_t) && (num2 != zero_t);
         } else if op == "||" {
-            res = num1 != zero_t || num2 != zero_t;
+            res = (num1 != zero_t) || (num2 != zero_t);
         } else {
             res = false;
         }
