@@ -79,11 +79,11 @@ impl FuncDef {
                             if dims[0] == -1 {
                                 stack.push_normal(result.as_str(), 8);
                             } else {
-                                let len = tar.width_num() * dims.iter().map(|d| *d as usize).product::<usize>();
+                                let len = tar.get_width() * dims.iter().map(|d| *d as usize).product::<usize>();
                                 stack.push_normal(result.as_str(), len as isize);
                             }
                         } else {
-                            stack.push_normal(result.as_str(), ty.width_num() as isize);
+                            stack.push_normal(result.as_str(), ty.get_width() as isize);
                         }
                     },
                     _ => panic!("Found {:?} in allocs", a),
@@ -95,13 +95,13 @@ impl FuncDef {
         for fparam in self.fparams.iter() {
             if fparam.param_type.width == SymbolWidth::Float {
                 if float_cnt >= FUNC_ARG.len() {
-                    stack.push_param(fparam.param_name.as_str(), fparam.param_type.width_num() as isize);
+                    stack.push_param(fparam.param_name.as_str(), fparam.param_type.get_width() as isize);
                 }
                 curr_func.params.insert(String::from(&fparam.param_name), float_cnt);
                 float_cnt += 1;
             } else {
                 if int_cnt >= FUNC_ARG.len() {
-                    stack.push_param(fparam.param_name.as_str(), fparam.param_type.width_num() as isize);
+                    stack.push_param(fparam.param_name.as_str(), fparam.param_type.get_width() as isize);
                 }
                 curr_func.params.insert(String::from(&fparam.param_name), int_cnt);
                 int_cnt += 1;
