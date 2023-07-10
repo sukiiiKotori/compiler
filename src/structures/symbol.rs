@@ -89,7 +89,7 @@ impl SymbolWidth {
     // 获取类型宽度实现
     pub fn get_width(&self) -> usize {
         match self {
-            SymbolWidth::I32 | SymbolWidth::Float => 4,
+            SymbolWidth::I1 | SymbolWidth::I8 | SymbolWidth::I32 | SymbolWidth::I64 | SymbolWidth::Float => 4,
             SymbolWidth::Arr {tar:_, dims:_} => 8,
             _ => panic!("Don't support!"),
         }

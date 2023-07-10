@@ -75,7 +75,7 @@ pub struct AsmBlock {
     // 标签
     pub instrs: Vec<AsmInstr>,
     // 指令列表
-    pub sux: Vec<String>,
+    pub successor: Vec<String>,
     // 后继基本块标签列表
     pub instr_cnt: usize,
     // 此基本块之前所有基本块的指令数之和
@@ -229,9 +229,28 @@ pub struct MemInstr {
     pub offset: String,    // 偏移量
 }
 
+impl RiscV {
+    pub fn deterministic_stack(&mut self) {
+        for func in self.text.funcs.iter_mut() {
+            func.deterministic_stack();
+        }
+    }
+
+    pub fn stack_alloc_free(&mut self) {
+        for func in self.text.funcs.iter_mut() {
+            func.stack_alloc_free();
+        }
+    }
+
+    pub fn map_addr(&mut self) {
+        for func in self.text.funcs.iter_mut() {
+            func.map_addr();
+        }
+    }
+}
+
 impl AsmFunc {
     /// 将包含指令的块转换为指令引用的向量。
-    #[allow(unused)]
     pub fn make_instr_vec(blocks: &Vec<AsmBlock>) -> Vec<&AsmInstr> {
         blocks
             .iter()
@@ -241,7 +260,6 @@ impl AsmFunc {
     }
 
     /// 将包含指令的块转换为可变指令引用的向量。
-    #[allow(unused)]
     pub fn make_instr_vec_mut(blocks: &mut Vec<AsmBlock>) -> Vec<&mut AsmInstr> {
         blocks
             .iter_mut()
