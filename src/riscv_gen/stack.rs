@@ -1,11 +1,7 @@
 use std::collections::{HashMap, HashSet};
-use crate::utils::check::is_decimal;
+use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
-use crate::riscv_gen::reg::{
-    PRESERVED,
-    TEMPORARY,
-    FUNC_ARG,
-};
+use crate::riscv_gen::reg::*;
 
 #[derive(Debug)]
 pub struct StackSlot {
@@ -63,32 +59,12 @@ impl StackSlot {
     }
 }
 
-impl RiscV {
-    pub fn deterministic_stack(&mut self) {
-        for func in self.text.funcs.iter_mut() {
-            func.deterministic_stack();
-        }
-    }
-
-    pub fn stack_alloc_free(&mut self) {
-        for func in self.text.funcs.iter_mut() {
-            func.stack_alloc_free();
-        }
-    }
-
-    pub fn map_addr(&mut self) {
-        for func in self.text.funcs.iter_mut() {
-            func.map_addr();
-        }
-    }
-}
-
 impl AsmFunc {
-    fn deterministic_stack(&mut self) {
+    pub fn deterministic_stack(&mut self) {
         self.stack.deterministic();
     }
 
-    fn stack_alloc_free(&mut self) {
+    pub fn stack_alloc_free(&mut self) {
         let free_size = self.stack.frame_size.to_string();
         let alloc_size = format!("-{}", free_size);
 
@@ -121,8 +97,8 @@ impl AsmFunc {
         } // for block in
     } // fn
     
-    fn map_addr(&mut self) {
-        use crate::utils::check::inside_imm_range;
+    pub fn map_addr(&mut self) {
+        
 
         for block in self.blocks.iter_mut() {
             let len = block.instrs.len();
