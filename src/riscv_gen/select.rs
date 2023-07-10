@@ -44,14 +44,26 @@ impl GlobalVar {
     pub fn select_asm(&self, asm: &mut RiscV) {
         if let SymbolType{width: SymbolWidth::Arr{tar, dims: _}, is_const: _} = &self.var_type {
             if tar.is_const {
-                asm.push_global_const(self.var_name.as_str(), &self.var_type, self.init_vals.iter().map(|v| v.as_str()).collect());
+                asm.push_global_const(
+                    self.var_name.as_str(),
+                    &self.var_type,
+                    self.init_num.iter().map(|v| v.init_val.as_str()).collect()
+                );
             } else {
-                asm.push_global_var(self.var_name.as_str(), &self.var_type, self.init_vals.iter().map(|v| v.as_str()).collect());
+                asm.push_global_var(
+                    self.var_name.as_str(),
+                    &self.var_type,
+                    self.init_num.iter().map(|v| v.init_val.as_str()).collect()
+                );
             }
         } else {
             match self.var_type {
                 SymbolType{width: SymbolWidth::I32, is_const: _} | SymbolType{width: SymbolWidth::Float, is_const: _} => {
-                    asm.push_global_var(self.var_name.as_str(), &self.var_type, self.init_vals.iter().map(|v| v.as_str()).collect());
+                    asm.push_global_var(
+                        self.var_name.as_str(),
+                        &self.var_type,
+                        self.init_num.iter().map(|v| v.init_val.as_str()).collect()
+                    );
                 },
                 _ => {
                     eprintln!("{:#?}", self);
