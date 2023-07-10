@@ -9,7 +9,7 @@ use crate::get_settings;
 use crate::structures::symbol::*;
 use crate::structures::llvm_struct::*;
 use crate::llvm_gen::scopes::*;
-use crate::llvm_gen::generate::*;
+use crate::llvm_gen::sysy_gen::*;
 use crate::llvm_gen::symbol::*;
 
 // 获取某元素在多维数组中，实际偏移位置量

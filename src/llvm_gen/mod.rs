@@ -1,14 +1,14 @@
 pub mod scopes;
 pub mod symbol;
 pub mod build;
-pub mod generate;
+pub mod sysy_gen;
 pub mod decl;
 pub mod arithmetic_gen;
 pub mod logic_gen;
 pub mod dump;
 
 use std::error::Error;
-use generate::*;
+use sysy_gen::*;
 use scopes::*;
 use crate::structures::llvm_struct::*;
 use crate::ast::*;
