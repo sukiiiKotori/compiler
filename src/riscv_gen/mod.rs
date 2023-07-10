@@ -5,3 +5,6 @@ pub mod select;
 pub mod rewrite;
 pub mod fetch;
 pub mod liveness;
+pub mod linear;
+
+use linear::*;
