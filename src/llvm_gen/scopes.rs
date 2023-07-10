@@ -242,9 +242,13 @@ impl Labels {
     pub fn pop_global(&mut self, ident: &str) -> String {
         let id = &ident[..std::cmp::min(ident.len(), 15)];
         let val = self.global.entry(String::from(id)).or_insert(0);
-        let res = format!("@{}_{}", id, *val);
         *val += 1;
-        res
+        if *val == 1 {
+            format!("@{}", id)
+        }
+        else {
+            format!("@{}_{}", id, *val - 1)
+        }
     }
 
     pub fn pop_block(&mut self, ident: &str) -> String {
