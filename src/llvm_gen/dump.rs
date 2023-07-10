@@ -62,7 +62,7 @@ impl GlobalVar {
             }
         } else {
             match &ty.width {
-                SymbolWidth::Arr{tar, dims} => write!(output, "{} ", dims_name(tar, &dims[pos.len()..])).unwrap(),
+                SymbolWidth::Arr{tar, dims} => write!(output, "{} ", tar.get_name(&dims[pos.len()..])).unwrap(),
                 _ => panic!("Should not appear"),
             }
             if vals.is_empty() || GlobalVar::all_is_zero(vals, start, end) {

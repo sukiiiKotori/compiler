@@ -54,6 +54,26 @@ impl SymbolType {
     pub fn get_width(&self) -> usize {
         self.width.get_width()
     }
+
+    // 从SymbolType导出LLVM格式的变量声明
+    pub fn get_name(&self, dims: &[i32]) -> String {
+        let tar_name = self.get_type();
+        let mut res = String::new();
+        for dim in dims.iter() {
+            if *dim >= 0 {
+                res += format!("[{} x ", dim).as_str();
+            }
+        }
+        res += &tar_name;
+        for dim in dims.iter().rev() {
+            if *dim >= 0 {
+                res += "]";
+            } else {
+                res += "*";
+            }
+        }
+        res
+    }
 }
 
 impl SymbolWidth {
