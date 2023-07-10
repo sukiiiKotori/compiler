@@ -1,5 +1,6 @@
 pub mod stack;
 pub mod reg;
+mod live_interval;
 pub mod build;
 pub mod select;
 pub mod rewrite;
