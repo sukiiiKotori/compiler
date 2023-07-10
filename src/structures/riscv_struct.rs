@@ -75,7 +75,7 @@ pub struct AsmBlock {
     // 标签
     pub instrs: Vec<AsmInstr>,
     // 指令列表
-    pub sux: Vec<String>,
+    pub successor: Vec<String>,
     // 后继基本块标签列表
     pub instr_cnt: usize,
     // 此基本块之前所有基本块的指令数之和
