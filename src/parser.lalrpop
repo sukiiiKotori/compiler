@@ -40,9 +40,9 @@ FuncDef: FuncDef = {
 
 // 类型
 Type: Type = {
-    "void" => Type{ty: SymType::new(Width::Void, false)},  // void 类型
-    "int" => Type{ty: SymType::new(Width::I32, false)},  // int 类型
-    "float" => Type{ty: SymType::new(Width::Float, false)},  // float 类型
+    "void" => Type{ty: SymbolType::new(SymbolWidth::Void, false)},  // void 类型
+    "int" => Type{ty: SymbolType::new(SymbolWidth::I32, false)},  // int 类型
+    "float" => Type{ty: SymbolType::new(SymbolWidth::Float, false)},  // float 类型
 }
 
 // 函数参数列表
@@ -241,8 +241,7 @@ RelExp: RelExp = {
 // 相等表达式
 EqExp: EqExp = {
     <rel_exp: RelExp> => EqExp::RelExp(<>),  // 关系表达式
-    <exp1: EqExp> "==" <exp2: RelExp> => EqExp::EQ(EqExpBody{exp1: Box::new(exp1), expcontinued:
-    2}),
+    <exp1: EqExp> "==" <exp2: RelExp> => EqExp::EQ(EqExpBody{exp1: Box::new(exp1), exp2: exp2}),
     <exp1: EqExp> "!=" <exp2: RelExp> => EqExp::NE(EqExpBody{exp1: Box::new(exp1), exp2: exp2}),  // 不等于运算
 };
 
