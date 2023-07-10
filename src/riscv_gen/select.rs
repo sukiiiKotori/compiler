@@ -219,8 +219,8 @@ impl Instruction {
 
     pub fn select_asm(&self, asm: &mut RiscV, select_cnt: &mut usize) {
         match self {
-            Instruction::Add(BinaryOp{result, ty, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), ty.width.clone());
+            Instruction::Add(BinaryOp{res, op_type, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), op_type.width.clone());
                 if is_immediate(op1) || is_immediate(op2) {
                     let op: &str;
                     let imm: &str;
@@ -232,18 +232,18 @@ impl Instruction {
                         op = op1.as_str();
                     }
                     if inside_imm_range(imm) {
-                        asm.gen_instr(AsmInstrType::Addi, vec!(result.as_str(), op, imm), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Addi, vec!(res.as_str(), op, imm), vec!(), vec!());
                     } else {
                         let li_res = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Li, vec!(li_res.as_str(), imm), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Add, vec!(result.as_str(), op, li_res.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Add, vec!(res.as_str(), op, li_res.as_str()), vec!(), vec!());
                     }
                 } else {
-                    asm.gen_instr(AsmInstrType::Add, vec!(result.as_str(), op1, op2), vec!(), vec!());
+                    asm.gen_instr(AsmInstrType::Add, vec!(res.as_str(), op1, op2), vec!(), vec!());
                 }
             },
-            Instruction::Sub(BinaryOp{result, ty, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), ty.width.clone());
+            Instruction::Sub(BinaryOp{res, op_type, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), op_type.width.clone());
                 if is_immediate(op2) {
                     let imm: String;
                     if &op2[0..1] == "-" {
@@ -253,11 +253,11 @@ impl Instruction {
                     }
 
                     if inside_imm_range(imm.as_str()) {
-                        asm.gen_instr(AsmInstrType::Addi, vec!(result.as_str(), op1.as_str(), imm.as_str()), vec!(), vec!())
+                        asm.gen_instr(AsmInstrType::Addi, vec!(res.as_str(), op1.as_str(), imm.as_str()), vec!(), vec!())
                     } else {
                         let li_res = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Li, vec!(li_res.as_str(), imm.as_str()), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Add, vec!(result.as_str(), op1.as_str(), li_res.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Add, vec!(res.as_str(), op1.as_str(), li_res.as_str()), vec!(), vec!());
                     }
                 } else {
                     let op: &str;
@@ -270,11 +270,11 @@ impl Instruction {
                     } else {
                         op = op1.as_str();
                     }
-                    asm.gen_instr(AsmInstrType::Sub, vec!(result.as_str(), op, op2), vec!(), vec!())
+                    asm.gen_instr(AsmInstrType::Sub, vec!(res.as_str(), op, op2), vec!(), vec!())
                 }
             },
-            Instruction::Mul(BinaryOp{result, ty, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), ty.width.clone());
+            Instruction::Mul(BinaryOp{res, op_type, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), op_type.width.clone());
                 if is_immediate(op1) || is_immediate(op2) {
                     let op: &str;
                     let li_dst: String;
@@ -287,47 +287,47 @@ impl Instruction {
                         asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), vec!(), vec!());
                         op = op1.as_str();
                     }
-                    asm.gen_instr(AsmInstrType::Mul, vec!(result.as_str(), op, li_dst.as_str()), vec!(NORMAL_WIDTH), vec!());
+                    asm.gen_instr(AsmInstrType::Mul, vec!(res.as_str(), op, li_dst.as_str()), vec!(NORMAL_WIDTH), vec!());
                 } else {
-                    asm.gen_instr(AsmInstrType::Mul, vec!(result.as_str(), op1.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!())
+                    asm.gen_instr(AsmInstrType::Mul, vec!(res.as_str(), op1.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!())
                 }
             },
-            Instruction::Sdiv(BinaryOp{result, ty, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), ty.width.clone());
+            Instruction::Sdiv(BinaryOp{res, op_type, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), op_type.width.clone());
                 if is_immediate(op1) || is_immediate(op2) {
                     let li_dst: String;
                     if is_immediate(op1) {
                         li_dst = pop_temp_label(select_cnt, asm, imm_width(op1.as_str()));
                         asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op1.as_str()), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Div, vec!(result.as_str(), li_dst.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!());
+                        asm.gen_instr(AsmInstrType::Div, vec!(res.as_str(), li_dst.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!());
                     } else {
                         li_dst = pop_temp_label(select_cnt, asm, imm_width(op2.as_str()));
                         asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Div, vec!(result.as_str(), op1.as_str(), li_dst.as_str()), vec!(NORMAL_WIDTH), vec!());
+                        asm.gen_instr(AsmInstrType::Div, vec!(res.as_str(), op1.as_str(), li_dst.as_str()), vec!(NORMAL_WIDTH), vec!());
                     }
                 } else {
-                    asm.gen_instr(AsmInstrType::Div, vec!(result.as_str(), op1.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!())
+                    asm.gen_instr(AsmInstrType::Div, vec!(res.as_str(), op1.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!())
                 }
             },
-            Instruction::Srem(BinaryOp{result, ty, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), ty.width.clone());
+            Instruction::Srem(BinaryOp{res, op_type, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), op_type.width.clone());
                 if is_immediate(op1) || is_immediate(op2) {
                     let li_dst: String;
                     if is_immediate(op1) {
                         li_dst = pop_temp_label(select_cnt, asm, imm_width(op1.as_str()));
                         asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op1.as_str()), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Rem, vec!(result.as_str(), li_dst.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!());
+                        asm.gen_instr(AsmInstrType::Rem, vec!(res.as_str(), li_dst.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!());
                     } else {
                         li_dst = pop_temp_label(select_cnt, asm, imm_width(op2.as_str()));
                         asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Rem, vec!(result.as_str(), op1.as_str(), li_dst.as_str()), vec!(NORMAL_WIDTH), vec!());
+                        asm.gen_instr(AsmInstrType::Rem, vec!(res.as_str(), op1.as_str(), li_dst.as_str()), vec!(NORMAL_WIDTH), vec!());
                     }
                 } else {
-                    asm.gen_instr(AsmInstrType::Rem, vec!(result.as_str(), op1.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!());
+                    asm.gen_instr(AsmInstrType::Rem, vec!(res.as_str(), op1.as_str(), op2.as_str()), vec!(NORMAL_WIDTH), vec!());
                 }
             },
-            Instruction::Cmp(cond, BinaryOp{result, ty: _, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::I32);
+            Instruction::Cmp(cond, BinaryOp{res, op_type: _, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::I32);
                 let op1_is_imm = is_immediate(op1);
                 let op2_is_imm = is_immediate(op2);
                 let exist_imm = op1_is_imm || op2_is_imm;
@@ -337,9 +337,9 @@ impl Instruction {
                             if op2_is_imm {
                                 let li_dst = pop_temp_label(select_cnt, asm, imm_width(op2.as_str()));
                                 asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), vec!(), vec!());
-                                asm.gen_instr(AsmInstrType::Seqz, vec!(result.as_str(), li_dst.as_str()), vec!(), vec!());
+                                asm.gen_instr(AsmInstrType::Seqz, vec!(res.as_str(), li_dst.as_str()), vec!(), vec!());
                             } else {
-                                asm.gen_instr(AsmInstrType::Seqz, vec!(result.as_str(), op2.as_str()), vec!(), vec!());
+                                asm.gen_instr(AsmInstrType::Seqz, vec!(res.as_str(), op2.as_str()), vec!(), vec!());
                             }
                             return;
                         }
@@ -375,10 +375,10 @@ impl Instruction {
                                     asm.gen_instr(AsmInstrType::Add, vec!(sub_res.as_str(), op1.as_str(), li_res.as_str()), vec!(), vec!());
                                 }
                             }
-                            asm.gen_instr(AsmInstrType::Seqz, vec!(result.as_str(), sub_res.as_str()), vec!(), vec!());
+                            asm.gen_instr(AsmInstrType::Seqz, vec!(res.as_str(), sub_res.as_str()), vec!(), vec!());
                         } else {
                             asm.gen_instr(AsmInstrType::Sub, vec!(sub_res.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
-                            asm.gen_instr(AsmInstrType::Seqz, vec!(result.as_str(), sub_res.as_str()), vec!(), vec!());
+                            asm.gen_instr(AsmInstrType::Seqz, vec!(res.as_str(), sub_res.as_str()), vec!(), vec!());
                         }
                     },
                     "ne" => {
@@ -386,9 +386,9 @@ impl Instruction {
                             if op2_is_imm {
                                 let li_dst = pop_temp_label(select_cnt, asm, imm_width(op2.as_str()));
                                 asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), vec!(), vec!());
-                                asm.gen_instr(AsmInstrType::Snez, vec!(result.as_str(), li_dst.as_str()), vec!(), vec!());
+                                asm.gen_instr(AsmInstrType::Snez, vec!(res.as_str(), li_dst.as_str()), vec!(), vec!());
                             } else {
-                                asm.gen_instr(AsmInstrType::Snez, vec!(result.as_str(), op2.as_str()), vec!(), vec!());
+                                asm.gen_instr(AsmInstrType::Snez, vec!(res.as_str(), op2.as_str()), vec!(), vec!());
                             }
                             return;
                         }
@@ -424,10 +424,10 @@ impl Instruction {
                                     asm.gen_instr(AsmInstrType::Add, vec!(sub_res.as_str(), op1.as_str(), li_res.as_str()), vec!(), vec!());
                                 }
                             }
-                            asm.gen_instr(AsmInstrType::Snez, vec!(result.as_str(), sub_res.as_str()), vec!(), vec!());
+                            asm.gen_instr(AsmInstrType::Snez, vec!(res.as_str(), sub_res.as_str()), vec!(), vec!());
                         } else {
                             asm.gen_instr(AsmInstrType::Sub, vec!(sub_res.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
-                            asm.gen_instr(AsmInstrType::Snez, vec!(result.as_str(), sub_res.as_str()), vec!(), vec!());
+                            asm.gen_instr(AsmInstrType::Snez, vec!(res.as_str(), sub_res.as_str()), vec!(), vec!());
                         }
                     },
                     "slt" => {
@@ -435,37 +435,37 @@ impl Instruction {
                             if op1_is_imm {
                                 let li_dst = pop_temp_label(select_cnt, asm, imm_width(op1.as_str()));
                                 asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op1.as_str()), vec!(), vec!());
-                                asm.gen_instr(AsmInstrType::Slt, vec!(result.as_str(), li_dst.as_str(), op1.as_str()), vec!(), vec!());
+                                asm.gen_instr(AsmInstrType::Slt, vec!(res.as_str(), li_dst.as_str(), op1.as_str()), vec!(), vec!());
                             } else {
                                 if inside_imm_range(op2.as_str()) {
-                                    asm.gen_instr(AsmInstrType::Slti, vec!(result.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
+                                    asm.gen_instr(AsmInstrType::Slti, vec!(res.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
                                 } else {
                                     let li_res = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
                                     asm.gen_instr(AsmInstrType::Li, vec!(li_res.as_str(), op2.as_str()), vec!(), vec!());
-                                    asm.gen_instr(AsmInstrType::Slt, vec!(result.as_str(), op1.as_str(), li_res.as_str()), vec!(), vec!());
+                                    asm.gen_instr(AsmInstrType::Slt, vec!(res.as_str(), op1.as_str(), li_res.as_str()), vec!(), vec!());
                                 }
                             }
                         } else {
-                            asm.gen_instr(AsmInstrType::Slt, vec!(result.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
+                            asm.gen_instr(AsmInstrType::Slt, vec!(res.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
                         }
                     }, 
                     "sgt" => {
                         if exist_imm {
                             if op1_is_imm {
                                 if inside_imm_range(op1.as_str()) {
-                                    asm.gen_instr(AsmInstrType::Slti, vec!(result.as_str(), op2.as_str(), op1.as_str()), vec!(), vec!());
+                                    asm.gen_instr(AsmInstrType::Slti, vec!(res.as_str(), op2.as_str(), op1.as_str()), vec!(), vec!());
                                 } else {
                                     let li_res = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
                                     asm.gen_instr(AsmInstrType::Li, vec!(li_res.as_str(), op1.as_str()), vec!(), vec!());
-                                    asm.gen_instr(AsmInstrType::Slt, vec!(result.as_str(), op2.as_str(), li_res.as_str()), vec!(), vec!());
+                                    asm.gen_instr(AsmInstrType::Slt, vec!(res.as_str(), op2.as_str(), li_res.as_str()), vec!(), vec!());
                                 }
                             } else {
                                 let li_dst = pop_temp_label(select_cnt, asm, imm_width(op2.as_str()));
                                 asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), vec!(), vec!());
-                                asm.gen_instr(AsmInstrType::Sgt, vec!(result.as_str(), op1.as_str(), li_dst.as_str()), vec!(), vec!());
+                                asm.gen_instr(AsmInstrType::Sgt, vec!(res.as_str(), op1.as_str(), li_dst.as_str()), vec!(), vec!());
                             }
                         } else {
-                            asm.gen_instr(AsmInstrType::Sgt, vec!(result.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
+                            asm.gen_instr(AsmInstrType::Sgt, vec!(res.as_str(), op1.as_str(), op2.as_str()), vec!(), vec!());
                         }
                     },
                     "sle" => {
@@ -491,7 +491,7 @@ impl Instruction {
                         }
                         let gt_res = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Sgt, vec!(gt_res.as_str(), op1_final, op2_final), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Xori, vec!(result.as_str(), gt_res.as_str(), "1"), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Xori, vec!(res.as_str(), gt_res.as_str(), "1"), vec!(), vec!());
                     },
                     "sge" => {
                         let op1_final: &str;
@@ -516,60 +516,60 @@ impl Instruction {
                         }
                         let lt_res = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Slt, vec!(lt_res.as_str(), op1_final, op2_final), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Xori, vec!(result.as_str(), lt_res.as_str(), "1"), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Xori, vec!(res.as_str(), lt_res.as_str(), "1"), vec!(), vec!());
                     },
                     _ => panic!("Do not support other Icmp condition."),
                 }
             },
-            Instruction::Fadd(BinaryOp{result, ty: _, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::Float);
+            Instruction::Fadd(BinaryOp{res, op_type: _, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::Float);
                 let op1_final = Self::check_float_op(asm, select_cnt, op1);
                 let op2_final = Self::check_float_op(asm, select_cnt, op2);
-                asm.gen_instr(AsmInstrType::Fadd, vec!(result.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
+                asm.gen_instr(AsmInstrType::Fadd, vec!(res.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
             },
-            Instruction::Fsub(BinaryOp{result, ty: _, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::Float);
+            Instruction::Fsub(BinaryOp{res, op_type: _, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::Float);
                 let op1_final = Self::check_float_op(asm, select_cnt, op1);
                 let op2_final = Self::check_float_op(asm, select_cnt, op2);
-                asm.gen_instr(AsmInstrType::Fsub, vec!(result.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
+                asm.gen_instr(AsmInstrType::Fsub, vec!(res.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
             },
-            Instruction::Fmul(BinaryOp{result, ty: _, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::Float);
+            Instruction::Fmul(BinaryOp{res, op_type: _, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::Float);
                 let op1_final = Self::check_float_op(asm, select_cnt, op1);
                 let op2_final = Self::check_float_op(asm, select_cnt, op2);
-                asm.gen_instr(AsmInstrType::Fmul, vec!(result.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
+                asm.gen_instr(AsmInstrType::Fmul, vec!(res.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
             },
-            Instruction::Fdiv(BinaryOp{result, ty: _, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::Float);
+            Instruction::Fdiv(BinaryOp{res, op_type: _, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::Float);
                 let op1_final = Self::check_float_op(asm, select_cnt, op1);
                 let op2_final = Self::check_float_op(asm, select_cnt, op2);
-                asm.gen_instr(AsmInstrType::Fdiv, vec!(result.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
+                asm.gen_instr(AsmInstrType::Fdiv, vec!(res.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
             },
-            Instruction::Fcmp(cond, BinaryOp{result, ty: _, op1, op2}) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::I32);
+            Instruction::Fcmp(cond, BinaryOp{res, op_type: _, op1, op2}) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::I32);
                 let op1_final = Self::check_float_op(asm, select_cnt, op1);
                 let op2_final = Self::check_float_op(asm, select_cnt, op2);
 
                 match cond.as_str() {
                     "oeq" => {
-                        asm.gen_instr(AsmInstrType::Feq, vec!(result.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Feq, vec!(res.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
                     },
                     "one" => {
                         let is_eq = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Feq, vec!(is_eq.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
-                        asm.gen_instr(AsmInstrType::Xori, vec!(result.as_str(), is_eq.as_str(), "1"), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Xori, vec!(res.as_str(), is_eq.as_str(), "1"), vec!(), vec!());
                     },
                     "olt" => {
-                        asm.gen_instr(AsmInstrType::Flt, vec!(result.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Flt, vec!(res.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
                     },
                     "ogt" => {
-                        asm.gen_instr(AsmInstrType::Fle, vec!(result.as_str(), op2_final.as_str(), op1_final.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Fle, vec!(res.as_str(), op2_final.as_str(), op1_final.as_str()), vec!(), vec!());
                     },
                     "ole" => {
-                        asm.gen_instr(AsmInstrType::Fle, vec!(result.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Fle, vec!(res.as_str(), op1_final.as_str(), op2_final.as_str()), vec!(), vec!());
                     },
                     "oge" => {
-                        asm.gen_instr(AsmInstrType::Flt, vec!(result.as_str(), op2_final.as_str(), op1_final.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Flt, vec!(res.as_str(), op2_final.as_str(), op1_final.as_str()), vec!(), vec!());
                     },
                     _ => panic!("Do not support other Fcmp condition."),
                 }
@@ -637,7 +637,7 @@ impl Instruction {
                     panic!("declaration of {} can not be found", ptr);
                 }
             },
-            Instruction::Load{result, ty, ptr, len: _} => {
+            Instruction::Load{res, ty, ptr, len: _} => {
                 let mut res_width = ty.width.clone();
                 let mut prefix = "";
                 if res_width == SymbolWidth::Float {
@@ -651,7 +651,7 @@ impl Instruction {
                     }
                 }
                 asm.insert_label_type(ptr.as_str(), SymbolWidth::I64);
-                asm.insert_label_type(result.as_str(), res_width);
+                asm.insert_label_type(res.as_str(), res_width);
 
                 // ptr的最终位置在dump时确定
                 let load_res = pop_temp_label(select_cnt, asm, ty.width.clone());
@@ -669,12 +669,12 @@ impl Instruction {
                     panic!("declaration of {} can not be found", ptr);
                 }
                 if load_width < 8 && prefix == "" {
-                    asm.gen_instr(AsmInstrType::Sextw, vec!(result.as_str(), load_res.as_str()), vec!(), vec!());
+                    asm.gen_instr(AsmInstrType::Sextw, vec!(res.as_str(), load_res.as_str()), vec!(), vec!());
                 } else {
                     if prefix == FLOAT_PREFIX {
-                        asm.gen_instr(AsmInstrType::Fmv, vec!(result.as_str(), load_res.as_str()), vec!(), vec!(SymbolWidth::Float, SymbolWidth::Float));
+                        asm.gen_instr(AsmInstrType::Fmv, vec!(res.as_str(), load_res.as_str()), vec!(), vec!(SymbolWidth::Float, SymbolWidth::Float));
                     } else {
-                        asm.gen_instr(AsmInstrType::Mv, vec!(result.as_str(), load_res.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Mv, vec!(res.as_str(), load_res.as_str()), vec!(), vec!());
                     }
                 }
             },
@@ -685,25 +685,25 @@ impl Instruction {
                     asm.gen_instr(AsmInstrType::Ret, vec!(), vec!(), vec!());
                 }
             },
-            Instruction::ZeroExt(ConverOp{result, ty: _, value, ty2: _}) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::I32);
-                asm.gen_instr(AsmInstrType::Mv, vec!(result.as_str(), value.as_str()), vec!(), vec!());
+            Instruction::ZeroExt(CastOp{res, type_1: _, val, type_2: _}) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::I32);
+                asm.gen_instr(AsmInstrType::Mv, vec!(res.as_str(), val.as_str()), vec!(), vec!());
             },
-            Instruction::I32ToFloat(ConverOp{result, ty, value, ty2}) | Instruction::Fptosi(ConverOp{result, ty, value, ty2})=> {
-                asm.insert_label_type(result.as_str(), ty2.width.clone());
-                asm.gen_instr(AsmInstrType::Fcvt, vec!(result.as_str(), value.as_str()), vec!(), vec!(ty2.width.clone(), ty.width.clone()));
+            Instruction::I32ToFloat(CastOp{res, type_1, val, type_2}) | Instruction::FloatToI32(CastOp{res, type_1, val, type_2})=> {
+                asm.insert_label_type(res.as_str(), type_2.width.clone());
+                asm.gen_instr(AsmInstrType::Fcvt, vec!(res.as_str(), val.as_str()), vec!(), vec!(type_2.width.clone(), type_1.width.clone()));
             },
-            Instruction::BitCast(result, _, ptr, _) => {
-                asm.insert_label_type(result.as_str(), SymbolWidth::I64);
+            Instruction::BitCast(res, _, ptr, _) => {
+                asm.insert_label_type(res.as_str(), SymbolWidth::I64);
                 let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr.as_str());
                 if inside_stack { // 在栈内
                     let ptr_pos = format!("#{}", ptr);
-                    asm.gen_instr(AsmInstrType::Addi, vec!(result.as_str(), "sp", ptr_pos.as_str()), vec!(), vec!());
+                    asm.gen_instr(AsmInstrType::Addi, vec!(res.as_str(), "sp", ptr_pos.as_str()), vec!(), vec!());
                 } else {
                     if asm.rodata.labels.contains(ptr.as_str()) || asm.data.labels.contains(ptr.as_str()) {
-                        asm.gen_instr(AsmInstrType::La, vec!(result.as_str(), ptr.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::La, vec!(res.as_str(), ptr.as_str()), vec!(), vec!());
                     } else {
-                        asm.gen_instr(AsmInstrType::Mv, vec!(result.as_str(), ptr.as_str()), vec!(), vec!());
+                        asm.gen_instr(AsmInstrType::Mv, vec!(res.as_str(), ptr.as_str()), vec!(), vec!());
                     }
                 }
             },
