@@ -3,7 +3,7 @@ use crate::get_settings;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
-use crate::llvm_gen::arithmetic::*;
+use crate::llvm_gen::arithmetic_gen::*;
 use crate::llvm_gen::scopes::*;
 use crate::llvm_gen::generate::*;
 use crate::llvm_gen::symbol::*;

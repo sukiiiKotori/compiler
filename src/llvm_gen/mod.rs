@@ -3,8 +3,8 @@ pub mod symbol;
 pub mod build;
 pub mod generate;
 pub mod decl;
-pub mod arithmetic;
-pub mod bool;
+pub mod arithmetic_gen;
+pub mod logic_gen;
 pub mod dump;
 
 use std::error::Error;
