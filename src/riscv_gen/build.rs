@@ -48,10 +48,10 @@ impl RiscV {
         self.push_instr(instr);
     }
     
-    pub fn push_sux(&mut self, succ: &str) {
+    pub fn push_successor(&mut self, succ: &str) {
         let curr_func = self.text.curr_func();
         let curr_block = curr_func.curr_block();
-        curr_block.push_sux(succ);
+        curr_block.push_successor(succ);
     }
 
     pub fn push_global_var(&mut self, label: &str, ty: &SymbolType, init_vals: Vec<&str>) {
@@ -233,7 +233,7 @@ impl AsmBlock {
         AsmBlock {
             label: String::from(label),
             instrs: Vec::new(),
-            sux: Vec::new(),
+            successor: Vec::new(),
             instr_cnt: instr_cnt,
             weight: 10_usize.pow(depth as u32),
             depth: depth,
@@ -244,8 +244,8 @@ impl AsmBlock {
         self.instrs.push(instr)
     }
 
-    fn push_sux(&mut self, succ: &str) {
-        self.sux.push(String::from(succ));
+    fn push_successor(&mut self, succ: &str) {
+        self.successor.push(String::from(succ));
     }
 
     pub fn load_float_param<'a>(

@@ -162,13 +162,13 @@ impl Block {
                             if next_block == label1 {
                                 asm.gen_instr(AsmInstrType::Branch, vec!("eq", cond_val.as_str(), "zero", final_label2.as_str()), vec!(), vec!());
                                 // 始终将下一个block设为第一个后续block
-                                asm.push_sux(final_label1.as_str());
-                                asm.push_sux(final_label2.as_str());
+                                asm.push_successor(final_label1.as_str());
+                                asm.push_successor(final_label2.as_str());
                             } else {
                                 asm.gen_instr(AsmInstrType::Branch, vec!("ne", cond_val.as_str(), "zero", final_label1.as_str()), vec!(), vec!());
                                 // 始终将下一个block设为第一个后续block
-                                asm.push_sux(final_label2.as_str());
-                                asm.push_sux(final_label1.as_str());
+                                asm.push_successor(final_label2.as_str());
+                                asm.push_successor(final_label1.as_str());
                             } // 两个目的地必然不同，若相同，则不会设置为有条件跳转
                         } else { // 有条件跳转一般会有一个目的地为下一个block
                             todo!();
@@ -182,7 +182,7 @@ impl Block {
                         if next_block != label1 { // 下一块的标号不是当前跳转目标，进行跳转
                             asm.gen_instr(AsmInstrType::Jump, vec!(final_label1.as_str()), vec!(), vec!())
                         }
-                        asm.push_sux(final_label1.as_str());
+                        asm.push_successor(final_label1.as_str());
                     } else { // 最后一个基本块不返回，不符合情况
                         panic!("Should not appear");
                     }
