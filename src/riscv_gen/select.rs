@@ -70,23 +70,23 @@ impl FuncDef {
         let label_type = &mut curr_func.label_type;
         let mut select_cnt = 0;
 
-        self.allocs.iter()
-            .for_each(|a|{
-                match &a.0 {
-                    Instruction::Alloca{result, ty, len: _} => {
-                        label_type.insert(String::from(result), ty.width.clone());
+        self.local_vars.iter()
+            .for_each(|local_var|{
+                match &local_var.ins {
+                    Instruction::Alloca{res, ty, len: _} => {
+                        label_type.insert(String::from(res), ty.width.clone());
                         if let SymbolWidth::Arr{tar, dims} = &ty.width {
                             if dims[0] == -1 {
-                                stack.push_normal(result.as_str(), 8);
+                                stack.push_normal(res.as_str(), 8);
                             } else {
                                 let len = tar.get_width() * dims.iter().map(|d| *d as usize).product::<usize>();
-                                stack.push_normal(result.as_str(), len as isize);
+                                stack.push_normal(res.as_str(), len as isize);
                             }
                         } else {
-                            stack.push_normal(result.as_str(), ty.get_width() as isize);
+                            stack.push_normal(res.as_str(), ty.get_width() as isize);
                         }
                     },
-                    _ => panic!("Found {:?} in allocs", a),
+                    _ => panic!("Found {:?} in allocs", local_var),
                 }
             });
 
