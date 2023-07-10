@@ -13,8 +13,16 @@ use crate::utils::float::*;
 /// 计算常量T类型的num1和num2关于op算子的计算结果<br>
 /// T类型需要满足基本的算术Trait和比较Trait
 fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: &str) -> (SymbolWidth, T) {
-    let res: T;
-    if op == "+" {
+    match op {
+        "+" => ()
+    }
+    
+    
+    
+    /*let res: T;
+
+
+     if op == "+" {
         res = num1 + num2;
     } else if op == "-" {
         res = num1 - num2;
@@ -26,8 +34,6 @@ fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: 
         res = num1 % num2;
     } else { // Boolean expression
         let res: bool;
-        let zero: i32 = 0;
-        let zero_t = T::from(zero);
         if op == "==" {
             res = num1 == num2;
         } else if op == "!=" {
@@ -41,16 +47,16 @@ fn operate_num<T: Num + From<i32> + std::cmp::PartialOrd>(num1: T, num2: T, op: 
         } else if op == ">=" {
             res = num1 >= num2; 
         } else if op == "&&" {
-            res = num1 as bool && num2 as bool;
+            res = num1 != T::from(0) && num2 != T::from(0);
         } else if op == "||" {
-            res = num1 != zero_t || num2 != zero_t;
+            res = num1 != T::from(0) || num2 != T::from(0);
         } else {
             res = false;
         }
         let res = i32::from(res);
         return (SymbolWidth::I1, T::from(res));
     }
-    (SymbolWidth::Void, res)
+    (SymbolWidth::Void, res) */
 }
 
 /// 计算常量<br>
@@ -72,8 +78,8 @@ pub fn operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String, o
             Ok((SymbolType::new(width, true), res.to_string()))
         }
     } else {
-        let num1 = parse_float(op1.as_str()) as f64;
-        let num2 = parse_float(op2.as_str()) as f64;
+        let num1 = parse_float(op1) as f64;
+        let num2 = parse_float(op2) as f64;
         let (width, res) = operate_num(num1, num2, op);
         if width == SymbolWidth::Void {
             if ty1.width > ty2.width {
