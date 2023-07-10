@@ -31,8 +31,8 @@ fn get_val(vals: &Vec<String>, pos: i32) -> String {
 }
 
 // 获取数据类型
-fn get_type(types: &Vec<SymbolType>, pos: i32) -> SymbolType {
-    types[pos as usize]
+fn get_type(types: &Vec<SymbolType>, pos: i32) -> &SymbolType {
+    &types[pos as usize]
 }
 
 // 遍历多维数组，使用GetElemPtr或者Store指令初始化，成功返回true
@@ -134,10 +134,9 @@ fn decl_arr(
     types: &Vec<SymbolType>,
     vals: &Vec<String>,
 ) {
-    let val_len = vals.len(); // 初始化值长度
     // 生成数组类型
     let ty_arr = SymbolType::new(SymbolWidth::Arr { tar: Box::new(ty.clone()), dims: dims.clone()}, false);
-    let mut val_init: Vec<String> = vals.iter().enumerate().map(|(cnt, val)| {
+    let val_init: Vec<String> = vals.iter().enumerate().map(|(cnt, val)| {
         if types[cnt].width != SymbolWidth::Void {
             type_conver(program, labels, val.clone(), &types[cnt], &ty)
         } else {
@@ -160,9 +159,10 @@ fn decl_arr(
         let ty_vec = vec!(&ty_arr);
         let settings = crate::get_settings();
         if scopes.is_in_while() || settings.all_allocs_in_entry {
+            let x=program.get_block_label();
             program.insert_alloc(
                 Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec), 
-                program.get_block_label().as_str(),
+                &x
             )
         } else {
             program.push_instr(InstructionType::Alloca, str_vec, ty_vec);
@@ -177,8 +177,9 @@ fn decl_arr(
 
         // 数组初始化
         let memset_size = dims.iter().fold(1, |acc, x| acc * x) * 4;
+        let memset_size_string = memset_size.to_string();
         let memset_funcname = "@llvm.memset.p018.i64".to_string();
-        let str_vec = vec!("", memset_funcname.as_str(), res.as_str(), "0", memset_size.to_string().as_str(), "false");
+        let str_vec = vec!("", memset_funcname.as_str(), res.as_str(), "0", &memset_size_string, "false");
         // type向量是对应上面数据向量的类型
         let ty_void = SymbolType::new(SymbolWidth::Void, false);
         let ty_i1 = SymbolType::new(SymbolWidth::I1, false);
@@ -283,7 +284,7 @@ impl Generate for ConstDef {
 
 impl InitVal {
     // 
-    fn Init_align(dims: &Vec<i32>, mut fill: i32, now_depth: usize) -> usize {
+    fn init_align(dims: &Vec<i32>, mut fill: i32, now_depth: usize) -> usize {
         if fill < 1 {
             return now_depth + 1;
         } else {
@@ -304,7 +305,7 @@ impl InitVal {
     }
 
     // 填充初始值，缺省值设置为0，类型为Void
-    fn Init_padding(
+    fn init_padding(
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels,
@@ -329,8 +330,8 @@ impl InitVal {
                     if fill % dims.last().unwrap() != 0 {
                         panic!("Wrong format of init array");
                     }
-                    let next_depth = InitVal::Init_align(dims, fill, now_depth);
-                    fill += InitVal::Init_padding(program, scopes, labels, arr, dims, tys, vals, next_depth);
+                    let next_depth = InitVal::init_align(dims, fill, now_depth);
+                    fill += InitVal::init_padding(program, scopes, labels, arr, dims, tys, vals, next_depth);
                 }
             }
         }
@@ -357,7 +358,7 @@ impl InitVal {
                 let mut ty: Vec<SymbolType> = vec!();
                 let mut val: Vec<String> = vec!();
                 if !arr.is_empty() {
-                    InitVal::Init_padding(program, scopes, labels, &arr, dims, &mut ty, &mut val, 0);
+                    InitVal::init_padding(program, scopes, labels, &arr, dims, &mut ty, &mut val, 0);
                 }
                 Ok((ty, val))
             },
@@ -419,11 +420,11 @@ impl Generate for VarDecl {
                     if scopes.is_in_while() || settings.all_allocs_in_entry {
                         let block_label = program.get_block_label();
                         program.insert_alloc(
-                            Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec),
+                            Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec.clone()),
                             block_label.as_str()
                         );
                     } else {
-                        program.push_instr(InstructionType::Alloca, str_vec, ty_vec);
+                        program.push_instr(InstructionType::Alloca, str_vec, ty_vec.clone());
                     }
 
                     // 如果初始化
@@ -434,7 +435,7 @@ impl Generate for VarDecl {
                             _ => panic!("{:?} is not supported", symbol_val),
                         };
                         let str_vec = vec![val.as_str(), label.as_str(), "4"];
-                        program.push_instr(InstructionType::Store, str_vec, ty_vec);
+                        program.push_instr(InstructionType::Store, str_vec, ty_vec.clone());
                         program.push_comment("\n");
                     }
                 }
