@@ -77,7 +77,7 @@ pub struct AsmBlock {
     // 指令列表
     pub successor: Vec<String>,
     // 后继基本块标签列表
-    pub instr_cnt: usize,
+    pub pre_instr_cnt: usize,
     // 此基本块之前所有基本块的指令数之和
     pub weight: usize,
     // 循环嵌套权重

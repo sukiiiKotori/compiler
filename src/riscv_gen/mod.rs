@@ -1,14 +1,12 @@
 pub mod stack;
 pub mod reg;
-pub mod live_interval;
+pub mod linearscan;
 pub mod build;
 pub mod select;
 pub mod rewrite;
 pub mod fetch;
-pub mod liveness;
-pub mod linear;
 
-use linear::*;
+use linearscan::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::riscv_struct::*;
 

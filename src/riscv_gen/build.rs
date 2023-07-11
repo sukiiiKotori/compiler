@@ -162,8 +162,8 @@ impl AsmFunc {
             self.blocks.push(AsmBlock::new(block_label, 0, depth));
         } else {
             let last_block = self.blocks.last().unwrap();
-            let new_instr_cnt = last_block.instr_cnt + last_block.instrs.len();
-            self.blocks.push(AsmBlock::new(block_label, new_instr_cnt, depth));
+            let new_pre_instr_cnt = last_block.pre_instr_cnt + last_block.instrs.len();
+            self.blocks.push(AsmBlock::new(block_label, new_pre_instr_cnt, depth));
         }
     }
 
@@ -174,7 +174,7 @@ impl AsmFunc {
     fn mark_call(&mut self) {
         self.used_saved("ra");
         let last_block = self.blocks.last().unwrap();
-        self.call_info.push((last_block.instr_cnt + last_block.instrs.len(), None, HashSet::new()));
+        self.call_info.push((last_block.pre_instr_cnt + last_block.instrs.len(), None, HashSet::new()));
     }
 
     pub fn unfold_call(&mut self, rodata: &mut RoDataSection, alloc_res: &HashMap<String, &'static str>) {
@@ -183,8 +183,8 @@ impl AsmFunc {
             loop {
                 if let Some(this_call_info) = call_info_ref.last() {
                     let this_idx = this_call_info.0;
-                    if this_idx >= block.instr_cnt {
-                        let position = this_idx - block.instr_cnt;
+                    if this_idx >= block.pre_instr_cnt {
+                        let position = this_idx - block.pre_instr_cnt;
                         block.unfold_call(&mut self.stack, this_call_info, alloc_res, rodata, position);
                         call_info_ref.pop();
                     } else {
@@ -229,12 +229,12 @@ impl<'a> UnfoldCallContext<'a> {
 }
 
 impl AsmBlock {
-    pub fn new(label: &str, instr_cnt: usize, depth: usize) -> Self {
+    pub fn new(label: &str, pre_instr_cnt: usize, depth: usize) -> Self {
         AsmBlock {
             label: String::from(label),
             instrs: Vec::new(),
             successor: Vec::new(),
-            instr_cnt: instr_cnt,
+            pre_instr_cnt: pre_instr_cnt,
             weight: 10_usize.pow(depth as u32),
             depth: depth,
         }

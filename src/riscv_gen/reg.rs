@@ -1,7 +1,7 @@
 use std::collections::{HashSet, HashMap, VecDeque};
 use crate::riscv_gen::build::PTR_WIDTH;
 use crate::riscv_gen::select::FLOAT_PREFIX;
-use crate::riscv_gen::liveness::Interval;
+use crate::riscv_gen::linearscan::Interval;
 use crate::structures::symbol::SymbolWidth;
 use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
@@ -229,7 +229,7 @@ impl AsmFunc {
     pub fn interval_cross_call(&mut self, live: &Interval, virt: &str) -> bool {
         let mut res = false;
         for (_, depth_first_pos, cross_virts) in self.call_info.iter_mut() {
-            let cross = live.ranges.iter().any(|range| range.from < *depth_first_pos.as_ref().unwrap() && range.to > *depth_first_pos.as_ref().unwrap());
+            let cross = live.intervals.iter().any(|range| range.left < *depth_first_pos.as_ref().unwrap() && range.right > *depth_first_pos.as_ref().unwrap());
             if cross {
                 res = true;
                 cross_virts.insert(String::from(virt));
