@@ -82,43 +82,38 @@ fn traverse_array(
                     match &ty.width {
                         SymbolWidth::Arr { tar, dims } => {
                             sub_tar = tar.as_ref().clone();
-                            sub_dims.extend_from_slice(&dims[pos.len() + 1..]); // 保存剩余维度
+                            // 保存剩余维度
+                            sub_dims.extend_from_slice(&dims[pos.len()..]);
                         }
                         _ => panic!("Error!"),   // 不是数组（前面已经判断过是数组）
                     }
-                    
                     // 生成低维度子数组
-                    let left_arr = SymbolType::new(SymbolWidth::Arr {
+                    let sub_arr = SymbolType::new(SymbolWidth::Arr {
                         tar: Box::new(sub_tar),
                         dims: sub_dims,
                     }, ty.is_const);
 
-                    let ty_vec = vec![&left_arr];
+                    let ty_vec = vec![&sub_arr];
                     let ptr = labels.pop_num_str();
                     let mut str_vec = vec![ptr.as_str(), label.as_str()];
                     let idx = cnt.to_string();      // 当前维度的下标
                     str_vec.push("0");
                     str_vec.push(idx.as_str());
 
+                    let ins_len = ins.len();
                     pos.push(cnt);                          // 放入当前维度下标
 
-                    // 递归继续遍历
                     if traverse_array(program, labels, ty, &ptr, types, vals, ins, pos) {
                         flag = true;
-                        ins.push(
-                            Instruction::make_instruction(InstructionType::GetElemPtr, str_vec, ty_vec),
-                        );
+                        ins.insert(ins_len, Instruction::make_instruction(InstructionType::GetElemPtr, str_vec, ty_vec));
                     } else {
                         labels.recover_num();
                     }
-                    
-                    // 递归完毕，弹出当前维度下标，循环遍历下一个下标
                     pos.pop();
                 }
-
                 return flag;
             }
-        }
+        },
         _ => panic!("{} is not an array, ty = {:?}", label, ty),
     }
 }
