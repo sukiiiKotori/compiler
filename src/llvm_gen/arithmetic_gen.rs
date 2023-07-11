@@ -10,7 +10,7 @@ use crate::utils::check::*;
 use crate::utils::float::*;
 
 /// 完成优化：常量折叠
-fn arithetic_operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
+fn arithetic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
     if all_is_int(ty1, ty2) {
         //操作数均为i32，无需进行类型提升。
         let num1 = op1.parse::<i32>().unwrap();
@@ -397,12 +397,12 @@ impl MulExpBody {
 
     /// 乘除运算的运算主体，是乘除表达式MulExp的抽象结果<br>
     /// 从MulExp接受算子，对运算数进行常量检查、类型比较，最终计算出结果或者生成对应指令
-    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: String) -> Result<(SymbolType, String), Box<dyn Error>> {
+    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
         let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
         let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
 
         if all_is_const(&ty1, &ty2) {
-            return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty.as_str());
+            return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
         }
 
         let (mut ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2, op2);
@@ -414,7 +414,7 @@ impl MulExpBody {
         );
         let ty_vec = vec!(&ty1);
         if ty1.width == SymbolWidth::Float {
-            match op_ty.as_str() {
+            match op_ty {
                 "*" => program.push_instr(
                     InstructionType::Fmul,
                     str_vec,
@@ -428,7 +428,7 @@ impl MulExpBody {
                 _ => panic!("Wrong op type {}", op_ty),
             }
         } else {
-            match op_ty.as_str() {
+            match op_ty {
                 "*" => program.push_instr(
                     InstructionType::Mul,
                     str_vec,
@@ -459,9 +459,9 @@ impl Generate for MulExp {
     fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
         match self {
             MulExp::UnaryExp(exp) => exp.generate(program, scopes, labels),
-            MulExp::Mul(body) => body.gen(program, scopes, labels, String::from("*")),
-            MulExp::Div(body) => body.gen(program, scopes, labels, String::from("/")),
-            MulExp::Mod(body) => body.gen(program, scopes, labels, String::from("%")),
+            MulExp::Mul(body) => body.gen(program, scopes, labels, "*"),
+            MulExp::Div(body) => body.gen(program, scopes, labels, "/"),
+            MulExp::Mod(body) => body.gen(program, scopes, labels, "%"),
         }
     }
 }
@@ -470,12 +470,12 @@ impl AddExpBody {
 
     /// 加减运算的运算主体，是加减表达式AddExp的抽象结果<br>
     /// 从AddExp接受算子，对运算数进行常量检查、类型比较，最终计算出结果或者生成对应指令
-    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: String) -> Result<(SymbolType, String), Box<dyn Error>> {
+    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
         let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
         let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
 
         if all_is_const(&ty1, &ty2) {
-            return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty.as_str());
+            return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
         }
 
         let (mut ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2, op2);
@@ -488,7 +488,7 @@ impl AddExpBody {
         let ty_vec = vec!(&ty1);
         let is_float = ty1.width == SymbolWidth::Float;
         if is_float {
-            match op_ty.as_str() {
+            match op_ty {
                 "+" => program.push_instr(
                     InstructionType::Fadd,
                     str_vec,
@@ -502,7 +502,7 @@ impl AddExpBody {
                 _ => panic!("Wrong op type {}", op_ty),
             }
         } else {
-            match op_ty.as_str() {
+            match op_ty {
                 "+" => program.push_instr(
                     InstructionType::Add,
                     str_vec,
@@ -528,8 +528,8 @@ impl Generate for AddExp {
     fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
         match self {
             AddExp::MulExp(exp) => exp.generate(program, scopes, labels),
-            AddExp::Add(body) => body.gen(program, scopes, labels, String::from("+")),
-            AddExp::Sub(body) => body.gen(program, scopes, labels, String::from("-")),
+            AddExp::Add(body) => body.gen(program, scopes, labels, "+"),
+            AddExp::Sub(body) => body.gen(program, scopes, labels, "-"),
         }
     }
 }
