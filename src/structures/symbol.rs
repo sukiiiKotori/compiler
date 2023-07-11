@@ -47,17 +47,17 @@ impl SymbolType {
         }
     }
     // 获取类型名
-    pub fn get_type(&self) -> String {
-        self.width.get_type()
+    pub fn get_typename(&self) -> String {
+        self.width.get_typename()
     }
     // 获取类型宽度
     pub fn get_width(&self) -> usize {
         self.width.get_width()
     }
 
-    // 从SymbolType导出LLVM格式的变量声明
+    // 从SymbolType导出数组的LLVM格式的变量声明
     pub fn get_name(&self, dims: &[i32]) -> String {
-        let tar_name = self.get_type();
+        let tar_name = self.get_typename();
         let mut res = String::new();
         for dim in dims.iter() {
             if *dim >= 0 {
@@ -78,7 +78,7 @@ impl SymbolType {
 
 impl SymbolWidth {
     // 获取类型名实现
-    pub fn get_type(&self) -> String {
+    pub fn get_typename(&self) -> String {
         match self {
             SymbolWidth::Void => "void".to_string(),
             SymbolWidth::Bool => "i1".to_string(),
@@ -87,7 +87,7 @@ impl SymbolWidth {
             SymbolWidth::I64 => "i64".to_string(),
             SymbolWidth::Float => "float".to_string(),
             SymbolWidth::Arr{tar, dims} => {
-                let name = tar.get_type();
+                let name = tar.get_typename();
                 let mut ret = String::new();
                 for dim in dims.iter() {
                     if dim >= &0 {

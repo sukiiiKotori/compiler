@@ -172,9 +172,9 @@ pub struct InitNumber {
 pub struct FuncDecl {
     /// 函数名称
     pub func_name: String,
-    /// 函数类型
+    /// 函数返回值类型
     pub func_type: SymbolType,
-    /// 参数类型列表
+    /// 参数类型
     pub param_types: Vec<SymbolType>,
 }
 

@@ -1,4 +1,8 @@
 @A = global[3 x [2 x [5 x i32]]]  zeroinitializer
+@a = global i32 0, align 4
+@b = global i32 10000, align 4
+@c = global float 0x3FF0000000000000, align 4
+@d = global float 0x0000000000000000, align 4
 
 declare i32 @getint()
 declare i32 @getch()
@@ -39,15 +43,6 @@ define i32 @main() {
 _entry:
   %replace_phi_0 = alloca i1, align 1
 
-  %0 = getelementptr inbounds [3 x [2 x [5 x i32]]], [3 x [2 x [5 x i32]]]* @A, i32 0, i32 2
-  %1 = getelementptr inbounds [2 x [5 x i32]], [2 x [5 x i32]]* %0, i32 0, i32 1
-  %2 = getelementptr inbounds [5 x i32], [5 x i32]* %1, i32 0, i32 2
-  %3 = getelementptr inbounds [3 x [2 x [5 x i32]]], [3 x [2 x [5 x i32]]]* @A, i32 0, i32 1
-  %4 = getelementptr inbounds [2 x [5 x i32]], [2 x [5 x i32]]* %3, i32 0, i32 2
-  %5 = getelementptr inbounds [5 x i32], [5 x i32]* %4, i32 0, i32 2
-  %6 = load i32, i32* %5, align 4
-  %7 = add i32 188, %6
-  store i32 %7, i32* %2, align 4
   ret i32 0
 
 }
