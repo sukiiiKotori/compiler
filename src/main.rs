@@ -8,10 +8,9 @@ mod llvm_opt;
 use std::fs;
 use std::env::args;
 use std::fs::read_to_string;
-use llvm_gen::generate_program;
-use llvm_gen::dump::*;
-use riscv_gen::emit_asm;
 use llvm_gen::generate_llvm;
+use llvm_gen::writetext::*;
+use riscv_gen::emit_asm;
 use crate::structures::writetext_trait::*;
 
 /*
@@ -50,7 +49,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let default_output = String::from(split_output[0])+".ll";
     let output = args.next().unwrap_or(default_output);
     let mut out = fs::File::create(&output)?;
-    program.dump(&mut out)?;
     // let mut riscv = emit_asm(&program);
     program.writetext(&mut out);
     Ok(())
