@@ -14,7 +14,7 @@ use crate::structures::llvm_struct::*;
 use crate::ast::*;
 
 
-pub fn generate_program(my_ast: &mut SysY) -> Result<LLVMProgram, Box<dyn Error>>{
+pub fn generate_llvm(my_ast: &mut SysY) -> Result<LLVMProgram, Box<dyn Error>>{
     let mut program = LLVMProgram::new();
     let mut scopes = Scopes::new();
     let mut labels = Labels::new();

@@ -8,7 +8,7 @@ mod llvm_opt;
 use std::fs;
 use std::env::args;
 use std::fs::read_to_string;
-use llvm_gen::generate_program;
+use llvm_gen::generate_llvm;
 use llvm_gen::dump::*;
 
 /*
@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let input_file = args.next().unwrap();
     let input = read_to_string(&input_file).unwrap();
     let mut ast = parser::SysYParser::new().parse(&input).unwrap();
-    let mut program = generate_program(&mut ast).unwrap();
+    let mut program = generate_llvm(&mut ast).unwrap();
     args.next();
     let split_output = input_file.split('.').collect::<Vec<_>>();
     let default_output = String::from(split_output[0])+".ll";

@@ -9,7 +9,7 @@ use crate::llvm_gen::symbol::*;
 use crate::utils::check::*;
 use crate::utils::float::*;
 
-fn logic_operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
+fn logic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
     if all_is_int(ty1, ty2) {
         let num1 = op1.parse::<i32>().unwrap();
         let num2 = op2.parse::<i32>().unwrap();
@@ -50,14 +50,13 @@ fn logic_operate(ty1: &SymbolType, op1: &String, ty2: &SymbolType, op2: &String,
 
 impl RelExpBody {
     /// 相对运算的运算主体，是相对运算表达式RelExp的抽象结果
-    ///
     /// 从RelExp接受算子，对运算数进行常量检查、类型比较，最终计算出结果或者生成对应指令
     fn gen(
         &self,
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels,
-        op_ty: String,
+        op_ty: &str,
     ) -> Result<(SymbolType, String), Box<dyn Error>> {
         // 生成第一个表达式的代码和结果
         let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
@@ -84,7 +83,7 @@ impl RelExpBody {
 
         // 构建指令所需的字符串向量和类型向量
         let str_vec = vec![
-            op_ty.as_str(),
+            op_ty,
             result.as_str(),
             op1.as_str(),
             op2.as_str(),
@@ -116,10 +115,10 @@ impl Generate for RelExp {
         // 根据不同的 RelExp 枚举类型，调用对应的生成方法
         match self {
             RelExp::AddExp(exp) => exp.generate(program, scopes, labels),
-            RelExp::Lt(body) => body.gen(program, scopes, labels, String::from("slt")),
-            RelExp::Gt(body) => body.gen(program, scopes, labels, String::from("sgt")),
-            RelExp::Le(body) => body.gen(program, scopes, labels, String::from("sle")),
-            RelExp::Ge(body) => body.gen(program, scopes, labels, String::from("sge")),
+            RelExp::Lt(body) => body.gen(program, scopes, labels, "slt"),
+            RelExp::Gt(body) => body.gen(program, scopes, labels, "sgt"),
+            RelExp::Le(body) => body.gen(program, scopes, labels, "sle"),
+            RelExp::Ge(body) => body.gen(program, scopes, labels, "sge"),
         }
     }
 }
@@ -133,7 +132,7 @@ impl EqExpBody {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels,
-        op_ty: String,
+        op_ty: &str,
     ) -> Result<(SymbolType, String), Box<dyn Error>> {
         // 生成第一个表达式的代码和结果
         let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
@@ -156,7 +155,7 @@ impl EqExpBody {
 
         // 构建指令所需的字符串向量和类型向量
         let str_vec = vec![
-            op_ty.as_str(),
+            op_ty,
             result.as_str(),
             op1.as_str(),
             op2.as_str(),
@@ -188,8 +187,8 @@ impl Generate for EqExp {
         // 根据不同的 EqExp 枚举类型，调用对应的生成方法
         match self {
             EqExp::RelExp(exp) => exp.generate(program, scopes, labels),
-            EqExp::EQ(body) => body.gen(program, scopes, labels, String::from("eq")),
-            EqExp::NE(body) => body.gen(program, scopes, labels, String::from("ne")),
+            EqExp::EQ(body) => body.gen(program, scopes, labels, "eq"),
+            EqExp::NE(body) => body.gen(program, scopes, labels, "ne"),
         }
     }
 }
