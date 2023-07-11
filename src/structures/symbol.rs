@@ -5,7 +5,7 @@ use crate::utils::float::parse_float;
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum SymbolWidth {
     Void,
-    I1,
+    Bool,
     I8,
     I32,
     I64,
@@ -47,17 +47,17 @@ impl SymbolType {
         }
     }
     // 获取类型名
-    pub fn get_type(&self) -> String {
-        self.width.get_type()
+    pub fn get_typename(&self) -> String {
+        self.width.get_typename()
     }
     // 获取类型宽度
     pub fn get_width(&self) -> usize {
         self.width.get_width()
     }
 
-    // 从SymbolType导出LLVM格式的变量声明
+    // 从SymbolType导出数组的LLVM格式的变量声明
     pub fn get_name(&self, dims: &[i32]) -> String {
-        let tar_name = self.get_type();
+        let tar_name = self.get_typename();
         let mut res = String::new();
         for dim in dims.iter() {
             if *dim >= 0 {
@@ -78,16 +78,16 @@ impl SymbolType {
 
 impl SymbolWidth {
     // 获取类型名实现
-    pub fn get_type(&self) -> String {
+    pub fn get_typename(&self) -> String {
         match self {
             SymbolWidth::Void => "void".to_string(),
-            SymbolWidth::I1 => "i1".to_string(),
+            SymbolWidth::Bool => "i1".to_string(),
             SymbolWidth::I8 => "i8".to_string(),
             SymbolWidth::I32 => "i32".to_string(),
             SymbolWidth::I64 => "i64".to_string(),
             SymbolWidth::Float => "float".to_string(),
             SymbolWidth::Arr{tar, dims} => {
-                let name = tar.get_type();
+                let name = tar.get_typename();
                 let mut ret = String::new();
                 for dim in dims.iter() {
                     if dim >= &0 {
@@ -109,7 +109,7 @@ impl SymbolWidth {
     // 获取类型宽度实现
     pub fn get_width(&self) -> usize {
         match self {
-            SymbolWidth::I1 | SymbolWidth::I8 | SymbolWidth::I32 | SymbolWidth::I64 | SymbolWidth::Float => 4,
+            SymbolWidth::Bool | SymbolWidth::I8 | SymbolWidth::I32 | SymbolWidth::I64 | SymbolWidth::Float => 4,
             SymbolWidth::Arr {tar:_, dims:_} => 8,
             _ => panic!("Don't support!"),
         }
@@ -137,7 +137,7 @@ pub fn get_symbol_val(s_val: &SymbolVal) -> String {
 /// 根据符号的类型，检查值val是否为零
 pub fn num_is_zero(ty: &SymbolType, val: &String) -> bool {
     match ty.width {
-        SymbolWidth::I1 => {
+        SymbolWidth::Bool => {
             let num: i32 = val.parse().unwrap();
             num == 0
         },

@@ -11,6 +11,8 @@ use std::fs::read_to_string;
 use llvm_gen::generate_program;
 use llvm_gen::dump::*;
 use riscv_gen::emit_asm;
+use llvm_gen::generate_llvm;
+use crate::structures::writetext_trait::*;
 
 /*
 编译器设置选项
@@ -42,7 +44,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let input_file = args.next().unwrap();
     let input = read_to_string(&input_file).unwrap();
     let mut ast = parser::SysYParser::new().parse(&input).unwrap();
-    let mut program = generate_program(&mut ast).unwrap();
+    let mut program = generate_llvm(&mut ast).unwrap();
     args.next();
     let split_output = input_file.split('.').collect::<Vec<_>>();
     let default_output = String::from(split_output[0])+".ll";
@@ -50,5 +52,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut out = fs::File::create(&output)?;
     program.dump(&mut out)?;
     // let mut riscv = emit_asm(&program);
+    program.writetext(&mut out);
     Ok(())
 }

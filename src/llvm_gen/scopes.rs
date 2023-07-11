@@ -23,7 +23,7 @@ pub struct Scope {
 
 impl Scope {
     fn new() -> Self {
-        Scope {
+        Self {
             ty: ScopeType::Global,
             tab: HashMap::new(),
         }
@@ -36,7 +36,7 @@ pub struct Scopes {
 
 impl Scopes {
     pub fn new() -> Self {
-        Scopes {
+        Self {
             scope_vec: vec![Scope::new()],
         }
     }
@@ -212,13 +212,12 @@ const BLOCK_LABELS: [&str; 14] = [
 
 impl Labels {
     pub fn new() -> Self {
-        let mut labels = Labels {
+        Self {
             number_counter: 0,
             local: HashMap::new(),
             basis_block: BLOCK_LABELS.iter().map(|label| (String::from(*label), 0)).collect(),
             global: HashMap::new(),
-        };
-        labels
+        }
     }
 
     pub fn pop_num_str(&mut self) -> String {

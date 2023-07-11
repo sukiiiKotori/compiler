@@ -15,7 +15,7 @@ pub fn double_to_float(double: &str) -> String {
     if double == "0.0" {
         float = 0.0;
     } else {
-        float = parse_float(double);
+        float = parse_ieee(double);
     }
     let num32 = unsafe {
         std::mem::transmute::<f32,u32>(float)

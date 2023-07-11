@@ -2,3 +2,6 @@
 *.log
 .vscode
 Cargo.lock
+*.c
+*.ll
+*.s

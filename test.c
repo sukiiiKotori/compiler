@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 float add(float a, float b){
     float x=0.5;
     return a+b+x;
@@ -14,5 +15,9 @@ int main(){
     float f2 = 2.+0.4;
     float f = 1 + 1.0 ;
     A[2][1][1+1] = 188 + A[1][2][1+1];
+=======
+int main(){
+    int arr[4]={1,2};
+>>>>>>> 1ab98900194049ccb039c09448d12375c6b4cc25
     return 0;
 }

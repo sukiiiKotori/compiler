@@ -1,8 +1,11 @@
+<<<<<<< HEAD
 @A = global[3 x [2 x [5 x i32]]]  zeroinitializer
 @a = global i32 0, align 4
 @b = global i32 10000, align 4
 @c = global float 0x3FF0000000000000, align 4
 @d = global float 0x0000000000000000, align 4
+=======
+>>>>>>> 1ab98900194049ccb039c09448d12375c6b4cc25
 
 declare i32 @getint()
 declare i32 @getch()
@@ -18,38 +21,21 @@ declare void @starttime()
 declare void @stoptime()
 declare void @llvm.memset.p018.i64(i8* noundef, i8 noundef, i64 noundef, i1 noundef)
 
-define float @add(float noundef %a_0, float noundef %b_0) {
-_entry:
-  %replace_phi_0 = alloca i1, align 1
-  %a_1 = alloca float, align 4
-  %b_1 = alloca float, align 4
-  %x_0 = alloca float, align 4
-
-  store float %a_0, float* %a_1, align 4
-  store float %b_0, float* %b_1, align 4
-; init x
-  store float 0x3FE0000000000000, float* %x_0, align 4
-
-  %0 = load float, float* %a_1, align 4
-  %1 = load float, float* %b_1, align 4
-  %2 = fadd float %0, %1
-  %3 = load float, float* %x_0, align 4
-  %4 = fadd float %2, %3
-  ret float %4
-
-}
-
 define i32 @main() {
 _entry:
   %replace_phi_0 = alloca i1, align 1
   %arr_0 = alloca [4 x i32], align 16
+<<<<<<< HEAD
   %f1_0 = alloca float, align 4
   %f2_0 = alloca float, align 4
   %f_0 = alloca float, align 4
+=======
+>>>>>>> 1ab98900194049ccb039c09448d12375c6b4cc25
 
 ; init arr
   %0 = bitcast [4 x i32]* %arr_0 to i8*
   call void @llvm.memset.p018.i64(i8* noundef %0, i8 noundef 0, i64 noundef 16, i1 noundef false)
+<<<<<<< HEAD
   store i32 1, i32* %1, align 4
   %1 = getelementptr inbounds i32, i32* %arr_0, i32 0, i32 0
   store i32 2, i32* %2, align 4
@@ -63,6 +49,12 @@ _entry:
 
 ; init f
   store float 0x4000000000000000, float* %f_0, align 4
+=======
+  %1 = getelementptr inbounds [4 x i32], [4 x i32]* %arr_0, i32 0, i32 0
+  store i32 1, i32* %1, align 4
+  %2 = getelementptr inbounds [4 x i32], [4 x i32]* %arr_0, i32 0, i32 1
+  store i32 2, i32* %2, align 4
+>>>>>>> 1ab98900194049ccb039c09448d12375c6b4cc25
 
   %3 = getelementptr inbounds [3 x [2 x [5 x i32]]], [3 x [2 x [5 x i32]]]* @A, i32 0, i32 2
   %4 = getelementptr inbounds [2 x [5 x i32]], [2 x [5 x i32]]* %3, i32 0, i32 1
