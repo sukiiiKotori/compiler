@@ -5,20 +5,21 @@ use crate::riscv_gen::linearscan::Interval;
 use crate::structures::symbol::SymbolWidth;
 use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
+use crate::structures::riscv_regs::*;
 
 use lazy_static::lazy_static;
 
-pub const TEMPORARY: [&str;7] = ["t0", "t1", "t2", "t3", "t4", "t5", "t6"];
-pub const SAVED: [&str;12] = ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"];
-pub const FUNC_ARG: [&str;8] = ["a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"];
-pub const RETURN: [&str;2] = ["a0", "a1"];
-pub const PRESERVED: [&str;2] = ["t0", "t1"];
+pub const TEMPORARY: [&str; 7] = ["t0", "t1", "t2", "t3", "t4", "t5", "t6"];
+pub const SAVED: [&str; 12] = ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"];
+pub const FUNC_ARG: [&str; 8] = ["a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7"];
+pub const RETURN: [&str; 2] = ["a0", "a1"];
+pub const PRESERVED: [&str; 2] = ["t0", "t1"];
 
-pub const FLOAT_TEMPORARY: [&str;7] = ["ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6"];
-pub const FLOAT_SAVED: [&str;12] = ["fs0", "fs1", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11"];
-pub const FLOAT_FUNC_ARG: [&str;8] = ["fa0", "fa1", "fa2", "fa3", "fa4", "fa5", "fa6", "fa7"];
-pub const FLOAT_RETURN: [&str;2] = ["fa0", "fa1"];
-pub const FLOAT_PRESERVED: [&str;2] = ["ft0", "ft1"];
+pub const FLOAT_TEMPORARY: [&str; 7] = ["ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6"];
+pub const FLOAT_SAVED: [&str; 12] = ["fs0", "fs1", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11"];
+pub const FLOAT_FUNC_ARG: [&str; 8] = ["fa0", "fa1", "fa2", "fa3", "fa4", "fa5", "fa6", "fa7"];
+pub const FLOAT_RETURN: [&str; 2] = ["fa0", "fa1"];
+pub const FLOAT_PRESERVED: [&str; 2] = ["ft0", "ft1"];
 
 lazy_static! {
     pub static ref TEMP_SET: HashSet<&'static str> = HashSet::from_iter(TEMPORARY.iter().chain(FUNC_ARG.iter()).map(|r| *r));
@@ -130,9 +131,9 @@ impl RegisterResource {
         for group in self.free_regs.iter_mut() {
             group.retain(|r| !evict(r));
         }
-    } 
+    }
 
-    pub fn filter_map_regs(group_idx: usize, idx: usize, reg: &str, filter_regs: impl Fn(&str) -> bool+Copy) -> Option<(usize, usize)> {
+    pub fn filter_map_regs(group_idx: usize, idx: usize, reg: &str, filter_regs: impl Fn(&str) -> bool + Copy) -> Option<(usize, usize)> {
         if filter_regs(reg) {
             Some((group_idx, idx))
         } else {
@@ -140,8 +141,8 @@ impl RegisterResource {
         }
     }
 
-    pub fn pick_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool+Copy) -> Option<(usize, usize)> {
-        let prio: &[usize;3];
+    pub fn pick_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool + Copy) -> Option<(usize, usize)> {
+        let prio: &[usize; 3];
 
         // 0 => TEMPORARY
         // 1 => FUNC_ARG
@@ -157,8 +158,8 @@ impl RegisterResource {
             .or(self.free_regs[prio[1]].iter().enumerate().find_map(|(i, r)| Self::filter_map_regs(prio[1], i, r, filter_regs)))
             .or(self.free_regs[prio[2]].iter().enumerate().find_map(|(i, r)| Self::filter_map_regs(prio[2], i, r, filter_regs)))
     }
-    
-    pub fn get_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool+Copy) -> Option<&'static str> {
+
+    pub fn get_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool + Copy) -> Option<&'static str> {
         if let Some((group_idx, idx)) = self.pick_register(ty, filter_regs) {
             let reg = *self.free_regs.get_mut(group_idx).unwrap().get(idx).unwrap();
             Some(reg)
@@ -167,7 +168,7 @@ impl RegisterResource {
         }
     }
 
-    pub fn pop_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool+Copy) -> Option<&'static str> {
+    pub fn pop_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool + Copy) -> Option<&'static str> {
         if let Some((group_idx, idx)) = self.pick_register(ty, filter_regs) {
             let reg = self.free_regs.get_mut(group_idx).unwrap().remove(idx).unwrap();
             Some(reg)
@@ -184,7 +185,7 @@ impl RegisterResource {
         match &reg[0..1] {
             "f" => {
                 Self::get_group_idx(&reg[1..]) + 3
-            },
+            }
             "t" => 0,
             "a" => 1,
             "s" => 2,
@@ -350,29 +351,29 @@ impl AsmInstr {
         match self {
             AsmInstr::Li(bin) | AsmInstr::La(bin) => {
                 match bin {
-                    BinInstr{dst, src: _} => {
+                    BinInstr { dst, src: _ } => {
                         (Some(dst), vec!())
-                    },
+                    }
                 }
-            },
+            }
             AsmInstr::Mv(bin) | AsmInstr::Fmv(bin, _, _) | AsmInstr::Sextw(bin) |
             AsmInstr::Fcvt(bin, _, _) | AsmInstr::Seqz(bin) | AsmInstr::Snez(bin) => {
                 bin.get_regs()
-            },
+            }
             AsmInstr::Addi(tri) | AsmInstr::Xori(tri) | AsmInstr::Slti(tri) => {
                 match tri {
-                    TriInstr{width: _, dst, op1, op2: _} => {
+                    TriInstr { width: _, dst, op1, op2: _ } => {
                         (Some(dst), vec!(op1))
-                    },
+                    }
                 }
-            },
+            }
             AsmInstr::Add(tri) | AsmInstr::Sub(tri) | AsmInstr::Mul(tri) |
             AsmInstr::Div(tri) | AsmInstr::Rem(tri) | AsmInstr::Slt(tri) |
             AsmInstr::Sgt(tri) | AsmInstr::Flt(tri) | AsmInstr::Fle(tri) |
             AsmInstr::Feq(tri) | AsmInstr::Fadd(tri) | AsmInstr::Fsub(tri) |
             AsmInstr::Fmul(tri) | AsmInstr::Fdiv(tri) => {
                 tri.get_regs()
-            },
+            }
             AsmInstr::Store(mem, _) => {
                 let (output, mut inputs) = mem.get_regs();
                 if output.is_some() {
@@ -380,14 +381,14 @@ impl AsmInstr {
                     inputs.push(output);
                 }
                 (None, inputs)
-            },
+            }
             AsmInstr::Load(mem, _) => {
                 mem.get_regs()
-            },
+            }
             AsmInstr::Branch(cond_tri) => {
                 let (output, _) = cond_tri.get_regs();
                 (None, vec!(output.unwrap()))
-            },
+            }
             AsmInstr::Jump(_) => (None, vec!()),
             AsmInstr::Ret(ret_val) => (None, vec!(ret_val.as_str())),
             AsmInstr::Call(ret, _, params, _) => (Some(ret.as_str()), params.iter().map(|s| s.as_str()).collect()),
