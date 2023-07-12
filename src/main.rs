@@ -61,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let asm = emit_asm(&program);
     
         let mut out = fs::File::create(&output)?;
-        asm.writetext(&mut out)?;
+        asm.writetext(&mut out);
     }
     Ok(())
 }
