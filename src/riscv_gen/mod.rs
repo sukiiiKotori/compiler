@@ -5,6 +5,7 @@ pub mod build;
 pub mod select;
 pub mod rewrite;
 pub mod fetch;
+pub mod writetext;
 
 use linearscan::*;
 use crate::structures::llvm_struct::*;
