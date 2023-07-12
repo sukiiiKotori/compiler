@@ -232,7 +232,7 @@ impl Block {
             res.push(p);
         }
 
-        for i in self.instrs.iter() {
+        for i in self.nor_ins.iter() {
             res.push(i);
         }
 
