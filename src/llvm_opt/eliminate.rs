@@ -2,9 +2,6 @@ use crate::structures::llvm_struct::*;
 
 #[allow(unused)]
 pub fn eliminate_all(mut program: LLVMProgram) -> LLVMProgram {
-    // 输出消除不可达基本块和死代码的提示信息
-    vprintln!("Eliminating unreachable basic block and deadcode...");
-
     // 对每个函数进行处理
     program.func_def = program
         .func_def
@@ -85,9 +82,5 @@ pub fn eliminate_all(mut program: LLVMProgram) -> LLVMProgram {
         })
         .collect();
 
-    // 输出完成的提示信息
-    vprintln!("Finished\n");
-
-    // 返回更新后的程序
     program
 }

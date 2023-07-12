@@ -1,8 +1,8 @@
-mod eliminate;
-mod flow;
+pub mod eliminate;
+pub mod flow;
 
 use crate::structures::llvm_struct::*;
-
+use crate::llvm_opt::eliminate::eliminate_all;
 
 pub fn optimise(program: LLVMProgram) -> LLVMProgram {
     let program = eliminate_all(program);
