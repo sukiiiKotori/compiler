@@ -7,7 +7,6 @@ use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::riscv_regs::*;
 
-use lazy_static::lazy_static;
 
 pub trait RegisterAllocator {
     fn new() -> Self;

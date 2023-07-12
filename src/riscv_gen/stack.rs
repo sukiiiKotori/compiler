@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
-use crate::riscv_gen::reg::*;
+use crate::structures::riscv_regs::*;
 
 #[derive(Debug)]
 /// 在栈上为变量分配的内存空间<br>

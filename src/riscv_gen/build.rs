@@ -1,20 +1,13 @@
 use std::iter::zip;
 use std::collections::{HashSet, HashMap, BTreeSet};
-use crate::riscv_gen::select::FLOAT_PREFIX;
-use crate::riscv_gen::reg::{
-    TEMP_SET,
-    FLOAT_TEMP_SET,
-    FUNC_ARG,
-    FLOAT_FUNC_ARG,
-    PRESERVED,
-    RETURN,
-    FLOAT_RETURN,
-    RegisterAllocator,
-};
 use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
-use crate::riscv_gen::stack::StackSlot;
+use crate::structures::riscv_regs::*;
 use crate::structures::symbol::*;
+use crate::riscv_gen::stack::StackSlot;
+use crate::riscv_gen::select::FLOAT_PREFIX;
+use crate::riscv_gen::reg::RegisterAllocator;
+
 
 pub const NORMAL_WIDTH: isize = 4;
 pub const PTR_WIDTH: isize = 8;
