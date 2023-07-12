@@ -17,7 +17,7 @@ impl FlowItem for BinaryOp {
     }
 }
 
-/// 取出ConverOp的自身标识，并取出操作数关联标识
+/// 取出CastOp的自身标识，并取出操作数关联标识
 impl FlowItem for CastOp {
     fn flow_info(&self) -> (Option<&str>, Vec<&str>) {
         (Some(self.res.as_str()), vec![self.val.as_str()])
@@ -129,7 +129,6 @@ impl FlowItem for Block {
         }
     }
 }
-
 
 
 impl FuncDef {
