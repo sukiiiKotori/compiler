@@ -1,4 +1,7 @@
+use std::collections::{HashMap, HashSet};
+use crate::llvm_gen::scopes::Labels;
 use crate::structures::llvm_struct::*;
+
 
 #[allow(unused)]
 pub fn eliminate_all(mut program: LLVMProgram) -> LLVMProgram {
