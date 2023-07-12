@@ -226,7 +226,7 @@ impl FuncDef {
 }
 
 impl Block {
-    pub fn make_block_instrs(&self) -> Vec<&Instr> {
+    pub fn make_block_instrs(&self) -> Vec<&Instruction> {
         let mut res = vec![];
         for p in self.phi_ins.iter() {
             res.push(p);
