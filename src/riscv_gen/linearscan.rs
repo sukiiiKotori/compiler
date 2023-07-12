@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::structures::riscv_struct::*;
+use crate::structures::riscv_regs::*;
 use crate::riscv_gen::reg::*;
 
 // 块活跃性信息
