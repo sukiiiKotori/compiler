@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use crate::llvm_opt::flow::*;
+use crate::llvm_opt::flow_graph::*;
 
 use crate::utils::check::*;
 use crate::structures::llvm_struct::*;
