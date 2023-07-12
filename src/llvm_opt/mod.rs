@@ -1,5 +1,6 @@
 mod eliminate;
 mod flow;
+mod flow_graph;
 
 use crate::structures::llvm_struct::*;
 use crate::llvm_opt::eliminate::*;
