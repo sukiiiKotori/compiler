@@ -43,13 +43,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let input_file = args.next().unwrap();
     let input = read_to_string(&input_file).unwrap();
     let mut ast = parser::SysYParser::new().parse(&input).unwrap();
-    let mut program = generate_llvm(&mut ast).unwrap();
-    args.next();
-    let split_output = input_file.split('.').collect::<Vec<_>>();
-    let default_output = String::from(split_output[0])+".ll";
-    let output = args.next().unwrap_or(default_output);
-    let mut out = fs::File::create(&output)?;
-    // let mut riscv = emit_asm(&program);
-    program.writetext(&mut out);
+    let program = generate_llvm(&mut ast).unwrap();
+    let mode = args.next().unwrap();
+    if mode == "-llvm" {
+        args.next();
+        let split_output = input_file.split('.').collect::<Vec<_>>();
+        let default_output = String::from(split_output[0])+".ll";
+        let output = args.next().unwrap_or(default_output);
+        let mut out = fs::File::create(&output)?;
+        program.writetext(&mut out);
+    } else if mode == "-S" {
+        args.next();
+        let split_output = input_file.split('.').collect::<Vec<_>>();
+        let default_output = String::from(split_output[0])+".s";
+        let output = args.next().unwrap_or(default_output);
+        
+        let asm = emit_asm(&program);
+    
+        let mut out = fs::File::create(&output)?;
+        asm.writetext(&mut out)?;
+    }
     Ok(())
 }
