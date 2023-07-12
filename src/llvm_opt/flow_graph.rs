@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 use crate::llvm_opt::flow::FlowItem;
-use super::*;
 
 /// 映射标号的关联标号
 type RelateMap = HashMap<String, HashSet<String>>;
