@@ -27,7 +27,7 @@ pub mod unreachable_eliminate {
     use super::*;
     pub fn eliminate(func: &FuncDef) -> HashSet<String>{
         let items: Vec<_> = func.make_blocks();
-        let (succs, mut preds) = flow_graph::build_map(items.clone());
+        let (succs, mut preds) = build_map(items.clone());
         if !preds.contains_key("_entry") {
             preds.insert(String::from("_entry"), HashSet::new());
         }
@@ -35,7 +35,7 @@ pub mod unreachable_eliminate {
             .unwrap()
             .insert(String::from(""));
 
-        flow_graph::calc_active(&succs, preds)
+        calc_active(&succs, preds)
     }
 
     #[allow(unused)]
@@ -81,12 +81,12 @@ pub mod dead_code_eliminate {
             .map(|b| b.make_block_instrs())
             .flatten()
             .collect();
-        let (succs, mut preds) = flow_graph::build_map(items.clone());
+        let (succs, mut preds) = build_map(items.clone());
         preds = preds.into_iter()
             .filter(|(k, _)| is_label(k.as_str()))
             .collect();
 
-        flow_graph::calc_active(&succs, preds)
+        calc_active(&succs, preds)
     }
 
     #[allow(unused)]
