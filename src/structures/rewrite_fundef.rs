@@ -1,28 +1,28 @@
-/* use crate::structures::llvm_struct::*;
+use crate::structures::llvm_struct::*;
 
-pub trait Reload {
-    type ReloadResult;
-    fn reload<UpdateLabel, BlockFilter, InstrFilter>(
+pub trait ReWrite {
+    type ReWriteResult;
+    fn rewrite<UpdateLabel, BlockFilter, InstrFilter>(
         self,
         update_label: &mut UpdateLabel,
         bb_filter: &BlockFilter,
         instr_filter: &InstrFilter,
-    ) -> Self::ReloadResult
+    ) -> Self::ReWriteResult
         where
             UpdateLabel: FnMut(&str) -> String,
             BlockFilter: Fn(&str) -> bool,
             InstrFilter: Fn(usize) -> bool;
 }
 
-impl Reload for FuncDef {
-    type ReloadResult = Self;
+impl ReWrite for FuncDef {
+    type ReWriteResult = Self;
 
-    fn reload<UpdateLabel, BlockFilter, InstrFilter>(
+    fn rewrite<UpdateLabel, BlockFilter, InstrFilter>(
         mut self,
         update_label: &mut UpdateLabel,
         bb_filter: &BlockFilter,
         instr_filter: &InstrFilter,
-    ) -> Self::ReloadResult
+    ) -> Self::ReWriteResult
         where
             UpdateLabel: FnMut(&str) -> String,
             BlockFilter: Fn(&str) -> bool,
@@ -41,7 +41,7 @@ impl Reload for FuncDef {
         let mut new_blocks: Vec<Block> = self
             .blocks
             .into_iter()
-            .filter_map(|b| b.reload(update_label, bb_filter, instr_filter))
+            .filter_map(|b| b.rewrite(update_label, bb_filter, instr_filter))
             .collect();
         new_blocks.first_mut().unwrap().ins_num = 0;
         for i in 1..new_blocks.len() {
@@ -54,7 +54,7 @@ impl Reload for FuncDef {
 }
 
 impl Block {
-    fn reload<UpdateLabel, BlockFilter, InstrFilter>(
+    fn rewrite<UpdateLabel, BlockFilter, InstrFilter>(
         mut self,
         update_label: &mut UpdateLabel,
         bb_filter: &BlockFilter,
@@ -78,7 +78,7 @@ impl Block {
                 instr_cnt += 1;
                 cond
             })
-            .map(|p| p.reload(update_label))
+            .map(|p| p.rewrite(update_label))
             .collect();
 
         let new_instrs: Vec<Instruction> = self
@@ -89,12 +89,12 @@ impl Block {
                 instr_cnt += 1;
                 cond
             })
-            .map(|i| i.reload(update_label))
+            .map(|i| i.rewrite(update_label))
             .collect();
 
         let ter_instr: Option<Instruction>;
         if let Some(ter) = self.ter_ins {
-            ter_instr = Some(ter.reload(update_label));
+            ter_instr = Some(ter.rewrite(update_label));
         } else {
             ter_instr = None;
         }
@@ -113,7 +113,7 @@ impl Instruction {
         str_vec.into_iter().map(|s| update_label(s)).collect()
     }
 
-    fn reload<UpdateLabel>(self, update_label: &mut UpdateLabel) -> Self
+    fn rewrite<UpdateLabel>(self, update_label: &mut UpdateLabel) -> Self
         where
             UpdateLabel: FnMut(&str) -> String,
     {
@@ -123,4 +123,3 @@ impl Instruction {
         Instruction::make_instruction(ty, str_vec_ref, ty_vec)
     }
 }
- */

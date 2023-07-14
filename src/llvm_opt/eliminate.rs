@@ -3,7 +3,7 @@ use crate::llvm_gen::scopes::Labels;
 use crate::llvm_opt::{dead_code_eliminate, unreachable_eliminate};
 use crate::llvm_opt::deadcode::update_label;
 use crate::structures::llvm_struct::*;
-use crate::llvm_opt::reload::*;
+use crate::structures::rewrite_fundef::*;
 
 
 #[allow(unused)]
@@ -80,7 +80,7 @@ pub fn eliminate_all(mut program: LLVMProgram) -> LLVMProgram {
             let mut label_map = HashMap::new();
 
             // 重新加载函数的内容，根据活跃的基本块、指令和标签进行更新
-            f.reload(
+            f.rewrite(
                 &mut |s| update_label(&mut labels, &mut label_map, s),
                 &|s| active_bb.contains(s),
                 &|i| active_instrs.contains(&(i as usize)),
