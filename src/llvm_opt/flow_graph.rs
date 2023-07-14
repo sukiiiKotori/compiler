@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use crate::llvm_opt::flow::FlowItem;
 
 /// 从FlowItem中建立映射关系
