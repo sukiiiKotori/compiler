@@ -54,7 +54,6 @@ impl RegType {
         }
     }
 
-    #[allow(unused)]
     pub fn is_float(&self) -> bool {
         match self {
             Self::TempInt | Self::SavedInt => false,
@@ -62,7 +61,6 @@ impl RegType {
         }
     }
 
-    #[allow(unused)]
     pub fn is_saved(&self) -> bool {
         match self {
             Self::TempInt | Self::TempFloat => false,
@@ -71,10 +69,9 @@ impl RegType {
     }
 }
 
-#[allow(unused)]
 impl RegisterResource {
     pub fn new() -> Self {
-        RegisterResource {
+        Self {
             free_regs: Vec::new(),
         }
     }

@@ -130,9 +130,9 @@ impl AsmFunc {
                         }
                     }
                 }
-            } // if let AsmInstr::Ret
-        } // for block in
-    } // fn
+            }
+        }
+    }
     /// 映射地址
     pub fn map_addr(&mut self) {
         // 遍历所有的代码块
@@ -202,9 +202,9 @@ impl AsmFunc {
                         block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Add, vec!(preserved_reg, preserved_reg, instr_base.unwrap().as_str()), vec!(instr_width.unwrap()), vec!()));
                         block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Li, vec!(preserved_reg, stack_pos.as_str()), vec!(), vec!()));
                     }
-                } // if
-            } // for cnt
-        } // for block
-    } // fn
-} // impl
+                }
+            }
+        }
+    }
+}
 

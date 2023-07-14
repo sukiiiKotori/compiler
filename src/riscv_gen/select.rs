@@ -20,13 +20,12 @@ fn incre_cnt(cnt: &mut usize) {
 }
 
 fn gen_temp_label(cnt: &usize) -> String {
-    let res = format!("%temp.{}", cnt);
-    res
+    format!("%temp.{}", cnt)
 }
 
 fn pop_temp_label(cnt: &mut usize, asm: &mut RiscV, ty: SymbolWidth) -> String {
     let res = gen_temp_label(cnt);
-    asm.insert_label_type(res.as_str(), ty);
+    asm.insert_label_type(&res, ty);
     incre_cnt(cnt);
     res
 }
