@@ -1,6 +1,7 @@
 /target
 *.log
 .vscode
+.idea
 Cargo.lock
 *.c
 *.ll
