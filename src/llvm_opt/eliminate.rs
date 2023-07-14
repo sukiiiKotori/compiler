@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
-use crate::llvm_gen::scopes::Labels;
 use crate::llvm_opt::{dead_code_eliminate, unreachable_eliminate};
 use crate::llvm_opt::deadcode::update_label;
 use crate::structures::llvm_struct::*;
 use crate::structures::rewrite_fundef::*;
+use crate::structures::scopes::*;
 
 
 #[allow(unused)]

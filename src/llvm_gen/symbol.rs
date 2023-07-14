@@ -1,6 +1,6 @@
 use crate::structures::llvm_struct::{LLVMProgram, InstructionType};
 use crate::structures::symbol::*;
-use crate::llvm_gen::scopes::Labels;
+use crate::structures::scopes::*;
 use crate::utils::float::{format_double, parse_float};
 
 

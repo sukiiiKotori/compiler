@@ -4,7 +4,7 @@ use crate::llvm_opt::flow_graph::*;
 
 use crate::utils::check::*;
 use crate::structures::llvm_struct::*;
-use crate::llvm_gen::scopes::Labels;
+use crate::structures::scopes::*;
 
 pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, String>, old_label: &str) -> String {
     if !old_label.contains("%") { // 跳过非局部标号

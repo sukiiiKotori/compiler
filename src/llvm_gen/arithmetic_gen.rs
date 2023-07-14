@@ -3,7 +3,7 @@ use std::convert::From;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
-use crate::llvm_gen::scopes::*;
+use crate::structures::scopes::*;
 use crate::llvm_gen::sysy_gen::*;
 use crate::llvm_gen::symbol::*;
 use crate::utils::check::*;

@@ -1,6 +1,6 @@
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
-use crate::llvm_gen::scopes::Scopes;
+use crate::structures::scopes::*;
 
 impl LLVMProgram {
     fn curr_func(&mut self) -> Option<&mut FuncDef> {
@@ -146,7 +146,7 @@ impl LLVMProgram {
 
     pub fn push_ter_instr(&mut self, ter_type: InstructionType, str_vec: Vec<&str>, ty_vec: Vec<&SymbolType>) {
         let curr_func = self.curr_func().unwrap();
-        let mut curr_bb_mut = curr_func.curr_bb_mut().unwrap();
+        let curr_bb_mut = curr_func.curr_bb_mut().unwrap();
         assert!(curr_bb_mut.ter_ins.is_none(), "Already pushed one terminator instr in this basic block before.");
 
         let ter_ins = Instruction::make_instruction(ter_type, str_vec, ty_vec);

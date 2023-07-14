@@ -2,7 +2,7 @@ use std::error::Error;
 use crate::ast::*;
 use crate::structures::llvm_struct::{LLVMProgram, Instruction, InstructionType};
 use crate::structures::symbol::*;
-use crate::llvm_gen::scopes::{Scopes, Labels};
+use crate::structures::scopes::*;
 use crate::llvm_gen::symbol::*;
 
 pub trait Generate {
