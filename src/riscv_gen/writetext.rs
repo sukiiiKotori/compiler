@@ -167,12 +167,8 @@ impl AsmInstr {
             },
             AsmInstr::Fmv(bin, dst, src) => {
                 if dst == src {
-                    match dst {
-                        SymbolWidth::Float => {
-                            write!(output, "\tfmv.d\t")?;
-                        },
-                        _ => todo!(),
-                    }
+                    write!(output, "\tfmv.d\t")?;
+                        
                 } else {
                     match dst {
                         SymbolWidth::Float => {

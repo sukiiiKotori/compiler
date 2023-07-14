@@ -173,9 +173,9 @@ impl AsmFunc {
         self.stack.push_normal(reg, 8);
         let first_block = self.blocks.first_mut().unwrap();
         if phy_is_float(reg) {
-            first_block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", reg, FLOAT_PREFIX), vec!(PTR_WIDTH), vec!()));
+            first_block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", reg, FLOAT_PREFIX), Some(PTR_WIDTH), vec!()));
         } else {
-            first_block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", reg), vec!(PTR_WIDTH), vec!()));
+            first_block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", reg), Some(PTR_WIDTH), vec!()));
         }
     }
 
@@ -238,9 +238,9 @@ impl AsmFunc {
 impl AsmBlock {
     fn restore_saved(&mut self, position: usize, reg: &str) {
         if phy_is_float(reg) {
-            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(reg, "sp", reg, FLOAT_PREFIX), vec!(PTR_WIDTH), vec!()));
+            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(reg, "sp", reg, FLOAT_PREFIX), Some(PTR_WIDTH), vec!()));
         } else {
-            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(reg, "sp", reg), vec!(PTR_WIDTH), vec!()));
+            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(reg, "sp", reg), Some(PTR_WIDTH), vec!()));
         }
     }
 

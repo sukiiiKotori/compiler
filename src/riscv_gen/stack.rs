@@ -103,10 +103,10 @@ impl AsmFunc {
             if idx == 0 && self.stack.frame_size > 0 {
                 // 根据堆栈帧大小的不同，插入不同的指令
                 if self.stack.frame_size < 2040 {
-                    block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Addi, vec!("sp", "sp", alloc_size.as_str()), vec!(), vec!()));
+                    block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Addi, vec!("sp", "sp", alloc_size.as_str()), None, vec!()));
                 } else {
-                    block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Add, vec!("sp", "sp", TEMPORARY[0]), vec!(), vec!()));
-                    block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Li, vec!(TEMPORARY[0], alloc_size.as_str()), vec!(), vec!()));
+                    block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Add, vec!("sp", "sp", TEMPORARY[0]), None, vec!()));
+                    block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Li, vec!(TEMPORARY[0], alloc_size.as_str()), None, vec!()));
                 }
             }
 
@@ -118,15 +118,15 @@ impl AsmFunc {
                     let before_last = block.instrs.len() - 1;
                     // 根据堆栈帧大小的不同，插入不同的指令
                     if self.stack.frame_size < 2040 {
-                        block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Addi, vec!("sp", "sp", free_size.as_str()), vec!(), vec!()));
+                        block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Addi, vec!("sp", "sp", free_size.as_str()), None, vec!()));
                     } else {
                         // 看返回值使用了哪个寄存器
                         if ret_val == FUNC_ARG[0] {
-                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Add, vec!("sp", "sp", TEMPORARY[0]), vec!(), vec!()));
-                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Li, vec!(TEMPORARY[0], free_size.as_str()), vec!(), vec!()));
+                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Add, vec!("sp", "sp", TEMPORARY[0]), None, vec!()));
+                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Li, vec!(TEMPORARY[0], free_size.as_str()), None, vec!()));
                         } else {
-                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Add, vec!("sp", "sp", FUNC_ARG[0]), vec!(), vec!()));
-                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Li, vec!(FUNC_ARG[0], free_size.as_str()), vec!(), vec!()));
+                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Add, vec!("sp", "sp", FUNC_ARG[0]), None, vec!()));
+                            block.instrs.insert(before_last, AsmInstr::make_instr(AsmInstrType::Li, vec!(FUNC_ARG[0], free_size.as_str()), None, vec!()));
                         }
                     }
                 }
@@ -194,13 +194,13 @@ impl AsmFunc {
                 }
                 if conver_flag {
                     // 将addi指令替换为li add
-                    block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Add, vec!(instr_dst.unwrap().as_str(), "sp", preserved_reg), vec!(), vec!()));
-                    block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Li, vec!(preserved_reg, stack_pos.as_str()), vec!(), vec!()));
+                    block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Add, vec!(instr_dst.unwrap().as_str(), "sp", preserved_reg), None, vec!()));
+                    block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Li, vec!(preserved_reg, stack_pos.as_str()), None, vec!()));
                     block.instrs.remove(cnt+2);
                 } else {
                     if li_flag {
-                        block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Add, vec!(preserved_reg, preserved_reg, instr_base.unwrap().as_str()), vec!(instr_width.unwrap()), vec!()));
-                        block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Li, vec!(preserved_reg, stack_pos.as_str()), vec!(), vec!()));
+                        block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Add, vec!(preserved_reg, preserved_reg, instr_base.unwrap().as_str()), instr_width, vec!()));
+                        block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Li, vec!(preserved_reg, stack_pos.as_str()), None, vec!()));
                     }
                 }
             }
