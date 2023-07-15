@@ -45,7 +45,7 @@ impl AsmFunc {
                     }
                     let spilled_mark = format!("spilled.{}", virt);
                     self.stack.push_normal(spilled_mark.as_str(), 8);
-                    block.instrs.insert(cnt+1, AsmInstr::make_instr(AsmInstrType::Store, vec!(phy, "sp", spilled_mark.as_str(), prefix), vec!(PTR_WIDTH), vec!()));
+                    block.instrs.insert(cnt+1, AsmInstr::make_instr(AsmInstrType::Store, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
                 }
                 for (virt, phy) in inputs_map.into_iter() {
                     let mut prefix = "";
@@ -54,7 +54,7 @@ impl AsmFunc {
                     }
                     let spilled_mark = format!("spilled.{}", virt);
                     self.stack.push_normal(spilled_mark.as_str(), 8);
-                    block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Load, vec!(phy, "sp", spilled_mark.as_str(), prefix), vec!(PTR_WIDTH), vec!()));
+                    block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Load, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
                 }
             } // for
         } // for
@@ -96,6 +96,7 @@ impl AsmInstr {
             },
             AsmInstr::Addi(tri) | AsmInstr::Add(tri) | AsmInstr::Sub(tri) | 
             AsmInstr::Mul(tri) | AsmInstr::Div(tri) | AsmInstr::Rem(tri) |
+            AsmInstr::Slli(tri) | AsmInstr::Srli(tri) | AsmInstr::Srai(tri) |
             AsmInstr::Xori(tri) | AsmInstr::Slt(tri) | AsmInstr::Slti(tri) |
             AsmInstr::Flt(tri) | AsmInstr::Fle(tri) | AsmInstr::Feq(tri) |
             AsmInstr::Fadd(tri) | AsmInstr::Fsub(tri) | AsmInstr::Fmul(tri) | AsmInstr::Fdiv(tri) |

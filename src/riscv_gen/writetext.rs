@@ -167,12 +167,8 @@ impl AsmInstr {
             },
             AsmInstr::Fmv(bin, dst, src) => {
                 if dst == src {
-                    match dst {
-                        SymbolWidth::Float => {
-                            write!(output, "\tfmv.d\t")?;
-                        },
-                        _ => todo!(),
-                    }
+                    write!(output, "\tfmv.d\t")?;
+                        
                 } else {
                     match dst {
                         SymbolWidth::Float => {
@@ -236,6 +232,18 @@ impl AsmInstr {
             },
             AsmInstr::Xori(tri) => {
                 write!(output, "\txori\t")?;
+                tri.writetext(output);
+            },
+            AsmInstr::Slli(tri) => {
+                write!(output, "\txslli\t")?;
+                tri.writetext(output);
+            },
+            AsmInstr::Srli(tri) => {
+                write!(output, "\txslli\t")?;
+                tri.writetext(output);
+            },
+            AsmInstr::Srai(tri) => {
+                write!(output, "\txsrai\t")?;
                 tri.writetext(output);
             },
             AsmInstr::Fcvt(bin, dst, src) => {

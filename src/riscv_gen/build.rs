@@ -36,8 +36,8 @@ impl RiscV {
         curr_block.push_instr(instr);
     }
 
-    pub fn gen_instr(&mut self, ty: AsmInstrType, str_vec: Vec<&str>, num_vec: Vec<isize>, ty_vec: Vec<SymbolWidth>) {
-        let instr = AsmInstr::make_instr(ty, str_vec, num_vec, ty_vec);
+    pub fn gen_instr(&mut self, ty: AsmInstrType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) {
+        let instr = AsmInstr::make_instr(ty, str_vec, width_num, ty_vec);
         self.push_instr(instr);
     }
     
@@ -253,12 +253,12 @@ impl AsmBlock {
             let stack_pos = format!("-{}", context.stack_len);
 	        if is_immediate(param.as_str()) {
 	            let imm = double_to_float(param.as_str());
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(PRESERVED[1], "sp", stack_pos.as_str(), ), vec!(NORMAL_WIDTH), vec!()));
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Li, vec!(PRESERVED[1], imm.as_str()), vec!(), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(PRESERVED[1], "sp", stack_pos.as_str(), ), Some(NORMAL_WIDTH), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Li, vec!(PRESERVED[1], imm.as_str()), None, vec!()));
             } else if context.invalid_regs.contains(param.as_str()) {
                 panic!("Should not appear");
             } else {
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(param.as_str(), "sp", stack_pos.as_str(), FLOAT_PREFIX), vec!(NORMAL_WIDTH), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(param.as_str(), "sp", stack_pos.as_str(), FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
 	        }
         } else {
             context.invalid_regs.remove(FLOAT_FUNC_ARG[context.float_cnt]);
@@ -266,15 +266,15 @@ impl AsmBlock {
 	            let imm = double_to_float(param.as_str());
                 let imm_id = context.rodata.push_float_imm(imm.as_str());
 	            let imm_label = RoDataSection::format_float_imm(imm_id);
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_FUNC_ARG[context.float_cnt], PRESERVED[1], "0", FLOAT_PREFIX), vec!(NORMAL_WIDTH), vec!()));
-                self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::La, vec!(PRESERVED[1], imm_label.as_str()), vec!(), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_FUNC_ARG[context.float_cnt], PRESERVED[1], "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
+                self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::La, vec!(PRESERVED[1], imm_label.as_str()), None, vec!()));
             } else if context.invalid_regs.contains(param.as_str()) {
 	            let stored_pos = format!("stored.{}", param);
 	            context.stored_regs.insert(param.as_str());
 	            context.stack.push_normal(stored_pos.as_str(), 8);
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), FLOAT_PREFIX), vec!(NORMAL_WIDTH), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
 	        } else {
-                self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_FUNC_ARG[context.float_cnt], param.as_str()), vec!(NORMAL_WIDTH), vec!(SymbolWidth::Float, SymbolWidth::Float)));
+                self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_FUNC_ARG[context.float_cnt], param.as_str()), Some(NORMAL_WIDTH), vec!(SymbolWidth::Float, SymbolWidth::Float)));
 	        }
         }
 	    context.float_cnt += 1;
@@ -291,24 +291,24 @@ impl AsmBlock {
 	        context.stack_len += param_size;
 	        let stack_pos = format!("-{}", context.stack_len);
 	        if is_immediate(param.as_str()) {
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(PRESERVED[1], "sp", stack_pos.as_str()), vec!(param_size), vec!()));
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Li, vec!(PRESERVED[1], param.as_str()), vec!(), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(PRESERVED[1], "sp", stack_pos.as_str()), Some(param_size), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Li, vec!(PRESERVED[1], param.as_str()), None, vec!()));
 	        } else if context.invalid_regs.contains(param.as_str()) {
                 panic!("Should not appear");
 	        } else {
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(param.as_str(), "sp", stack_pos.as_str()), vec!(param_size), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(param.as_str(), "sp", stack_pos.as_str()), Some(param_size), vec!()));
             }
 	    } else {
             context.invalid_regs.remove(FUNC_ARG[context.int_cnt]);
 	        if is_immediate(param.as_str()) {
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Li, vec!(FUNC_ARG[context.int_cnt], param.as_str()), vec!(param_size), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Li, vec!(FUNC_ARG[context.int_cnt], param.as_str()), Some(param_size), vec!()));
 	        } else if context.invalid_regs.contains(param.as_str()) {
 	            let stored_pos = format!("stored.{}", param);
 	            context.stored_regs.insert(param.as_str());
 	            context.stack.push_normal(stored_pos.as_str(), 8);
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FUNC_ARG[context.int_cnt], stored_pos.as_str()), vec!(8), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FUNC_ARG[context.int_cnt], stored_pos.as_str()), Some(PTR_WIDTH), vec!()));
             } else {
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Mv, vec!(FUNC_ARG[context.int_cnt], param.as_str()), vec!(), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Mv, vec!(FUNC_ARG[context.int_cnt], param.as_str()), None, vec!()));
 	        }
 	    }
         context.int_cnt += 1;
@@ -351,15 +351,15 @@ impl AsmBlock {
             if FLOAT_TEMP_SET.contains(*temp) {
                 prefix = FLOAT_PREFIX;
             }
-            self.instrs.insert(position+1, AsmInstr::make_instr(AsmInstrType::Load, vec!(temp, "sp", stored_pos.as_str(), prefix), vec!(8), vec!()));
+            self.instrs.insert(position+1, AsmInstr::make_instr(AsmInstrType::Load, vec!(temp, "sp", stored_pos.as_str(), prefix), Some(PTR_WIDTH), vec!()));
         }
 
         // 存储调用返回值
 	    if ret_val != "" {
 	        if types[0] == SymbolWidth::Float {
-	            self.instrs.insert(position+1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(ret_val.as_str(), "fa0"), vec!(), vec!(SymbolWidth::Float, SymbolWidth::Float)));
+	            self.instrs.insert(position+1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(ret_val.as_str(), "fa0"), None, vec!(SymbolWidth::Float, SymbolWidth::Float)));
 	        } else {
-	            self.instrs.insert(position+1, AsmInstr::make_instr(AsmInstrType::Mv, vec!(ret_val.as_str(), "a0"), vec!(), vec!()));
+	            self.instrs.insert(position+1, AsmInstr::make_instr(AsmInstrType::Mv, vec!(ret_val.as_str(), "a0"), None, vec!()));
 	        }
 	    }
 
@@ -399,7 +399,7 @@ impl AsmBlock {
         // 保存参数冲突的寄存器和穿越生命周期的寄存器
 	    for reg in context.stored_regs.iter() {
 	        let stored_reg = format!("stored.{}", reg);
-	        self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", stored_reg.as_str()), vec!(8), vec!()));
+	        self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", stored_reg.as_str()), Some(PTR_WIDTH), vec!()));
 	    }
     } // for
 
@@ -417,16 +417,16 @@ impl AsmBlock {
                         let imm = double_to_float(ret_val.as_str());
                         let imm_id = rodata.push_float_imm(imm.as_str());
                         let imm_label = RoDataSection::format_float_imm(imm_id);
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], RETURN[0], "0", FLOAT_PREFIX), vec!(NORMAL_WIDTH), vec!()));
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::La, vec!(RETURN[0], imm_label.as_str()), vec!(), vec!()));
+                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], RETURN[0], "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
+                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::La, vec!(RETURN[0], imm_label.as_str()), None, vec!()));
                     } else {
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], ret_val.as_str()), vec!(), vec!(SymbolWidth::Float, SymbolWidth::Float)));
+                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], ret_val.as_str()), None, vec!(SymbolWidth::Float, SymbolWidth::Float)));
                     }
                 } else {
                     if is_immediate(ret_val.as_str()) {
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Li, vec!(RETURN[0], ret_val.as_str()), vec!(), vec!()));
+                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Li, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
                     } else {
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Mv, vec!(RETURN[0], ret_val.as_str()), vec!(), vec!()));
+                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Mv, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
                     }
                 }
             }
@@ -435,35 +435,38 @@ impl AsmBlock {
 } // imp
 
 impl AsmInstr {
-    pub fn make_instr(ty: AsmInstrType, str_vec: Vec<&str>, num_vec: Vec<isize>, ty_vec: Vec<SymbolWidth>) -> Self {
+    pub fn make_instr(ty: AsmInstrType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) -> Self {
         match ty {
             AsmInstrType::Li => AsmInstr::Li(BinInstr::new(str_vec[0], str_vec[1])),
             AsmInstrType::La => AsmInstr::La(BinInstr::new(str_vec[0], str_vec[1])),
             AsmInstrType::Mv => AsmInstr::Mv(BinInstr::new(str_vec[0], str_vec[1])),
             AsmInstrType::Fmv => AsmInstr::Fmv(BinInstr::new(str_vec[0], str_vec[1]), ty_vec[0].clone(), ty_vec[1].clone()),
             AsmInstrType::Sextw => AsmInstr::Sextw(BinInstr::new(str_vec[0], str_vec[1])),
-            AsmInstrType::Addi => AsmInstr::Addi(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Add => AsmInstr::Add(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Sub => AsmInstr::Sub(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Mul => AsmInstr::Mul(TriInstr::new(Some(num_vec[0]), str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Div => AsmInstr::Div(TriInstr::new(Some(num_vec[0]), str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Rem => AsmInstr::Rem(TriInstr::new(Some(num_vec[0]), str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Xori => AsmInstr::Xori(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fadd => AsmInstr::Fadd(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fsub => AsmInstr::Fsub(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fmul => AsmInstr::Fmul(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fdiv => AsmInstr::Fdiv(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Addi => AsmInstr::Addi(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Add => AsmInstr::Add(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Sub => AsmInstr::Sub(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Mul => AsmInstr::Mul(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Div => AsmInstr::Div(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Rem => AsmInstr::Rem(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Xori => AsmInstr::Xori(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Slli => AsmInstr::Slli(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Srli => AsmInstr::Srli(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Srai => AsmInstr::Srai(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Fadd => AsmInstr::Fadd(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Fsub => AsmInstr::Fsub(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Fmul => AsmInstr::Fmul(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Fdiv => AsmInstr::Fdiv(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
             AsmInstrType::Fcvt => AsmInstr::Fcvt(BinInstr::new(str_vec[0], str_vec[1]), ty_vec[0].clone(), ty_vec[1].clone()),
-            AsmInstrType::Slt => AsmInstr::Slt(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Slti => AsmInstr::Slti(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Sgt => AsmInstr::Sgt(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Slt => AsmInstr::Slt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Slti => AsmInstr::Slti(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Sgt => AsmInstr::Sgt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
             AsmInstrType::Seqz => AsmInstr::Seqz(BinInstr::new(str_vec[0], str_vec[1])),
             AsmInstrType::Snez => AsmInstr::Snez(BinInstr::new(str_vec[0], str_vec[1])),
-            AsmInstrType::Flt => AsmInstr::Flt(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fle => AsmInstr::Fle(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Feq => AsmInstr::Feq(TriInstr::new(None, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Store => AsmInstr::Store(MemInstr::new(num_vec[0], str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
-            AsmInstrType::Load => AsmInstr::Load(MemInstr::new(num_vec[0], str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
+            AsmInstrType::Flt => AsmInstr::Flt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Fle => AsmInstr::Fle(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Feq => AsmInstr::Feq(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Store => AsmInstr::Store(MemInstr::new(width_num.unwrap(), str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
+            AsmInstrType::Load => AsmInstr::Load(MemInstr::new(width_num.unwrap(), str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
             AsmInstrType::Branch => AsmInstr::Branch(CondTriInstr::new(str_vec[0], None, str_vec[1], str_vec[2], str_vec[3])),
             AsmInstrType::Jump => AsmInstr::Jump(String::from(str_vec[0])),
             AsmInstrType::Ret => {
@@ -501,7 +504,7 @@ impl CondTriInstr {
 impl TriInstr {
     pub fn new(width: Option<isize>, dst: &str, op1: &str, op2: &str) -> Self {
         TriInstr {
-            width: width,
+            width,
             dst: String::from(dst),
             op1: String::from(op1),
             op2: String::from(op2),
@@ -512,7 +515,7 @@ impl TriInstr {
 impl MemInstr {
     pub fn new(width: isize, val: &str, base: &str, offset: &str) -> Self {
         MemInstr {
-            width: width,
+            width,
             val: String::from(val),
             base: String::from(base),
             offset: String::from(offset),

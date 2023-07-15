@@ -16,6 +16,9 @@ impl AsmInstr {
             AsmInstr::Div(_) => AsmInstrType::Div,
             AsmInstr::Rem(_) => AsmInstrType::Rem,
             AsmInstr::Xori(_) => AsmInstrType::Xori,
+            AsmInstr::Slli(_) => AsmInstrType::Slli,
+            AsmInstr::Srli(_) => AsmInstrType::Srli,
+            AsmInstr::Srai(_) => AsmInstrType::Srai,
             AsmInstr::Fadd(_) => AsmInstrType::Fadd,
             AsmInstr::Fsub(_) => AsmInstrType::Fsub,
             AsmInstr::Fmul(_) => AsmInstrType::Fmul,
@@ -58,6 +61,7 @@ impl AsmInstr {
             },
             AsmInstr::Addi(tri) | AsmInstr::Add(tri) | AsmInstr::Sub(tri) |
             AsmInstr::Mul(tri) | AsmInstr::Div(tri) | AsmInstr::Rem(tri) |
+            AsmInstr::Slli(tri) | AsmInstr::Srli(tri) | AsmInstr::Srai(tri) |
             AsmInstr::Xori(tri) | AsmInstr::Fadd(tri) | AsmInstr::Fsub(tri) |
             AsmInstr::Fmul(tri) | AsmInstr::Fdiv(tri) | AsmInstr::Slt(tri) |
             AsmInstr::Slti(tri) | AsmInstr::Sgt(tri) | AsmInstr::Flt(tri) |

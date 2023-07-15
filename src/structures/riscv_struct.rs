@@ -65,7 +65,8 @@ pub struct AsmFunc {
     // 标签类型映射
     pub call_info: Vec<(usize, Option<usize>, HashSet<String>)>,
     // 函数调用信息
-    pub used_saved: HashSet<&'static str>,    // 使用的保存寄存器
+    pub used_saved: HashSet<&'static str>,    
+    // 使用的保存寄存器
 }
 
 /// 表示函数中的基本块。
@@ -111,6 +112,12 @@ pub enum AsmInstrType {
     // 整数求余指令
     Xori,
     // 异或指令
+    Slli,
+    // 立即数左移
+    Srli,
+    //立即数逻辑右移
+    Srai,
+    //立即数算术右移
     Fadd,
     // 浮点加法指令
     Fsub,
@@ -154,9 +161,10 @@ pub enum AsmInstr {
     Mv(BinInstr),
     // 伪指令，移动寄存器的值
     Fmv(BinInstr, SymbolWidth, SymbolWidth),
-    // 伪指令，移动浮点数寄存器
+    // 伪指令，移动浮点数寄存器，前一个类型代表目的寄存器的类型，后一个代表源寄存器的类型
+    // 该指令有三种形式，分别是浮点->浮点，整数->浮点，浮点->整数
     Sextw(BinInstr),
-    // 伪指令，将数据从32位符号扩展到64位(主要用于Load)
+    // 伪指令，将数据从32位符号扩展到64位(主要用于Load，和立即数乘除)
 // Arith
     Add(TriInstr),
     Addi(TriInstr),
@@ -165,6 +173,9 @@ pub enum AsmInstr {
     Div(TriInstr),
     Rem(TriInstr),
     Xori(TriInstr),
+    Slli(TriInstr),
+    Srli(TriInstr),
+    Srai(TriInstr),
     Fadd(TriInstr),
     Fsub(TriInstr),
     Fmul(TriInstr),
