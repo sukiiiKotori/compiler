@@ -47,6 +47,7 @@ impl StackSlot {
     }
     /// 将普通变量加入到栈槽中
     pub fn push_normal(&mut self, label: &str, len: isize) {
+        // 逻辑和上一个函数基本相同
         if !self.pushed.contains(label) {
             self.pushed.insert(String::from(label));
             self.normal_slot.push((String::from(label), len));
@@ -87,6 +88,7 @@ impl StackSlot {
 }
 
 impl AsmFunc {
+    // 确定函数栈大小
     pub fn deterministic_stack(&mut self) {
         self.stack.deterministic();
     }
