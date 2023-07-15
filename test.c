@@ -20,7 +20,7 @@ int main(){
 
 int main() {
     int a = 4;
-    int b = a * 8;
-    int c = 4*4*4;
+    int b = a * -8.0;
+    int c = 0x7FFFFFFF;
     return 0;
 }

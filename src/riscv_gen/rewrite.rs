@@ -96,6 +96,7 @@ impl AsmInstr {
             },
             AsmInstr::Addi(tri) | AsmInstr::Add(tri) | AsmInstr::Sub(tri) | 
             AsmInstr::Mul(tri) | AsmInstr::Div(tri) | AsmInstr::Rem(tri) |
+            AsmInstr::Slli(tri) | AsmInstr::Srli(tri) | AsmInstr::Srai(tri) |
             AsmInstr::Xori(tri) | AsmInstr::Slt(tri) | AsmInstr::Slti(tri) |
             AsmInstr::Flt(tri) | AsmInstr::Fle(tri) | AsmInstr::Feq(tri) |
             AsmInstr::Fadd(tri) | AsmInstr::Fsub(tri) | AsmInstr::Fmul(tri) | AsmInstr::Fdiv(tri) |

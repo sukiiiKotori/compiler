@@ -16,15 +16,22 @@ declare void @llvm.memset.p018.i64(i8* noundef, i8 noundef, i64 noundef, i1 noun
 define i32 @main() {
 _entry:
   %replace_phi_0 = alloca i1, align 1
-  %arr_0 = alloca [4 x i32], align 16
+  %a_0 = alloca i32, align 4
+  %b_0 = alloca i32, align 4
+  %c_0 = alloca i32, align 4
 
-; init arr
-  %0 = bitcast [4 x i32]* %arr_0 to i8*
-  call void @llvm.memset.p018.i64(i8* noundef %0, i8 noundef 0, i64 noundef 16, i1 noundef false)
-  %1 = getelementptr inbounds [4 x i32], [4 x i32]* %arr_0, i32 0, i32 0
-  store i32 1, i32* %1, align 4
-  %2 = getelementptr inbounds [4 x i32], [4 x i32]* %arr_0, i32 0, i32 1
-  store i32 2, i32* %2, align 4
+; init a
+  store i32 4, i32* %a_0, align 4
+
+; init b
+  %0 = load i32, i32* %a_0, align 4
+  %1 = sitofp i32 %0 to float
+  %2 = fmul float %1, 0xC020000000000000
+  %3 = fptosi float %2 to i32
+  store i32 %3, i32* %b_0, align 4
+
+; init c
+  store i32 2147483647, i32* %c_0, align 4
 
   ret i32 0
 

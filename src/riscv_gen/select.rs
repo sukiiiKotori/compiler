@@ -8,10 +8,9 @@ use crate::riscv_gen::build::{NORMAL_WIDTH, PTR_WIDTH};
 pub const FLOAT_PREFIX: &str = "f";
 
 fn imm_width(imm: &str) -> SymbolWidth {
-    if is_hex(imm) {
-        SymbolWidth::Float
-    } else {
-        SymbolWidth::I32
+    match is_hex(imm) {
+        true => SymbolWidth::Float,
+        false => SymbolWidth::I32,
     }
 }
 
@@ -277,6 +276,25 @@ impl Instruction {
             //能完成这个优化的前提是，常量折叠已做完。
             Instruction::Mul(BinaryOp{res, op_type, op1, op2}) => {
                 asm.insert_label_type(res.as_str(), op_type.width.clone());
+
+                /* if is_immediate(op1) { //如果op1是立即数
+                    if &op1[0..1] == "-" {//如果是负数
+                        let op1_positive = &op1[1..];//转成正数
+                        match is_powerOftwo(op1_positive) {//如果是2的幂次
+                            Some(pow) => {
+                                asm.gen_instr(AsmInstrType::Slli, vec!(res.as_str(), op2, op1_positive), None, vec!());
+
+                            },
+                            None =>
+                        }
+                    } else { //就是正数
+                        match is_powerOftwo(op1) {
+
+                        }
+                    }
+                    
+                } */
+
                 if is_immediate(op1) || is_immediate(op2) {
                     let op: &str;
                     let li_dst: String;

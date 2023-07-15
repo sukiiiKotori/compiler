@@ -114,6 +114,8 @@ pub enum AsmInstrType {
     // 异或指令
     Slli,
     // 立即数左移
+    Srli,
+    //立即数逻辑右移
     Srai,
     //立即数算术右移
     Fadd,
@@ -172,6 +174,7 @@ pub enum AsmInstr {
     Rem(TriInstr),
     Xori(TriInstr),
     Slli(TriInstr),
+    Srli(TriInstr),
     Srai(TriInstr),
     Fadd(TriInstr),
     Fsub(TriInstr),

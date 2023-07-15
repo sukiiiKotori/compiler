@@ -322,7 +322,8 @@ impl AsmInstr {
             AsmInstr::Fcvt(bin, _, _) | AsmInstr::Seqz(bin) | AsmInstr::Snez(bin) => {
                 bin.get_regs()
             }
-            AsmInstr::Addi(tri) | AsmInstr::Xori(tri) | AsmInstr::Slti(tri) => {
+            AsmInstr::Addi(tri) | AsmInstr::Xori(tri) | AsmInstr::Slti(tri) |
+            AsmInstr::Slli(tri) | AsmInstr::Srli(tri) | AsmInstr::Srai(tri) => {
                 match tri {
                     TriInstr { width: _, dst, op1, op2: _ } => {
                         (Some(dst), vec!(op1))

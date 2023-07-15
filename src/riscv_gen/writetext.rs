@@ -238,6 +238,10 @@ impl AsmInstr {
                 write!(output, "\txslli\t")?;
                 tri.writetext(output);
             },
+            AsmInstr::Srli(tri) => {
+                write!(output, "\txslli\t")?;
+                tri.writetext(output);
+            },
             AsmInstr::Srai(tri) => {
                 write!(output, "\txsrai\t")?;
                 tri.writetext(output);
