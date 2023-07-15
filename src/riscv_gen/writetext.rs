@@ -235,15 +235,15 @@ impl AsmInstr {
                 tri.writetext(output);
             },
             AsmInstr::Slli(tri) => {
-                write!(output, "\txslli\t")?;
+                write!(output, "\tslli\t")?;
                 tri.writetext(output);
             },
             AsmInstr::Srli(tri) => {
-                write!(output, "\txslli\t")?;
+                write!(output, "\tsrli\t")?;
                 tri.writetext(output);
             },
             AsmInstr::Srai(tri) => {
-                write!(output, "\txsrai\t")?;
+                write!(output, "\tsrai\t")?;
                 tri.writetext(output);
             },
             AsmInstr::Fcvt(bin, dst, src) => {

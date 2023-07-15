@@ -18,7 +18,7 @@ pub fn is_immediate(s: &str) -> bool {
 }
 
 //检查立即数是否为2的幂
-pub fn is_powerOftwo(s: &str) -> Option<i32> {
+pub fn is_poweroftwo(s: &str) -> Option<i32> {
     let num = s.parse::<i32>().unwrap();
     match num & (num - 1) {
         0 => Some(f32::log2(num as f32) as i32),

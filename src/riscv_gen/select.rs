@@ -275,58 +275,113 @@ impl Instruction {
             //这里完成了优化：强度削弱；对有一个立即数是2的幂次的立即数替换为移位指令。
             //能完成这个优化的前提是，常量折叠已做完。
             Instruction::Mul(BinaryOp{res, op_type, op1, op2}) => {
-                asm.insert_label_type(res.as_str(), op_type.width.clone());
+                asm.insert_label_type(res, op_type.width.clone());
 
-                /* if is_immediate(op1) { //如果op1是立即数
+                if is_immediate(op1) { //如果op1是立即数
                     if &op1[0..1] == "-" {//如果是负数
                         let op1_positive = &op1[1..];//转成正数
-                        match is_powerOftwo(op1_positive) {//如果是2的幂次
+                        match is_poweroftwo(op1_positive) {//如果是2的幂次
                             Some(pow) => {
-                                asm.gen_instr(AsmInstrType::Slli, vec!(res.as_str(), op2, op1_positive), None, vec!());
+                                asm.gen_instr(AsmInstrType::Slli, vec![res, op2, &pow.to_string()], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Sub, vec![res, "zero", res], None, vec![]);
 
                             },
-                            None =>
+                            None => {
+                                let li_dst = pop_temp_label(select_cnt, asm, imm_width(op1));
+                                asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op1], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Mul, vec![res, &li_dst, op2], Some(NORMAL_WIDTH), vec![]);
+                            }
                         }
                     } else { //就是正数
-                        match is_powerOftwo(op1) {
+                        match is_poweroftwo(op1) {
+                            Some(pow) => {
+                                asm.gen_instr(AsmInstrType::Slli, vec![res, op2, &pow.to_string()], None, vec![]);
 
+                            },
+                            None => {
+                                let li_dst = pop_temp_label(select_cnt, asm, imm_width(op1));
+                                asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op1], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Mul, vec![res, &li_dst, op2], Some(NORMAL_WIDTH), vec![]);
+                            }
                         }
                     }
-                    
-                } */
+                } else if is_immediate(op2) {//op2是立即数
+                    if &op2[0..1] == "-" {//如果是负数
+                        let op2_positive = &op2[1..];//转成正数
+                        match is_poweroftwo(op2_positive) {//如果是2的幂次
+                            Some(pow) => {
+                                asm.gen_instr(AsmInstrType::Slli, vec![res, op1, &pow.to_string()], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Sub, vec![res, "zero", res], None, vec![]);
 
-                if is_immediate(op1) || is_immediate(op2) {
-                    let op: &str;
-                    let li_dst: String;
-                    if is_immediate(op1) {
-                        li_dst = pop_temp_label(select_cnt, asm, imm_width(op1.as_str()));
-                        asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op1.as_str()), None, vec!());
-                        op = op2.as_str();
-                    } else {
-                        li_dst = pop_temp_label(select_cnt, asm, imm_width(op2.as_str()));
-                        asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), None, vec!());
-                        op = op1.as_str();
+                            },
+                            None => {
+                                let li_dst = pop_temp_label(select_cnt, asm, imm_width(op2));
+                                asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Mul, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
+                            }
+                        }
+                    } else { //就是正数
+                        match is_poweroftwo(op2) {
+                            Some(pow) => {
+                                asm.gen_instr(AsmInstrType::Slli, vec![res, op1, &pow.to_string()], None, vec![]);
+
+                            },
+                            None => {
+                                let li_dst = pop_temp_label(select_cnt, asm, imm_width(op2));
+                                asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Mul, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
+                            }
+                        }
                     }
-                    asm.gen_instr(AsmInstrType::Mul, vec!(res.as_str(), op, li_dst.as_str()), Some(NORMAL_WIDTH), vec!());
-                } else {
-                    asm.gen_instr(AsmInstrType::Mul, vec!(res.as_str(), op1.as_str(), op2.as_str()), Some(NORMAL_WIDTH), vec!())
+                } else {//都不是立即数
+                    asm.gen_instr(AsmInstrType::Mul, vec![res, op1, op2], Some(NORMAL_WIDTH), vec![]);
                 }
             },
             Instruction::Sdiv(BinaryOp{res, op_type, op1, op2}) => {
-                asm.insert_label_type(res.as_str(), op_type.width.clone());
-                if is_immediate(op1) || is_immediate(op2) {
-                    let li_dst: String;
-                    if is_immediate(op1) {
-                        li_dst = pop_temp_label(select_cnt, asm, imm_width(op1.as_str()));
-                        asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op1.as_str()), None, vec!());
-                        asm.gen_instr(AsmInstrType::Div, vec!(res.as_str(), li_dst.as_str(), op2.as_str()), Some(NORMAL_WIDTH), vec!());
-                    } else {
-                        li_dst = pop_temp_label(select_cnt, asm, imm_width(op2.as_str()));
-                        asm.gen_instr(AsmInstrType::Li, vec!(li_dst.as_str(), op2.as_str()), None, vec!());
-                        asm.gen_instr(AsmInstrType::Div, vec!(res.as_str(), op1.as_str(), li_dst.as_str()), Some(NORMAL_WIDTH), vec!());
+                asm.insert_label_type(res, op_type.width.clone());
+                if is_immediate(op1) {//第一个op是立即数，只能用除法
+                    let li_dst = pop_temp_label(select_cnt, asm, imm_width(op1));
+                    asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op1], None, vec![]);
+                    asm.gen_instr(AsmInstrType::Div, vec![res, &li_dst, op2], Some(NORMAL_WIDTH), vec![]);
+                    
+                } else if is_immediate(op2) {
+                    if &op2[0..1] == "-" {//如果是负数
+                        let op2_positive = &op2[1..];//转成正数
+                        match is_poweroftwo(op2_positive) {//如果是2的幂次
+                            Some(pow) => {
+                                let temp_reg = pop_temp_label(select_cnt, asm, imm_width(op2));
+                                asm.gen_instr(AsmInstrType::Srai, vec![&temp_reg, op1, "63"], None, vec![]);//算术右移，得到64个1或0
+                                asm.gen_instr(AsmInstrType::Srli, vec![&temp_reg, &temp_reg, &(64-pow).to_string()], None, vec![]);//逻辑右移，负数会得到pow个1，正数不变
+                                asm.gen_instr(AsmInstrType::Add, vec![op1, &temp_reg, op1], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Srai, vec![res, op1, &pow.to_string()], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Sub, vec![res, "zero", res], None, vec![]);
+
+                            },
+                            None => {
+                                let li_dst = pop_temp_label(select_cnt, asm, imm_width(op2));
+                                asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Div, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
+                            }
+                        }
+                    } else { //就是正数
+                        match is_poweroftwo(op2) {
+                            Some(pow) => {
+                                let temp_reg = pop_temp_label(select_cnt, asm, imm_width(op2));
+                                asm.gen_instr(AsmInstrType::Srai, vec![&temp_reg, op1, "63"], None, vec![]);//算术右移，得到64个1或0
+                                asm.gen_instr(AsmInstrType::Srli, vec![&temp_reg, &temp_reg, &(64-pow).to_string()], None, vec![]);//逻辑右移，负数会得到pow个1，正数不变
+                                asm.gen_instr(AsmInstrType::Add, vec![op1, &temp_reg, op1], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Srai, vec![res, op1, &pow.to_string()], None, vec![]);
+
+                            },
+                            None => {
+                                let li_dst = pop_temp_label(select_cnt, asm, imm_width(op2));
+                                asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
+                                asm.gen_instr(AsmInstrType::Div, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
+                            }
+                        }
                     }
                 } else {
-                    asm.gen_instr(AsmInstrType::Div, vec!(res.as_str(), op1.as_str(), op2.as_str()), Some(NORMAL_WIDTH), vec!())
+                    asm.gen_instr(AsmInstrType::Div, vec![res, op1, op2], Some(NORMAL_WIDTH), vec![])
                 }
             },
             Instruction::Srem(BinaryOp{res, op_type, op1, op2}) => {

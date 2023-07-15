@@ -18,9 +18,22 @@ int main(){
 }
  */
 
+int square(int num) {
+    return num/-8;
+}
+
 int main() {
-    int a = 4;
-    int b = a * -8.0;
-    int c = 0x7FFFFFFF;
+    int a = 128;
+    int b = 16384;
+    int c = 20000;
+    int d = -128;
+    int e =-16384;
+    int f = -20000;
+    putint(a);
+    putint(b);
+    putint(c);
+    putint(d);
+    putint(e);
+    putint(f);
     return 0;
 }
