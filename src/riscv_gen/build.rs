@@ -411,11 +411,11 @@ impl AsmBlock {
         if let AsmInstr::Ret(ret_val) = self.instrs.last().unwrap() {
             let ret_val = String::from(ret_val);
             let len = self.instrs.len();
-            if ret_val != "" {
+            if !ret_val.is_empty() {
                 if *ty == SymbolWidth::Float {
-                    if is_immediate(ret_val.as_str()) {
-                        let imm = double_to_float(ret_val.as_str());
-                        let imm_id = rodata.push_float_imm(imm.as_str());
+                    if is_immediate(&ret_val) {
+                        let imm = double_to_float(&ret_val);
+                        let imm_id = rodata.push_float_imm(&imm);
                         let imm_label = RoDataSection::format_float_imm(imm_id);
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], RETURN[0], "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::La, vec!(RETURN[0], imm_label.as_str()), None, vec!()));
@@ -423,7 +423,7 @@ impl AsmBlock {
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], ret_val.as_str()), None, vec!(SymbolWidth::Float, SymbolWidth::Float)));
                     }
                 } else {
-                    if is_immediate(ret_val.as_str()) {
+                    if is_immediate(&ret_val) {
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Li, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
                     } else {
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Mv, vec!(RETURN[0], ret_val.as_str()), None, vec!()));

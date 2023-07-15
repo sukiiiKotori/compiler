@@ -2,8 +2,9 @@ mod utils;
 mod structures;
 mod ast;
 mod llvm_gen;
-mod riscv_gen;
 mod llvm_opt;
+mod riscv_gen;
+mod riscv_opt;
 
 use std::fs;
 use std::env::args;
