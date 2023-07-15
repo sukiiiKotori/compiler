@@ -25,7 +25,7 @@ pub struct Settings {
 static SETTINGS: Settings = Settings {
     use_phi: false,
     optimise: true,
-    debug: false,
+    debug: true,
     log: false,
     all_allocs_in_entry: true,
 };
