@@ -234,6 +234,14 @@ impl AsmInstr {
                 write!(output, "\txori\t")?;
                 tri.writetext(output);
             },
+            AsmInstr::Slli(tri) => {
+                write!(output, "\txslli\t")?;
+                tri.writetext(output);
+            },
+            AsmInstr::Srai(tri) => {
+                write!(output, "\txsrai\t")?;
+                tri.writetext(output);
+            },
             AsmInstr::Fcvt(bin, dst, src) => {
                 if dst == src {
                     panic!("Two types should be different");

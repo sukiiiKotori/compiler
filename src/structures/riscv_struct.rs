@@ -65,7 +65,8 @@ pub struct AsmFunc {
     // 标签类型映射
     pub call_info: Vec<(usize, Option<usize>, HashSet<String>)>,
     // 函数调用信息
-    pub used_saved: HashSet<&'static str>,    // 使用的保存寄存器
+    pub used_saved: HashSet<&'static str>,    
+    // 使用的保存寄存器
 }
 
 /// 表示函数中的基本块。
@@ -111,6 +112,10 @@ pub enum AsmInstrType {
     // 整数求余指令
     Xori,
     // 异或指令
+    Slli,
+    // 立即数左移
+    Srai,
+    //立即数算术右移
     Fadd,
     // 浮点加法指令
     Fsub,
@@ -166,6 +171,8 @@ pub enum AsmInstr {
     Div(TriInstr),
     Rem(TriInstr),
     Xori(TriInstr),
+    Slli(TriInstr),
+    Srai(TriInstr),
     Fadd(TriInstr),
     Fsub(TriInstr),
     Fmul(TriInstr),

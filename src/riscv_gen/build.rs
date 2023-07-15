@@ -449,6 +449,8 @@ impl AsmInstr {
             AsmInstrType::Div => AsmInstr::Div(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
             AsmInstrType::Rem => AsmInstr::Rem(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
             AsmInstrType::Xori => AsmInstr::Xori(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Slli => AsmInstr::Slli(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstrType::Srai => AsmInstr::Srai(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
             AsmInstrType::Fadd => AsmInstr::Fadd(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
             AsmInstrType::Fsub => AsmInstr::Fsub(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
             AsmInstrType::Fmul => AsmInstr::Fmul(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
@@ -501,7 +503,7 @@ impl CondTriInstr {
 impl TriInstr {
     pub fn new(width: Option<isize>, dst: &str, op1: &str, op2: &str) -> Self {
         TriInstr {
-            width: width,
+            width,
             dst: String::from(dst),
             op1: String::from(op1),
             op2: String::from(op2),
@@ -512,7 +514,7 @@ impl TriInstr {
 impl MemInstr {
     pub fn new(width: isize, val: &str, base: &str, offset: &str) -> Self {
         MemInstr {
-            width: width,
+            width,
             val: String::from(val),
             base: String::from(base),
             offset: String::from(offset),

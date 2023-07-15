@@ -1,5 +1,4 @@
 //检查工具
-
 use crate::structures::symbol::*;
 
 // 检查是否为十进制数
@@ -16,6 +15,15 @@ pub fn is_hex(s: &str) -> bool {
 // 检查是否为立即数
 pub fn is_immediate(s: &str) -> bool {
     is_decimal(s) || is_hex(s) || s == "0.0"
+}
+
+//检查立即数是否为2的幂
+pub fn is_powerOftwo(s: &str) -> Option<i32> {
+    let num = s.parse::<i32>().unwrap();
+    match num & (num - 1) {
+        0 => Some(f32::log2(num as f32) as i32),
+        _ => None
+    }
 }
 
 // 检查标号是否为LLVM IR的临时标号
