@@ -17,12 +17,17 @@ use crate::structures::writetext_trait::*;
 编译器设置选项
 */
 pub struct Settings {
-    pub use_phi: bool,              // 使用phi指令
-    pub optimise: bool,             // 开启优化
-    pub debug: bool,                // 调试模式
-    pub log: bool,                  // 打印日志
+    pub use_phi: bool,
+    // 使用phi指令
+    pub optimise: bool,
+    // 开启优化
+    pub debug: bool,
+    // 调试模式
+    pub log: bool,
+    // 打印日志
     pub all_allocs_in_entry: bool,  // 在入口处全部分配
 }
+
 static SETTINGS: Settings = Settings {
     use_phi: false,
     optimise: true,
@@ -30,39 +35,42 @@ static SETTINGS: Settings = Settings {
     log: false,
     all_allocs_in_entry: true,
 };
+
 pub fn get_settings() -> &'static Settings {
     &SETTINGS
 }
 
 use lalrpop_util::lalrpop_mod;
+use crate::llvm_opt::optimise_llvm;
 lalrpop_mod!(parser);
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
     let mut args = args();
+    //跳过第一个参数
     args.next();
-    let input_file = args.next().unwrap();
-    let input = read_to_string(&input_file).unwrap();
-    let mut ast = parser::SysYParser::new().parse(&input).unwrap();
-    let program = generate_llvm(&mut ast).unwrap();
-    let mode = args.next().unwrap();
-    if mode == "-llvm" {
-        args.next();
-        let split_output = input_file.split('.').collect::<Vec<_>>();
-        let default_output = String::from(split_output[0])+".ll";
-        let output = args.next().unwrap_or(default_output);
-        let mut out = fs::File::create(&output)?;
-        program.writetext(&mut out);
-    } else if mode == "-S" {
-        args.next();
-        let split_output = input_file.split('.').collect::<Vec<_>>();
-        let default_output = String::from(split_output[0])+".s";
-        let output = args.next().unwrap_or(default_output);
-        
-        let mut asm = emit_asm(&program);
-        asm.optimise_riscv();
-    
-        let mut out = fs::File::create(&output)?;
-        asm.writetext(&mut out);
+    //获取待编译的文件名
+    let file_name = args.next().unwrap();
+    //用lalrpop解析得到ast
+    let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
+    //生成llvm
+    let mut llvm = generate_llvm(&mut ast).unwrap();
+    if SETTINGS.optimise {
+        llvm = optimise_llvm(llvm);
     }
-    Ok(())
+    let filename_without_suffix= file_name.split(".").collect::<Vec<_>>()[0].to_string();
+    //编译选项，可选-llvm和-S
+    match args.next().unwrap().as_str() {
+        "-llvm" => {
+            let mut llvm_file = fs::File::create(filename_without_suffix + ".ll").unwrap();
+            llvm.writetext(&mut llvm_file);
+        }
+        "-S" => {
+            let mut asm = emit_asm(&llvm);
+            asm.optimise_riscv();
+            
+            let mut asm_file = fs::File::create(filename_without_suffix + ".s").unwrap();
+            asm.writetext(&mut asm_file);
+        }
+        _ => panic!()
+    }
 }

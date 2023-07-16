@@ -19,21 +19,20 @@ _entry:
   %a_0 = alloca i32, align 4
   %b_0 = alloca i32, align 4
   %c_0 = alloca i32, align 4
+  %d_0 = alloca i32, align 4
 
-; init a
-  store i32 4, i32* %a_0, align 4
-
-; init b
-  %0 = load i32, i32* %a_0, align 4
-  %1 = sitofp i32 %0 to float
-  %2 = fmul float %1, 0xC020000000000000
-  %3 = fptosi float %2 to i32
-  store i32 %3, i32* %b_0, align 4
-
-; init c
-  store i32 2147483647, i32* %c_0, align 4
-
-  ret i32 0
+  store i32 10, i32* %a_0, align 4
+  store i32 4, i32* %b_0, align 4
+  store i32 2, i32* %c_0, align 4
+  store i32 2, i32* %d_0, align 4
+  %0 = load i32, i32* %c_0, align 4
+  %1 = load i32, i32* %a_0, align 4
+  %2 = add i32 %0, %1
+  %3 = load i32, i32* %b_0, align 4
+  %4 = load i32, i32* %d_0, align 4
+  %5 = sub i32 %3, %4
+  %6 = mul i32 %2, %5
+  ret i32 %6
 
 }
 
