@@ -14,6 +14,16 @@ int main(){
     float f2 = 2.+0.4;
     float f = 1 + 1.0 ;
     A[2][1][1+1] = 188 + A[1][2][1+1];
+    putint(a * 4);
+    putch(10);
+    putint(b / 4);
+    putch(10);
+    putfloat(f1);
+    putch(10);
+    putfloat(f2);
+    putch(10);
+    putint(A[2][1][2]);
+    putch(10);
     return 0;
 }
 
@@ -23,7 +33,7 @@ int main(){
 //     int c = 0x7FFFFFFF;
 //     return 0;
 // }
-int square(int num) {
+/* int square(int num) {
     return num/-8;
 }
 
@@ -42,3 +52,4 @@ int main() {
     putint(f);
     return 0;
 }
+ */

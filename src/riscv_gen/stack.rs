@@ -201,7 +201,7 @@ impl AsmFunc {
                     block.instrs.remove(cnt+2);
                 } else {
                     if li_flag {
-                        block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Add, vec!(preserved_reg, preserved_reg, instr_base.unwrap().as_str()), instr_width, vec!()));
+                        block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Add, vec!(preserved_reg, preserved_reg, instr_base.unwrap().as_str()), None, vec!()));
                         block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Li, vec!(preserved_reg, stack_pos.as_str()), None, vec!()));
                     }
                 }
