@@ -1,4 +1,4 @@
-/* float add(float a, float b){
+float add(float a, float b){
     float x=0.5;
     return a+b+x;
 }
@@ -16,11 +16,10 @@ int main(){
     A[2][1][1+1] = 188 + A[1][2][1+1];
     return 0;
 }
- */
 
-int main() {
-    int a = 4;
-    int b = a * -8.0;
-    int c = 0x7FFFFFFF;
-    return 0;
-}
+// int main() {
+//     int a = 4;
+//     int b = a * -8.0;
+//     int c = 0x7FFFFFFF;
+//     return 0;
+// }

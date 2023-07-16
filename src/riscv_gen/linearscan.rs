@@ -289,7 +289,7 @@ impl LiveInterval<'_> {
                     if ALL_REGS.contains(input) {
                         interval.push_right(left + idx);
                     } else {
-                        interval.push(*left, right + idx);
+                        interval.push(*left, left + idx);
                     }
                 }
             }
