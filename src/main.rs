@@ -37,32 +37,32 @@ pub fn get_settings() -> &'static Settings {
 use lalrpop_util::lalrpop_mod;
 lalrpop_mod!(parser);
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
     let mut args = args();
+    //跳过第一个参数
     args.next();
-    let input_file = args.next().unwrap();
-    let input = read_to_string(&input_file).unwrap();
-    let mut ast = parser::SysYParser::new().parse(&input).unwrap();
-    let program = generate_llvm(&mut ast).unwrap();
-    let mode = args.next().unwrap();
-    if mode == "-llvm" {
-        args.next();
-        let split_output = input_file.split('.').collect::<Vec<_>>();
-        let default_output = String::from(split_output[0])+".ll";
-        let output = args.next().unwrap_or(default_output);
-        let mut out = fs::File::create(&output)?;
-        program.writetext(&mut out);
-    } else if mode == "-S" {
-        args.next();
-        let split_output = input_file.split('.').collect::<Vec<_>>();
-        let default_output = String::from(split_output[0])+".s";
-        let output = args.next().unwrap_or(default_output);
-        
-        let mut asm = emit_asm(&program);
-        asm.optimise_riscv();
-    
-        let mut out = fs::File::create(&output)?;
-        asm.writetext(&mut out);
+    //获取待编译的文件名
+    let file_name = args.next().unwrap();
+    //用lalrpop解析得到ast
+    let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
+    //生成llvm
+    let llvm = generate_llvm(&mut ast).unwrap();
+    //编译选项，可选-llvm和-S
+    match args.next().unwrap().as_str() {
+        "-llvm" => {
+            let llvm_filename = args.next().unwrap();
+            let mut llvm_file = fs::File::create(&llvm_filename).unwrap();
+            llvm.writetext(&mut llvm_file);
+        },
+        "-S" => {
+            let asm_filename = args.next().unwrap();
+            
+            let mut asm = emit_asm(&llvm);
+            asm.optimise_riscv();
+            
+            let mut asm_file = fs::File::create(&asm_filename).unwrap();
+            asm.writetext(&mut asm_file);
+        }
+        _ => panic!()
     }
-    Ok(())
 }
