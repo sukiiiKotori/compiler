@@ -548,12 +548,12 @@ impl Instruction {
             Instruction::Br(cond, label1, label2) => {
                 if let (Some(c), Some(l2)) = (cond, label2) {
                     (
-                        InstructionType::Branch,
+                        InstructionType::Br,
                         vec![c.as_str(), label1.as_str(), l2.as_str()],
                         vec![],
                     )
                 } else {
-                    (InstructionType::Branch, vec!["", label1.as_str(), ""], vec![])
+                    (InstructionType::Br, vec!["", label1.as_str(), ""], vec![])
                 }
             }
         }

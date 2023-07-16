@@ -53,7 +53,10 @@ fn main() {
     //用lalrpop解析得到ast
     let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
     //生成llvm
-    let llvm = generate_llvm(&mut ast).unwrap();
+    let mut llvm = generate_llvm(&mut ast).unwrap();
+    if SETTINGS.optimise {
+        llvm = optimise_llvm(llvm);
+    }
     let filename_without_suffix= file_name.split(".").collect::<Vec<_>>()[0].to_string();
     //编译选项，可选-llvm和-S
     match args.next().unwrap().as_str() {
