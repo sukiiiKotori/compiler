@@ -27,12 +27,12 @@ impl AsmFunc {
         self.blocks.iter_mut().for_each(|block| {
             let mut replace_idx = Vec::new();
             block.instrs.iter().enumerate().for_each(|(idx, instr)| {
-                if idx < block.instrs.len() { //如果不是最后一个元素
+                if idx < block.instrs.len() - 1 { //如果不是最后一个元素
                     if let AsmInstr::Store(mem_s, perfix_s) = instr {//如果当前指令是store指令，判断其下一条指令
                         if let AsmInstr::Load(mem_l, perfix_l) = &block.instrs[idx + 1] {//如果下一条指令是load
                             if mem_s.base == mem_l.base && mem_s.offset == mem_l.offset && perfix_s == perfix_l { //如果偏移量和基地址相同，可以替换为mv
                                 if perfix_s.is_empty() {//都是i32的store, load
-                                    //replace_idx.push((true, idx + 1, &mem_l.val, &mem_s.val));//is_i32,id,dst,src
+                                    replace_idx.push((true, idx + 1, mem_l.val.clone(), mem_s.val.clone()));//is_i32,id,dst,src
                                 } else {
                                     replace_idx.push((false, idx + 1, mem_l.val.clone(), mem_s.val.clone()));
                                 }
