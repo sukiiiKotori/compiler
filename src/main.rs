@@ -47,20 +47,18 @@ fn main() {
     let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
     //生成llvm
     let llvm = generate_llvm(&mut ast).unwrap();
+    let filename_without_suffix= file_name.split(".").collect::<Vec<_>>()[0].to_string();
     //编译选项，可选-llvm和-S
     match args.next().unwrap().as_str() {
         "-llvm" => {
-            let llvm_filename = args.next().unwrap();
-            let mut llvm_file = fs::File::create(&llvm_filename).unwrap();
+            let mut llvm_file = fs::File::create(filename_without_suffix + ".ll").unwrap();
             llvm.writetext(&mut llvm_file);
         },
         "-S" => {
-            let asm_filename = args.next().unwrap();
-            
             let mut asm = emit_asm(&llvm);
             asm.optimise_riscv();
             
-            let mut asm_file = fs::File::create(&asm_filename).unwrap();
+            let mut asm_file = fs::File::create(filename_without_suffix + ".s").unwrap();
             asm.writetext(&mut asm_file);
         }
         _ => panic!()
