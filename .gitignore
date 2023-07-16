@@ -3,11 +3,11 @@
 .vscode
 .idea
 Cargo.lock
-*.c
-*.C
-*.ll
-*.s
-*.S
+/*.c
+/*.C
+/*.ll
+/*.s
+/*.S
 .idea
 /test_new/functional_elf/*
 /test_new/functional_s/*
