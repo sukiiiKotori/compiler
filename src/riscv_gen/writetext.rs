@@ -1,5 +1,4 @@
 use std::io;
-use std::error::Error;
 
 use crate::structures::symbol::*;
 use crate::structures::riscv_struct::*;
@@ -18,8 +17,8 @@ fn width_name(width: isize) -> &'static str {
 }
 
 impl WriteText for RiscV {
-    fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "\t.option nopic\n");
+    fn writetext(&self, output: &mut impl io::Write) {
+        write!(output, "\t.option nopic\n").unwrap();
         self.rodata.writetext(output);
         self.data.writetext(output);
         self.text.writetext(output);
@@ -31,8 +30,8 @@ impl WriteText for RoDataSection {
         if self.datas.is_empty() {
             return ;
         }
-        write!(output, "\t.text\n");
-        write!(output, "\t.section\t.rodata\n");
+        write!(output, "\t.text\n").unwrap();
+        write!(output, "\t.section\t.rodata\n").unwrap();
         for data in self.datas.iter() {
             data.writetext(output);
         }
@@ -44,15 +43,15 @@ impl WriteText for DataSection {
         if self.datas.is_empty() {
             return ;
         }
-        write!(output, "\t.text\n");
-        write!(output, "\t.section\t.data\n");
+        write!(output, "\t.text\n").unwrap();
+        write!(output, "\t.section\t.data\n").unwrap();
         for data in self.datas.iter() {
             data.writetext(output);
         }
     }
 }
 
-fn writetext_init(output: &mut impl io::Write, init_vals: &Vec<String>) -> Result<(), Box<dyn Error>>{
+fn writetext_init(output: &mut impl io::Write, init_vals: &Vec<String>) {
     // 状态码
     // 0 => 初始状态
     // 1 => 读取记录零的长度的状态
@@ -68,49 +67,48 @@ fn writetext_init(output: &mut impl io::Write, init_vals: &Vec<String>) -> Resul
             },
             _ => {
                 if state == 1 {
-                    write!(output, "\t.zero\t{}\n", cnt)?;
+                    write!(output, "\t.zero\t{}\n", cnt).unwrap();
                     state = 0;
                     cnt = 0;
                 }
                 if is_hex(val.as_str()) && val.len() == 18 {
-                    write!(output, "\t.word\t{}\n", double_to_float(val.as_str()))?;
+                    write!(output, "\t.word\t{}\n", double_to_float(val.as_str())).unwrap();
                 } else {
-                    write!(output, "\t.word\t{}\n", val)?;
+                    write!(output, "\t.word\t{}\n", val).unwrap();
                 }
             },
         }
     }
     if state == 1 {
-        write!(output, "\t.zero\t{}\n", cnt)?;
+        write!(output, "\t.zero\t{}\n", cnt).unwrap();
     }
-    Ok(())
 }
 
 impl WriteText for DataSectionItem {
     fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "\t.globl\t{}\n", self.label);
-        write!(output, "\t.align\t2\n");
-        write!(output, "\t.type\t{}, @object\n", self.label);
+        write!(output, "\t.globl\t{}\n", self.label).unwrap();
+        write!(output, "\t.align\t2\n").unwrap();
+        write!(output, "\t.type\t{}, @object\n", self.label).unwrap();
         if let SymbolType{width: SymbolWidth::Arr{tar: _, dims}, is_const: _} = &self.ty {
             let array_size = dims.iter().map(|d| *d as usize).product::<usize>()*4;
-            write!(output, "\t.size\t{}, {}\n", self.label, array_size);
-            write!(output, "{}:\n", self.label);
+            write!(output, "\t.size\t{}, {}\n", self.label, array_size).unwrap();
+            write!(output, "{}:\n", self.label).unwrap();
             if self.init_vals.is_empty() {
-                write!(output, "\t.zero\t{}\n", array_size);
+                write!(output, "\t.zero\t{}\n", array_size).unwrap();
             } else {
                 writetext_init(output, &self.init_vals);
             }
         } else {
-            write!(output, "\t.size\t{}, 4\n", self.label);
-            write!(output, "{}:\n", self.label);
+            write!(output, "\t.size\t{}, 4\n", self.label).unwrap();
+            write!(output, "{}:\n", self.label).unwrap();
             if self.init_vals.is_empty() {
-                write!(output, "\t.zero\t4\n");
+                write!(output, "\t.zero\t4\n").unwrap();
             } else {
                 let val = self.init_vals.get(0).unwrap();
                 if is_hex(val.as_str()) && val.len() == 18 {
-                    write!(output, "\t.word\t{}\n", double_to_float(val.as_str()));
+                    write!(output, "\t.word\t{}\n", double_to_float(val.as_str())).unwrap();
                 } else {
-                    write!(output, "\t.word\t{}\n", val);
+                    write!(output, "\t.word\t{}\n", val).unwrap();
                 }
             }
         }
@@ -119,8 +117,8 @@ impl WriteText for DataSectionItem {
 
 impl WriteText for TextSection {
     fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "\t.text\n");
-        write!(output, "\t.align\t1\n");
+        write!(output, "\t.text\n").unwrap();
+        write!(output, "\t.align\t1\n").unwrap();
         for func in self.funcs.iter() {
             func.writetext(output);
         }
@@ -129,9 +127,9 @@ impl WriteText for TextSection {
 
 impl WriteText for AsmFunc {
     fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "\t.global\t{}\n", self.label);
-        write!(output, "\t.type\t{}, @function\n", self.label);
-        write!(output, "{}:\n", self.label);
+        write!(output, "\t.global\t{}\n", self.label).unwrap();
+        write!(output, "\t.type\t{}, @function\n", self.label).unwrap();
+        write!(output, "{}:\n", self.label).unwrap();
         for block in self.blocks.iter() {
             block.writetext(output);
         }
@@ -139,43 +137,42 @@ impl WriteText for AsmFunc {
 }
 
 impl AsmBlock {
-    fn writetext(&self, output: &mut impl io::Write) -> Result<(), Box<dyn Error>> {
+    fn writetext(&self, output: &mut impl io::Write) {
         if !self.label.contains("._entry") {
-            write!(output, "{}:\n", self.label)?;
+            write!(output, "{}:\n", self.label).unwrap();
         }
         for instr in self.instrs.iter() {
-            instr.writetext(output)?;
+            instr.writetext(output);
         }
-        Ok(())
     }
 }
 
 impl AsmInstr {
-    fn writetext(&self, output: &mut impl io::Write) -> Result<(), Box<dyn Error>> {
+    fn writetext(&self, output: &mut impl io::Write) {
         match self {
             AsmInstr::Li(bin) => {
-                write!(output, "\tli\t")?;
+                write!(output, "\tli\t").unwrap();
                 bin.writetext(output);
             },
             AsmInstr::La(bin) => {
-                write!(output, "\tla\t")?;
+                write!(output, "\tla\t").unwrap();
                 bin.writetext(output);
             },
             AsmInstr::Mv(bin) => {
-                write!(output, "\tmv\t")?;
+                write!(output, "\tmv\t").unwrap();
                 bin.writetext(output);
             },
             AsmInstr::Fmv(bin, dst, src) => {
                 if dst == src {
-                    write!(output, "\tfmv.d\t")?;
+                    write!(output, "\tfmv.d\t").unwrap();
                         
                 } else {
                     match dst {
                         SymbolWidth::Float => {
-                            write!(output, "\tfmv.w.x\t")?;
+                            write!(output, "\tfmv.w.x\t").unwrap();
                         },
                         SymbolWidth::I32 => {
-                            write!(output, "\tfmv.x.w\t")?;
+                            write!(output, "\tfmv.x.w\t").unwrap();
                         },
                         _ => todo!(),
                     }
@@ -183,67 +180,67 @@ impl AsmInstr {
                 bin.writetext(output);
             },
             AsmInstr::Sextw(bin) => {
-                write!(output, "\tsext.w\t")?;
+                write!(output, "\tsext.w\t").unwrap();
                 bin.writetext(output);
             },
             AsmInstr::Addi(tri) => {
-                write!(output, "\taddi\t")?;
+                write!(output, "\taddi\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Add(tri) => {
-                write!(output, "\tadd\t")?;
+                write!(output, "\tadd\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Sub(tri) => {
-                write!(output, "\tsub\t")?;
+                write!(output, "\tsub\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Mul(tri) => {
                 if let TriInstr{width: Some(8), dst, op1, op2} = tri {
-                    write!(output, "\tmul\t{}, {}, {}\n", dst, op1, op2)?;
-                    return Ok(());
+                    write!(output, "\tmul\t{}, {}, {}\n", dst, op1, op2).unwrap();
+                    return;
                 }
-                write!(output, "\tmul")?;
+                write!(output, "\tmul").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Div(tri) => {
-                write!(output, "\tdiv")?;
+                write!(output, "\tdiv").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Rem(tri) => {
-                write!(output, "\trem")?;
+                write!(output, "\trem").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Fadd(tri) => {
-                write!(output, "\tfadd.s\t")?;
+                write!(output, "\tfadd.s\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Fsub(tri) => {
-                write!(output, "\tfsub.s\t")?;
+                write!(output, "\tfsub.s\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Fmul(tri) => {
-                write!(output, "\tfmul.s\t")?;
+                write!(output, "\tfmul.s\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Fdiv(tri) => {
-                write!(output, "\tfdiv.s\t")?;
+                write!(output, "\tfdiv.s\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Xori(tri) => {
-                write!(output, "\txori\t")?;
+                write!(output, "\txori\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Slli(tri) => {
-                write!(output, "\txslli\t")?;
+                write!(output, "\tslli\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Srli(tri) => {
-                write!(output, "\txslli\t")?;
+                write!(output, "\tsrli\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Srai(tri) => {
-                write!(output, "\txsrai\t")?;
+                write!(output, "\tsrai\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Fcvt(bin, dst, src) => {
@@ -251,79 +248,78 @@ impl AsmInstr {
                     panic!("Two types should be different");
                 } else {
                     if *dst == SymbolWidth::Float {
-                        write!(output, "\tfcvt.s.w\t{}, {}, rtz\n", bin.dst, bin.src)?;
+                        write!(output, "\tfcvt.s.w\t{}, {}, rtz\n", bin.dst, bin.src).unwrap();
                     } else {
-                        write!(output, "\tfcvt.w.s\t{}, {}, rtz\n", bin.dst, bin.src)?;
+                        write!(output, "\tfcvt.w.s\t{}, {}, rtz\n", bin.dst, bin.src).unwrap();
                     }
                 }
             },
             AsmInstr::Slt(tri) => {
-                write!(output, "\tslt\t")?;
+                write!(output, "\tslt\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Slti(tri) => {
-                write!(output, "\tslti\t")?;
+                write!(output, "\tslti\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Sgt(tri) => {
-                write!(output, "\tsgt\t")?;
+                write!(output, "\tsgt\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Seqz(bin) => {
-                write!(output, "\tseqz\t")?;
+                write!(output, "\tseqz\t").unwrap();
                 bin.writetext(output);
             },
             AsmInstr::Snez(bin) => {
-                write!(output, "\tsnez\t")?;
+                write!(output, "\tsnez\t").unwrap();
                 bin.writetext(output);
             },
             AsmInstr::Flt(tri) => {
-                write!(output, "\tflt.s\t")?;
+                write!(output, "\tflt.s\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Fle(tri) => {
-                write!(output, "\tfle.s\t")?;
+                write!(output, "\tfle.s\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Feq(tri) => {
-                write!(output, "\tfeq.s\t")?;
+                write!(output, "\tfeq.s\t").unwrap();
                 tri.writetext(output);
             },
             AsmInstr::Store(mem, prefix) => {
-                write!(output, "\t{}s", prefix)?;
+                write!(output, "\t{}s", prefix).unwrap();
                 mem.writetext(output);
             },
             AsmInstr::Load(mem, prefix) => {
-                write!(output, "\t{}l", prefix)?;
+                write!(output, "\t{}l", prefix).unwrap();
                 mem.writetext(output);
             },
             AsmInstr::Branch(cond_tri) => {
-                write!(output, "\tb")?;
+                write!(output, "\tb").unwrap();
                 cond_tri.writetext(output);
             },
             AsmInstr::Jump(dst) => {
-                write!(output, "\tj\t{}\n", dst)?;
+                write!(output, "\tj\t{}\n", dst).unwrap();
             },
             AsmInstr::Ret(_) => {
-                write!(output, "\tret\n")?;
+                write!(output, "\tret\n").unwrap();
             },
             AsmInstr::Call(_, func_name, _, _) => {
-                write!(output, "\tcall\t{}\n",func_name)?;
+                write!(output, "\tcall\t{}\n",func_name).unwrap();
             },
         }
-        Ok(())
     }
 }
 
 impl WriteText for BinInstr {
     fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "{}, {}\n", self.dst, self.src);
+        write!(output, "{}, {}\n", self.dst, self.src).unwrap();
     }
 }
 
 impl WriteText for CondTriInstr {
     fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "{}\t", self.cond);
+        write!(output, "{}\t", self.cond).unwrap();
         self.tri.writetext(output);
     }
 }
@@ -331,16 +327,16 @@ impl WriteText for CondTriInstr {
 impl WriteText for TriInstr {
     fn writetext(&self, output: &mut impl io::Write){
         if let Some(width) = self.width {
-            write!(output, "{}\t{}, {}, {}\n", width_name(width), self.dst, self.op1, self.op2);
+            write!(output, "{}\t{}, {}, {}\n", width_name(width), self.dst, self.op1, self.op2).unwrap();
         } else {
-            write!(output, "{}, {}, {}\n", self.dst, self.op1, self.op2);
+            write!(output, "{}, {}, {}\n", self.dst, self.op1, self.op2).unwrap();
         }
     }
 }
 
 impl WriteText for MemInstr {
     fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "{}\t{}, {}({})\n", width_name(self.width), self.val, self.offset, self.base);
+        write!(output, "{}\t{}, {}({})\n", width_name(self.width), self.val, self.offset, self.base).unwrap();
     }
 }
 

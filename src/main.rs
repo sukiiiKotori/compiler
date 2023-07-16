@@ -2,8 +2,9 @@ mod utils;
 mod structures;
 mod ast;
 mod llvm_gen;
-mod riscv_gen;
 mod llvm_opt;
+mod riscv_gen;
+mod riscv_opt;
 
 use std::fs;
 use std::env::args;
@@ -57,7 +58,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let default_output = String::from(split_output[0])+".s";
         let output = args.next().unwrap_or(default_output);
         
-        let asm = emit_asm(&program);
+        let mut asm = emit_asm(&program);
+        asm.optimise_riscv();
     
         let mut out = fs::File::create(&output)?;
         asm.writetext(&mut out);
