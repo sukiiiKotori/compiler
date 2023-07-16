@@ -5,6 +5,8 @@ riscv64-linux-gnu-gcc -c ./libsysy/sylib.c -o ./libsysy/sylib.o
 mkdir -p ./functional_s
 mkdir -p ./functional_elf
 
+cargo build --release
+
 for file in functional/*.sy; 
 do
     if [[ -e "${file%.sy}.s" ]]; then
