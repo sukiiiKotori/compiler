@@ -918,7 +918,7 @@ impl Instruction {
                             let index = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
                             match is_poweroftwo(&left_size_str) {
                                 Some(pow) => {
-                                    asm.gen_instr(AsmInstrType::Slli, vec![&index, idx[0].as_str(), &pow.to_string()], None, vec![]);
+                                    asm.gen_instr(AsmInstrType::Slli, vec![&index, idx[cnt].as_str(), &pow.to_string()], None, vec![]);
                                     asm.gen_instr(AsmInstrType::Add, vec!(next_addr.as_str(), last_addr.as_str(), index.as_str()), None, vec!());
                                 },
                                 None => {
