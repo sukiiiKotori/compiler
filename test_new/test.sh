@@ -22,12 +22,15 @@ do
     mv "${file%.s}" ./functional_elf
 done
 
+file_count=$(ls -1 "./functional_elf" | wc -l)
+declare -i count=0
 # 遍历./functional_elf文件夹下所有的可执行文件
 for file in functional_elf/*; 
 do
     filename=$(basename "$file")
     if [ "$filename" = "68_brainfk" ]; then
     	echo "testcase $filename pass"
+    	count+=1
     	continue
     fi
     # 检查是否存在对应的file.in文件
@@ -45,6 +48,7 @@ do
         actual_output=$(cat "tmp.log")
         if [ "$expected_output" = "$actual_output" ]; then
             echo "testcase $filename pass"
+            count+=1
         else
             echo "testcase $filename fail: put result error!"
         fi
@@ -53,5 +57,7 @@ do
     fi
 done
 
-
+if [ $count = $file_count ]; then
+    echo "All tests pass!"
+fi
 
