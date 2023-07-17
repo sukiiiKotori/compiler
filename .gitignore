@@ -13,3 +13,4 @@ Cargo.lock
 /tests/functional_s/*
 /tests/test_2.sh
 /tests/test3.sh
+/.VSCodeCounter
