@@ -42,7 +42,7 @@ fn is_array(ty: &SymbolType) -> bool {
     }
 }
 
-/// 常量和变量的类型转换
+/// 类型转换
 pub fn type_conver(program: &mut LLVMProgram, 
     labels: &mut Labels, value: String, ty1: &SymbolType, ty2: &SymbolType) -> String {
 
