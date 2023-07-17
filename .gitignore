@@ -9,7 +9,7 @@ Cargo.lock
 /*.s
 /*.S
 .idea
-/test_new/functional_elf/*
-/test_new/functional_s/*
-/test_new/test_2.sh
-/test_new/test3.sh
+/tests/functional_elf/*
+/tests/functional_s/*
+/tests/test_2.sh
+/tests/test3.sh
