@@ -1,4 +1,4 @@
-pub mod stack;
+pub mod stack_slot;
 pub mod reg;
 pub mod linearscan;
 pub mod build;
@@ -6,6 +6,7 @@ pub mod select;
 pub mod rewrite;
 pub mod fetch;
 pub mod writetext;
+pub mod asmfunc_stack;
 
 use linearscan::*;
 use crate::structures::llvm_struct::*;

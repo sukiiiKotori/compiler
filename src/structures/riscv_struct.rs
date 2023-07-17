@@ -1,5 +1,5 @@
 use std::collections::{HashSet, HashMap};
-use crate::riscv_gen::stack::StackSlot;
+use crate::riscv_gen::stack_slot::StackSlot;
 use crate::structures::symbol::*;
 
 /// 表示RISC-V汇编代码的结构体。
