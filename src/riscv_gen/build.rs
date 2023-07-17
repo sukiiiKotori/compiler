@@ -87,9 +87,9 @@ impl RiscV {
         }
     }
 
-    pub fn unfold_ret(&mut self) {
+    pub fn mv_to_retreg(&mut self) {
         for func in self.text.funcs.iter_mut() {
-            func.unfold_ret(&mut self.rodata);
+            func.mv_to_retreg(&mut self.rodata);
         }
     } 
 } // imp
@@ -192,9 +192,9 @@ impl AsmFunc {
         }
     }
 
-    fn unfold_ret(&mut self, rodata: &mut RoDataSection) {
+    fn mv_to_retreg(&mut self, rodata: &mut RoDataSection) {
         for block in self.blocks.iter_mut() {
-            block.unfold_ret(rodata, &self.ty);
+            block.mv_to_retreg(rodata, &self.ty);
         }
     }
 }
@@ -403,9 +403,9 @@ impl AsmBlock {
 	        let stored_reg = format!("stored.{}", reg);
 	        self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", stored_reg.as_str()), Some(PTR_WIDTH), vec!()));
 	    }
-    } // for
+    }
 
-    fn unfold_ret(&mut self, rodata: &mut RoDataSection, ty: &SymbolWidth) {
+    fn mv_to_retreg(&mut self, rodata: &mut RoDataSection, ty: &SymbolWidth) {
         use crate::utils::float::double_to_float;
         if self.instrs.is_empty() {
             return;
@@ -413,8 +413,11 @@ impl AsmBlock {
         if let AsmInstr::Ret(ret_val) = self.instrs.last().unwrap() {
             let ret_val = String::from(ret_val);
             let len = self.instrs.len();
+            //如果有返回值，则需要往a0或者fa0里写东西
             if !ret_val.is_empty() {
+                //如果返回值是float类型的, 则需要使用fa0寄存器
                 if *ty == SymbolWidth::Float {
+                    //如果float是立即数，则需要使用La指令
                     if is_immediate(&ret_val) {
                         let imm = double_to_float(&ret_val);
                         let imm_id = rodata.push_float_imm(&imm);
@@ -422,9 +425,11 @@ impl AsmBlock {
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], RETURN[0], "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::La, vec!(RETURN[0], imm_label.as_str()), None, vec!()));
                     } else {
+                        //否则使用fmv即可
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], ret_val.as_str()), None, vec!(SymbolWidth::Float, SymbolWidth::Float)));
                     }
                 } else {
+                    //如果是i32
                     if is_immediate(&ret_val) {
                         self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Li, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
                     } else {
@@ -432,9 +437,9 @@ impl AsmBlock {
                     }
                 }
             }
-        } // if let
-    } // fn
-} // imp
+        }
+    }
+}
 
 impl AsmInstr {
     pub fn make_instr(ty: AsmInstrType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) -> Self {
