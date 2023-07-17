@@ -36,7 +36,7 @@ pub fn is_temp_opr(s: &str) -> bool {
     s.contains("%temp.") && is_decimal(&s[6..])
 }
 
-// 检查立即数是否在十二位整型数的表示范围内
+// 检查立即数是否在十二位整型数的表示范围内-2048到+2047
 pub fn inside_imm_range(s: &str) -> bool {
     // 先检查是否为isize
     let num = s.parse::<isize>().unwrap();

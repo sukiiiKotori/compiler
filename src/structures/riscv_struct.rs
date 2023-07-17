@@ -253,9 +253,9 @@ impl RiscV {
         }
     }
 
-    pub fn map_addr(&mut self) {
+    pub fn adapt_stack_address(&mut self) {
         for func in self.text.funcs.iter_mut() {
-            func.map_addr();
+            func.adapt_stack_address();
         }
     }
 }
