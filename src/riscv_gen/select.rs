@@ -652,23 +652,33 @@ impl Instruction {
             Instruction::Store{ty, value, ptr, len: _} => {
                 asm.insert_label_type(ptr.as_str(), SymbolWidth::I64);
                 let curr_func = asm.text.curr_func();
-                if let Some(idx) = curr_func.params.get(value) { // value为函数参数
+                // 如果value为函数参数
+                if let Some(idx) = curr_func.params.get(value) { 
                     let idx = *idx;
                     if ty.width == SymbolWidth::Float {
+                        //如果参数够参数寄存器的数量，则不需要用栈
                         if idx < FLOAT_FUNC_ARG.len() {
                             asm.gen_instr(AsmInstrType::Store, vec!(FLOAT_FUNC_ARG[idx], "sp", ptr.as_str(), FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!());
-                        } else {
+                        }
+                        //参数过多，需要用栈
+                        else {
+                            //从栈里面pop一个位置
                             let load_dst = pop_temp_label(select_cnt, asm, ty.width.clone());
                             asm.gen_instr(AsmInstrType::Load, vec!(load_dst.as_str(), "sp", value.as_str(), FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!());
                             asm.gen_instr(AsmInstrType::Store, vec!(load_dst.as_str(), "sp", ptr.as_str(), FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!());
                         }
                     } else {
-                        let mut width_num = Some(NORMAL_WIDTH);
-                        if let SymbolWidth::Arr{tar: _, dims} = &ty.width {
-                            if dims[0] == -1 {
-                                width_num = Some(PTR_WIDTH);
-                            }
-                        }
+                        let width_num = match &ty.width {
+                            SymbolWidth::Arr{tar: _, dims} => {
+                                //如果是指针
+                                if dims[0] == -1 {
+                                    Some(PTR_WIDTH)
+                                } else {
+                                    Some(NORMAL_WIDTH)
+                                }
+                            },
+                            _ => Some(NORMAL_WIDTH)
+                        };
                         if idx < FUNC_ARG.len() {
                             asm.gen_instr(AsmInstrType::Store, vec!(FUNC_ARG[idx], "sp", ptr.as_str()), width_num, vec!());
                         } else {
@@ -681,7 +691,8 @@ impl Instruction {
                 }
 
                 let final_value: String;
-                if is_immediate(value.as_str()) {
+                //如果是立即数，对浮点数需要先在data段声明再移动，整数则直接移动
+                if is_immediate(&value) {
                     if ty.width == SymbolWidth::Float {
                         final_value = Self::load_float_imm(asm, select_cnt, value);
                     } else {
@@ -692,65 +703,79 @@ impl Instruction {
                     final_value = String::from(value);
                 }
 
-                let mut prefix = "";
-                if ty.width == SymbolWidth::Float {
-                    prefix = FLOAT_PREFIX;
-                }
+                let prefix = match &ty.width {
+                    SymbolWidth::Float => FLOAT_PREFIX,
+                    _ => ""
+                };
 
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr.as_str());
+                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
                 let pure_ptr = &ptr.as_str()[1..];
-                if is_num_label(ptr.as_str()) {
-                    asm.gen_instr(AsmInstrType::Store, vec!(final_value.as_str(), ptr.as_str(), "0", prefix), Some(NORMAL_WIDTH), vec!());
+                //如果是llvm的临时标号，其实就是store分配出来的那些临时标号，比如%c_0，直接store即可。
+                if is_num_label(&ptr) {
+                    asm.gen_instr(AsmInstrType::Store, vec!(&final_value, ptr, "0", prefix), Some(NORMAL_WIDTH), vec!());
                 } else if inside_stack {
-                    // ptr的最终位置在dump时确定
-                    asm.gen_instr(AsmInstrType::Store, vec!(final_value.as_str(), "sp", ptr.as_str(), prefix), Some(NORMAL_WIDTH), vec!());
+                    // 如果在函数的栈里面，则需要通过栈偏移来store，具体值需要到分配完栈大小才能确定
+                    asm.gen_instr(AsmInstrType::Store, vec!(&final_value, "sp", ptr, prefix), Some(NORMAL_WIDTH), vec!());
                 } else if asm.data.labels.contains(pure_ptr) {
+                    //如果是全局变量，比如说预先声明的一个int A。则需要用La指令来移动。
+                    //先加载到临时寄存器，再移动到目标地址
                     let store_addr = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
-                    asm.gen_instr(AsmInstrType::La, vec!(store_addr.as_str(), pure_ptr), None, vec!());
-                    asm.gen_instr(AsmInstrType::Store, vec!(final_value.as_str(), store_addr.as_str(), "0", prefix), Some(NORMAL_WIDTH), vec!());
-                } else {
-                    panic!("declaration of {} can not be found", ptr);
+                    asm.gen_instr(AsmInstrType::La, vec!(&store_addr, pure_ptr), None, vec!());
+                    asm.gen_instr(AsmInstrType::Store, vec!(&final_value, &store_addr, "0", prefix), Some(NORMAL_WIDTH), vec!());
                 }
             },
             Instruction::Load{res, ty, ptr, len: _} => {
                 let mut res_width = ty.width.clone();
-                let mut prefix = "";
-                if res_width == SymbolWidth::Float {
-                    prefix = FLOAT_PREFIX;
-                }
-                let mut width_num = Some(NORMAL_WIDTH);
-                if let SymbolWidth::Arr{tar: _, dims} = &ty.width {
-                    if dims[0] == -1 {
-                        res_width = SymbolWidth::I64;
-                        width_num = Some(PTR_WIDTH);
-                    }
-                }
+                let prefix = match &ty.width {
+                    SymbolWidth::Float => FLOAT_PREFIX,
+                    _ => ""
+                };
 
-                asm.insert_label_type(ptr.as_str(), SymbolWidth::I64);
-                asm.insert_label_type(res.as_str(), res_width);
+                let width_num = match &ty.width {
+                    SymbolWidth::Arr{tar: _, dims} => {
+                        //如果是指针
+                        if dims[0] == -1 {
+                            res_width = SymbolWidth::I64;
+                            Some(PTR_WIDTH)
+                        } else {
+                            Some(NORMAL_WIDTH)
+                        }
+                    },
+                    _ => Some(NORMAL_WIDTH)
+                };
 
-                // ptr的最终位置在dump时确定
+                asm.insert_label_type(ptr, SymbolWidth::I64);
+                asm.insert_label_type(res, res_width);
+
+                
                 let load_res = pop_temp_label(select_cnt, asm, ty.width.clone());
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr.as_str());
-                let pure_ptr = &ptr.as_str()[1..];
-                if is_num_label(ptr.as_str()) {
-                    asm.gen_instr(AsmInstrType::Load, vec!(load_res.as_str(), ptr.as_str(), "0", prefix), width_num, vec!());
+                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let pure_ptr = &ptr[1..];
+                //和store指令的步骤一样
+                if is_num_label(ptr) {
+                    //如果是llvm的临时标号，其实就是store分配出来的那些临时标号，比如%c_0，直接load即可。
+                    asm.gen_instr(AsmInstrType::Load, vec!(&load_res, ptr, "0", prefix), width_num, vec!());
                 } else if inside_stack {
-                    asm.gen_instr(AsmInstrType::Load, vec!(load_res.as_str(), "sp", ptr.as_str(), prefix), width_num, vec!());
+                    // 如果在函数的栈里面，则需要通过栈偏移来load，具体值需要到分配完栈大小才能确定
+                    asm.gen_instr(AsmInstrType::Load, vec!(&load_res, "sp", ptr, prefix), width_num, vec!());
                 } else if asm.data.labels.contains(pure_ptr) || asm.rodata.labels.contains(pure_ptr) {
+                    //如果是全局变量，比如说预先声明的一个int A。则需要用La指令来移动。
+                    //先加载到临时寄存器，再store到目标地址
                     let load_addr = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
-                    asm.gen_instr(AsmInstrType::La, vec!(load_addr.as_str(), pure_ptr), None, vec!());
-                    asm.gen_instr(AsmInstrType::Load, vec!(load_res.as_str(), load_addr.as_str(), "0", prefix), width_num, vec!());
-                } else {
-                    panic!("declaration of {} can not be found", ptr);
+                    asm.gen_instr(AsmInstrType::La, vec!(&load_addr, pure_ptr), None, vec!());
+                    asm.gen_instr(AsmInstrType::Load, vec!(&load_res, &load_addr, "0", prefix), width_num, vec!());
                 }
+                //如果是整数需要来一个符号扩展
                 if width_num == Some(NORMAL_WIDTH) && prefix == "" {
-                    asm.gen_instr(AsmInstrType::Sextw, vec!(res.as_str(), load_res.as_str()), None, vec!());
+                    asm.gen_instr(AsmInstrType::Sextw, vec!(res, &load_res), None, vec!());
                 } else {
+                    //
                     if prefix == FLOAT_PREFIX {
-                        asm.gen_instr(AsmInstrType::Fmv, vec!(res.as_str(), load_res.as_str()), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
+                    //是float，用fmv
+                        asm.gen_instr(AsmInstrType::Fmv, vec!(res, &load_res), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
                     } else {
-                        asm.gen_instr(AsmInstrType::Mv, vec!(res.as_str(), load_res.as_str()), None, vec!());
+                    //是64位指针，使用mov指令
+                        asm.gen_instr(AsmInstrType::Mv, vec!(res, &load_res), None, vec!());
                     }
                 }
             },
@@ -762,32 +787,36 @@ impl Instruction {
                 }
             },
             Instruction::ZeroExt(CastOp{res, type_1: _, val, type_2: _}) => {
-                asm.insert_label_type(res.as_str(), SymbolWidth::I32);
-                asm.gen_instr(AsmInstrType::Mv, vec!(res.as_str(), val.as_str()), None, vec!());
+                asm.insert_label_type(res, SymbolWidth::I32);
+                asm.gen_instr(AsmInstrType::Mv, vec!(res, val.as_str()), None, vec!());
             },
             Instruction::I32ToFloat(CastOp{res, type_1, val, type_2}) | Instruction::FloatToI32(CastOp{res, type_1, val, type_2})=> {
-                asm.insert_label_type(res.as_str(), type_2.width.clone());
-                asm.gen_instr(AsmInstrType::Fcvt, vec!(res.as_str(), val.as_str()), None, vec!(type_2.width.clone(), type_1.width.clone()));
+                asm.insert_label_type(res, type_2.width.clone());
+                asm.gen_instr(AsmInstrType::Fcvt, vec!(res, val.as_str()), None, vec!(type_2.width.clone(), type_1.width.clone()));
             },
             Instruction::BitCast(res, _, ptr, _) => {
-                asm.insert_label_type(res.as_str(), SymbolWidth::I64);
+                asm.insert_label_type(res, SymbolWidth::I64);
                 let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr.as_str());
                 if inside_stack { // 在栈内
                     let ptr_pos = format!("#{}", ptr);
-                    asm.gen_instr(AsmInstrType::Addi, vec!(res.as_str(), "sp", ptr_pos.as_str()), None, vec!());
+                    asm.gen_instr(AsmInstrType::Addi, vec!(res, "sp", ptr_pos.as_str()), None, vec!());
                 } else {
                     if asm.rodata.labels.contains(ptr.as_str()) || asm.data.labels.contains(ptr.as_str()) {
-                        asm.gen_instr(AsmInstrType::La, vec!(res.as_str(), ptr.as_str()), None, vec!());
+                        asm.gen_instr(AsmInstrType::La, vec!(res, ptr.as_str()), None, vec!());
                     } else {
-                        asm.gen_instr(AsmInstrType::Mv, vec!(res.as_str(), ptr.as_str()), None, vec!());
+                        asm.gen_instr(AsmInstrType::Mv, vec!(res, ptr.as_str()), None, vec!());
                     }
                 }
             },
             Instruction::GetElemPtr(dst, SymbolType{width: SymbolWidth::Arr{tar: _, dims}, is_const: _}, ptr, idx) => {
-                asm.insert_label_type(dst.as_str(), SymbolWidth::I64);
+                //把dst和I64类型做map映射
+                asm.insert_label_type(dst, SymbolWidth::I64);
 
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr.as_str());
+                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
                 let start_addr: String;
+
+                //接下来的一个大if，目的是设置开始的地址
+                //如果是临时标号
                 if is_num_label(ptr) {
                     start_addr = String::from(ptr);
                     if idx.len() == 1 {
@@ -800,12 +829,21 @@ impl Instruction {
 	                            asm.gen_instr(AsmInstrType::Li, vec!(li_res.as_str(), this_idx.as_str()), None, vec!());
 	                            asm.gen_instr(AsmInstrType::Add, vec!(dst.as_str(), start_addr.as_str(), li_res.as_str()), None, vec!());
 	                        } else {
-	                            let size_str = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
-	                            let this_idx = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
+	                            
 	                            let size = format!("{}", size);
-	                            asm.gen_instr(AsmInstrType::Li, vec!(size_str.as_str(), size.as_str()), None, vec!());
-	                            asm.gen_instr(AsmInstrType::Mul, vec!(this_idx.as_str(), idx[0].as_str(), size_str.as_str()), Some(PTR_WIDTH), vec!());
-	                            asm.gen_instr(AsmInstrType::Add, vec!(dst.as_str(), start_addr.as_str(), this_idx.as_str()), None, vec!());
+                                let this_idx = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
+                                match is_poweroftwo(&size) {
+                                    Some(pow) => {
+                                        asm.gen_instr(AsmInstrType::Slli, vec![&this_idx, idx[0].as_str(), &pow.to_string()], None, vec![]);
+                                        asm.gen_instr(AsmInstrType::Add, vec!(dst, &start_addr, &this_idx), None, vec!());
+                                    },
+                                    None => {
+                                        let size_str = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
+                                        asm.gen_instr(AsmInstrType::Li, vec!(size_str.as_str(), size.as_str()), None, vec!());
+	                                    asm.gen_instr(AsmInstrType::Mul, vec!(this_idx.as_str(), idx[0].as_str(), size_str.as_str()), Some(PTR_WIDTH), vec!());
+	                                    asm.gen_instr(AsmInstrType::Add, vec!(dst.as_str(), start_addr.as_str(), this_idx.as_str()), None, vec!());
+                                    }
+                                }
 	                        }
                         } else {
                             asm.gen_instr(AsmInstrType::Mv, vec!(dst.as_str(), ptr.as_str()), None, vec!());
@@ -813,6 +851,7 @@ impl Instruction {
                         return;
                     }
                 } else {
+                    //设置为栈指针（"sp"）加上ptr的偏移量
                     if inside_stack { // 在栈内
                         let ptr_pos = format!("#{}", ptr);
                         if idx.len() == 1 {
@@ -822,6 +861,7 @@ impl Instruction {
                         start_addr = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
                         asm.gen_instr(AsmInstrType::Addi, vec!(start_addr.as_str(), "sp", ptr_pos.as_str()), None, vec!());
                     } else {
+                        //如果是全局变量的标签，直接La
                         let pure_ptr = &ptr[1..];
                         if asm.rodata.labels.contains(pure_ptr) || asm.data.labels.contains(pure_ptr) {
                             if idx.len() == 1 {
@@ -836,10 +876,18 @@ impl Instruction {
                     }
                 } // else
 
+                //根据数组的维度情况和指定的索引生成相应的指令。
+                //使用一个循环来处理每个索引。循环的计数变量是cnt，从1到idx.len() - 1。
+                
+                
+                
+                //最后，将next_addr赋值给last_addr，继续下一次循环。
+                //综上所述，这段代码的作用是根据给定的指令信息生成相应的汇编指令，用于计算多维数组中指定索引的元素的内存地址。
                 let mut last_addr = start_addr;
                 let mut left_size = dims.iter().map(|d| *d as usize).product::<usize>() * 4;
                 let mut next_addr: String;
                 for cnt in 1..idx.len() {
+                    //首先计算剩余的大小left_size，即当前维度及后续维度的元素个数。
                     left_size /= dims[cnt-1] as usize;
 
                     if cnt == idx.len() - 1 {
@@ -847,6 +895,8 @@ impl Instruction {
                     } else {
                         next_addr = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
                     }
+                    //根据索引是否为立即数，生成相应的指令。
+                    //如果索引是立即数，代码会计算出对应的偏移量this_idx，并根据偏移量是否为0生成相应的指令。
                     if is_immediate(idx[cnt].as_str()) {
                         let this_idx = idx[cnt].parse::<usize>().unwrap() * left_size;
                         if this_idx == 0 {
@@ -858,15 +908,26 @@ impl Instruction {
                             asm.gen_instr(AsmInstrType::Add, vec!(next_addr.as_str(), last_addr.as_str(), index.as_str()), None, vec!());
                         }
                     } else {
+                        //如果索引不是立即数，则生成一系列指令来计算偏移量。
+                        //首先，生成一条Li指令，将left_size加载到一个临时寄存器base中。
+                        //然后，生成一条Mul指令，将索引乘以base，结果存储在另一个临时寄存器index中。最后，生成一条Add指令，将last_addr加上index，结果存储在next_addr中。
                         if left_size == 0 {
                             asm.gen_instr(AsmInstrType::Mv, vec!(next_addr.as_str(), last_addr.as_str()), None, vec!());
                         } else {
                             let left_size_str = format!("{}", left_size);
-                            let base = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
                             let index = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
-                            asm.gen_instr(AsmInstrType::Li, vec!(base.as_str(), left_size_str.as_str()), None, vec!());
-                            asm.gen_instr(AsmInstrType::Mul, vec!(index.as_str(), idx[cnt].as_str(), base.as_str()), Some(NORMAL_WIDTH), vec!());
-                            asm.gen_instr(AsmInstrType::Add, vec!(next_addr.as_str(), last_addr.as_str(), index.as_str()), None, vec!());
+                            match is_poweroftwo(&left_size_str) {
+                                Some(pow) => {
+                                    asm.gen_instr(AsmInstrType::Slli, vec![&index, idx[0].as_str(), &pow.to_string()], None, vec![]);
+                                    asm.gen_instr(AsmInstrType::Add, vec!(next_addr.as_str(), last_addr.as_str(), index.as_str()), None, vec!());
+                                },
+                                None => {
+                                    let base = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
+                                    asm.gen_instr(AsmInstrType::Li, vec!(base.as_str(), left_size_str.as_str()), None, vec!());
+                                    asm.gen_instr(AsmInstrType::Mul, vec!(index.as_str(), idx[cnt].as_str(), base.as_str()), Some(NORMAL_WIDTH), vec!());
+                                    asm.gen_instr(AsmInstrType::Add, vec!(next_addr.as_str(), last_addr.as_str(), index.as_str()), None, vec!());
+                                }
+                            }
                         }
                     }
                     last_addr = next_addr;

@@ -79,7 +79,9 @@ impl RiscV {
         for func in self.text.funcs.iter_mut() {
             let mut allocator = Alloc::new();
             allocator.alloc_regs(func);
+            //把虚拟寄存器更改为物理寄存器
             func.assign_register(allocator.get_alloc_res());
+            //
             func.unfold_call(&mut self.rodata, allocator.get_alloc_res());
             func.rewrite_spilled(allocator.get_spilled());
         }
@@ -186,9 +188,9 @@ impl AsmFunc {
                 } else {
                     return;
                 }
-            } // loop
-        } // for block
-    } // fn
+            }
+        }
+    }
 
     fn unfold_ret(&mut self, rodata: &mut RoDataSection) {
         for block in self.blocks.iter_mut() {
@@ -363,7 +365,7 @@ impl AsmBlock {
 	        }
 	    }
 
-        // 计算所有存储参数的寄存器
+        // 获取存储参数的寄存器，并把它加入invalid_regs的集合中
         let mut int_pos = 0;
         let mut float_pos = 0;
         let mut invalid_regs = HashSet::new();
