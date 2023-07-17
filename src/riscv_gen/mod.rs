@@ -19,7 +19,7 @@ pub fn emit_asm(program: &LLVMProgram) -> RiscV {
     asm.save_registers();
     asm.deterministic_stack();
     asm.stack_alloc_free();
-    asm.adapt_stack_address();
+    asm.map_stack_address();
     asm.unfold_ret();
     asm
 }

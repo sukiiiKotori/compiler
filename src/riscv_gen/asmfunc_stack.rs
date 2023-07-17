@@ -91,8 +91,8 @@ impl AsmFunc {
             }
         }
     }
-    /// 适配栈sp相关的立即数寻址范围
-    pub fn adapt_stack_address(&mut self) {
+    /// 映射栈sp相关的地址
+    pub fn map_stack_address(&mut self) {
         // 遍历所有的代码块
         for block in self.blocks.iter_mut() {
             let len = block.instrs.len();
