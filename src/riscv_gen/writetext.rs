@@ -301,7 +301,7 @@ impl AsmInstr {
             AsmInstr::Jump(dst) => {
                 write!(output, "\tj\t{}\n", dst).unwrap();
             },
-            AsmInstr::Ret(_) => {
+            AsmInstr::Ret() => {
                 write!(output, "\tret\n").unwrap();
             },
             AsmInstr::Call(_, func_name, _, _) => {

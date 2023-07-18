@@ -199,7 +199,7 @@ pub enum AsmInstr {
     Branch(CondTriInstr),
     Jump(String),
     //ret指令，返回值可无
-    Ret(String),
+    Ret(),
     Call(String, String, Vec<String>, Vec<SymbolWidth>),
 }
 

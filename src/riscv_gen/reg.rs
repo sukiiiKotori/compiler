@@ -249,7 +249,7 @@ impl AsmBlock {
             .enumerate()
             .filter_map(|(idx, instr)| {
                 match instr {
-                    AsmInstr::Ret(_) => Some(idx),
+                    AsmInstr::Ret() => Some(idx),
                     _ => None,
                 }
             })
@@ -353,7 +353,7 @@ impl AsmInstr {
                 (None, vec!(output.unwrap()))
             }
             AsmInstr::Jump(_) => (None, vec!()),
-            AsmInstr::Ret(ret_val) => (None, vec!(ret_val.as_str())),
+            AsmInstr::Ret() => (None, vec!()),
             AsmInstr::Call(ret, _, params, _) => (Some(ret.as_str()), params.iter().map(|s| s.as_str()).collect()),
         }
     }

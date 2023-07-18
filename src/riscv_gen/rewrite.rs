@@ -131,11 +131,6 @@ impl AsmInstr {
                     }
                 }
             },
-            AsmInstr::Ret(ret_val) => {
-                if filter_type(AsmInstrType::Ret) {
-                    map_labels(None, vec!(ret_val));
-                }
-            },
             AsmInstr::Jump(dst) => {
                 if filter_type(AsmInstrType::Jump) {
                     map_labels(None, vec!(dst));
@@ -146,6 +141,7 @@ impl AsmInstr {
                     map_labels(Some(ret_val), params.iter_mut().collect());
                 }
             },
+            _ => panic!("ret instr should not be rewrited!")
         }
     }
 }

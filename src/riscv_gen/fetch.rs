@@ -36,7 +36,7 @@ impl AsmInstr {
             AsmInstr::Load(_, _) => AsmInstrType::Load,
             AsmInstr::Branch(_) => AsmInstrType::Branch,
             AsmInstr::Jump(_) => AsmInstrType::Jump,
-            AsmInstr::Ret(_) => AsmInstrType::Ret,
+            AsmInstr::Ret() => AsmInstrType::Ret,
             AsmInstr::Call(_, _, _, _) => AsmInstrType::Call,
         }
     }
@@ -86,12 +86,8 @@ impl AsmInstr {
             AsmInstr::Jump(dst) => {
                 (AsmInstrType::Jump, vec!(dst.as_str()), vec!(), vec!())
             },
-            AsmInstr::Ret(ret_val) => {
-                if ret_val == "" {
-                    (AsmInstrType::Ret, vec!(), vec!(), vec!())
-                } else {
-                    (AsmInstrType::Ret, vec!(ret_val.as_str()), vec!(), vec!())
-                }
+            AsmInstr::Ret() => {
+                (AsmInstrType::Ret, vec!(), vec!(), vec!())
             }
             AsmInstr::Call(ret_val, func_name, params, ty_vec) => {
                 let mut str_vec = vec!(ret_val.as_str(), func_name.as_str());

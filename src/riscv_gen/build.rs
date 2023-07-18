@@ -429,13 +429,7 @@ impl AsmInstr {
             AsmInstrType::Load => AsmInstr::Load(MemInstr::new(width_num.unwrap(), str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
             AsmInstrType::Branch => AsmInstr::Branch(CondTriInstr::new(str_vec[0], None, str_vec[1], str_vec[2], str_vec[3])),
             AsmInstrType::Jump => AsmInstr::Jump(String::from(str_vec[0])),
-            AsmInstrType::Ret => {
-                if str_vec.is_empty() {
-                    AsmInstr::Ret(String::from(""))
-                } else {
-                    AsmInstr::Ret(String::from(str_vec[0]))
-                }
-            },
+            AsmInstrType::Ret => AsmInstr::Ret(),
             AsmInstrType::Call => {
                 AsmInstr::Call(String::from(str_vec[0]), String::from(str_vec[1]), str_vec.into_iter().skip(2).map(|s| String::from(s)).collect(), ty_vec)
             },

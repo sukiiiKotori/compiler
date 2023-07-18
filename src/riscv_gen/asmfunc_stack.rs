@@ -44,7 +44,7 @@ impl AsmFunc {
 
             // 获取代码块中的最后一条指令
             let last_instr = block.instrs.last();
-            if let Some(AsmInstr::Ret(ret_val)) = last_instr {
+            if let Some(AsmInstr::Ret()) = last_instr {
                 // 如果堆栈帧大小大于0
                 if self.stack.frame_size > 0 {
                     let before_last = block.instrs.len() - 1;

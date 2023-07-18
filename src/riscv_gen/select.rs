@@ -806,11 +806,6 @@ impl Instruction {
                     }
                 }
                 asm.gen_instr(AsmInstrType::Ret, vec!(), None, vec!()); 
-                /*if let Some(ret_val) = ret_val {
-                    asm.gen_instr(AsmInstrType::Ret, vec!(ret_val.as_str()), None, vec!());
-                } else {
-                    asm.gen_instr(AsmInstrType::Ret, vec!(), None, vec!());
-                }*/
             },
             Instruction::ZeroExt(CastOp{res, type_1: _, val, type_2: _}) => {
                 asm.insert_label_type(res, SymbolWidth::I32);
