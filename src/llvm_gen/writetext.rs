@@ -169,47 +169,24 @@ impl Block {
 }
 
 impl WriteText for Instruction {
-    //对于各个指令的dump，具体需要调用每种指令的dump
-    //1、对于二元指令，首先输出每种具体的指令头，例如 result = 'op' {}, 然后调用公共的dump函数
-    //2、对于
+    //对于各个指令的writetext，具体需要调用每种指令的writetext
     fn writetext(&self, output: &mut impl Write) {
+        //1、对于二元指令，首先输出每种具体的指令头，例如 result = 'op', 然后调用公共的writetext函数
+        fn bin_op_write(output: &mut impl Write, bin_op: &BinaryOp, name: &str) {
+            write!(output, "  {} = {} ", bin_op.res, name).unwrap();
+            bin_op.writetext(output);
+        }
         match self {
-            Instruction::Add(bin_op) => {
-                write!(output, "  {} = add ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Sub(bin_op) => {
-                write!(output, "  {} = sub ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Mul(bin_op) => {
-                write!(output, "  {} = mul ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Sdiv(bin_op) => {
-                write!(output, "  {} = sdiv ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Srem(bin_op) => {
-                write!(output, "  {} = srem ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fadd(bin_op) => {
-                write!(output, "  {} = fadd ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fsub(bin_op) => {
-                write!(output, "  {} = fsub ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fmul(bin_op) => {
-                write!(output, "  {} = fmul ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fdiv(bin_op) => {
-                write!(output, "  {} = fdiv ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
+            // 1、二元指令
+            Instruction::Add(bin_op) => bin_op_write(output, bin_op, "add"),
+            Instruction::Sub(bin_op) => bin_op_write(output, bin_op, "sub"),
+            Instruction::Mul(bin_op) => bin_op_write(output, bin_op, "mul"),
+            Instruction::Sdiv(bin_op) => bin_op_write(output, bin_op, "sdiv"),
+            Instruction::Srem(bin_op) => bin_op_write(output, bin_op, "srem"),
+            Instruction::Fadd(bin_op) => bin_op_write(output, bin_op, "fadd"),
+            Instruction::Fsub(bin_op) => bin_op_write(output, bin_op, "fsub"),
+            Instruction::Fmul(bin_op) => bin_op_write(output, bin_op, "fmul"),
+            Instruction::Fdiv(bin_op) => bin_op_write(output, bin_op, "fdiv"),
             Instruction::Cmp(cond, bin_op) => {
                 write!(output, "  {} = icmp {} ", bin_op.res, cond).unwrap();
                 bin_op.writetext(output);
