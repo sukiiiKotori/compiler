@@ -1,6 +1,7 @@
 #!/bin/bash
 
-riscv64-linux-gnu-gcc -c ./libsysy/sylib.c -o ./libsysy/sylib.o
+riscv64-linux-gnu-gcc -c -fPIC ./libsysy/sylib.c -o ./libsysy/sylib.o
+riscv64-linux-gnu-ar -rc ./libsysy/libsysy.a ./libsysy/sylib.o
 
 mkdir -p ./functional_s
 mkdir -p ./functional_elf
@@ -18,7 +19,8 @@ done
 
 for file in functional_s/*.s; 
 do
-    riscv64-linux-gnu-gcc "$file" ./libsysy/sylib.o -o "${file%.s}"
+    #sed -i '/memset/d' "$file"
+    riscv64-linux-gnu-gcc "$file" ./libsysy/libsysy.a -o "${file%.s}"
     mv "${file%.s}" ./functional_elf
 done
 
