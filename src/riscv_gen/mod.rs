@@ -20,6 +20,6 @@ pub fn emit_asm(program: &LLVMProgram) -> RiscV {
     asm.deterministic_stack();
     asm.stack_alloc_free();
     asm.map_stack_address();
-    //asm.mv_to_ra();//处理返回值寄存器
+    asm.mv_to_ra();//处理返回值寄存器
     asm
 }

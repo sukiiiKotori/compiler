@@ -781,7 +781,7 @@ impl Instruction {
                 }
             },
             Instruction::Ret(ret_type, ret_val) => {
-                if let Some(ret_val) = ret_val {
+                /* if let Some(ret_val) = ret_val {
                     match ret_type.width {
                         SymbolWidth::I32 => {
                             if is_immediate(ret_val) {
@@ -805,7 +805,12 @@ impl Instruction {
                         _ => panic!("Error ret type")
                     }
                 }
-                asm.gen_instr(AsmInstrType::Ret, vec!(), None, vec!());
+                asm.gen_instr(AsmInstrType::Ret, vec!(), None, vec!()); */
+                if let Some(ret_val) = ret_val {
+                    asm.gen_instr(AsmInstrType::Ret, vec!(ret_val.as_str()), None, vec!());
+                } else {
+                    asm.gen_instr(AsmInstrType::Ret, vec!(), None, vec!());
+                }
             },
             Instruction::ZeroExt(CastOp{res, type_1: _, val, type_2: _}) => {
                 asm.insert_label_type(res, SymbolWidth::I32);
