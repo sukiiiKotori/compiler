@@ -9,7 +9,8 @@ pub struct RiscV {
     // 文本段
     pub data: DataSection,
     // 数据段
-    pub rodata: RoDataSection,    // 只读数据段
+    pub rodata: RoDataSection,    
+    // 只读数据段，常量如浮点立即数存储在这
 }
 
 /// 表示RISC-V汇编代码中的只读数据段。
@@ -53,8 +54,8 @@ pub struct TextSection {
 pub struct AsmFunc {
     pub label: String,
     // 标签
-    pub ty: SymbolWidth,
-    // 宽度
+    pub ret_type: SymbolWidth,
+    // 返回值类型
     pub stack: StackSlot,
     // 栈插槽
     pub blocks: Vec<AsmBlock>,
@@ -180,6 +181,7 @@ pub enum AsmInstr {
     Fsub(TriInstr),
     Fmul(TriInstr),
     Fdiv(TriInstr),
+    //类型转换指令
     Fcvt(BinInstr, SymbolWidth, SymbolWidth),
     // Compare
     Slt(TriInstr),
@@ -196,6 +198,7 @@ pub enum AsmInstr {
     // Branch-Jump
     Branch(CondTriInstr),
     Jump(String),
+    //ret指令，返回值可无
     Ret(String),
     Call(String, String, Vec<String>, Vec<SymbolWidth>),
 }

@@ -1,6 +1,7 @@
 use std::iter::zip;
 use std::collections::{HashSet, HashMap, BTreeSet};
 use crate::utils::check::*;
+use crate::utils::float::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::riscv_regs::*;
 use crate::structures::symbol::*;
@@ -87,10 +88,8 @@ impl RiscV {
         }
     }
 
-    pub fn mv_to_retreg(&mut self) {
-        for func in self.text.funcs.iter_mut() {
-            func.mv_to_retreg(&mut self.rodata);
-        }
+    pub fn mv_to_ra(&mut self) {
+        self.text.funcs.iter_mut().for_each(|func| func.mv_to_ra(&mut self.rodata));
     } 
 } // imp
 
@@ -139,10 +138,10 @@ impl TextSection {
 }
 
 impl AsmFunc {
-    pub fn new(label: &str, ty: SymbolWidth) -> Self {
+    pub fn new(label: &str, ret_type: SymbolWidth) -> Self {
         AsmFunc{
             label: String::from(label), 
-            ty: ty,
+            ret_type,
             stack: StackSlot::new(), 
             blocks: Vec::new(),
             params: HashMap::new(),
@@ -192,10 +191,8 @@ impl AsmFunc {
         }
     }
 
-    fn mv_to_retreg(&mut self, rodata: &mut RoDataSection) {
-        for block in self.blocks.iter_mut() {
-            block.mv_to_retreg(rodata, &self.ty);
-        }
+    fn mv_to_ra(&mut self, rodata: &mut RoDataSection) {
+        self.blocks.iter_mut().for_each(|block| block.mv_to_ra(rodata, &self.ret_type))
     }
 }
 
@@ -249,7 +246,6 @@ impl AsmBlock {
         position: usize, 
         context: &mut UnfoldCallContext<'a>,
     ) {
-        use crate::utils::float::double_to_float;
 	    if context.float_cnt >= FLOAT_FUNC_ARG.len() {
 	        context.stack_len += 4;
             let stack_pos = format!("-{}", context.stack_len);
@@ -405,39 +401,59 @@ impl AsmBlock {
 	    }
     }
 
-    fn mv_to_retreg(&mut self, rodata: &mut RoDataSection, ty: &SymbolWidth) {
-        use crate::utils::float::double_to_float;
-        if self.instrs.is_empty() {
-            return;
-        }
-        if let AsmInstr::Ret(ret_val) = self.instrs.last().unwrap() {
-            let ret_val = String::from(ret_val);
-            let len = self.instrs.len();
-            //如果有返回值，则需要往a0或者fa0里写东西
-            if !ret_val.is_empty() {
-                //如果返回值是float类型的, 则需要使用fa0寄存器
-                if *ty == SymbolWidth::Float {
-                    //如果float是立即数，则需要使用La指令
-                    if is_immediate(&ret_val) {
-                        let imm = double_to_float(&ret_val);
-                        let imm_id = rodata.push_float_imm(&imm);
-                        let imm_label = RoDataSection::format_float_imm(imm_id);
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], RETURN[0], "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::La, vec!(RETURN[0], imm_label.as_str()), None, vec!()));
-                    } else {
-                        //否则使用fmv即可
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], ret_val.as_str()), None, vec!(SymbolWidth::Float, SymbolWidth::Float)));
+    fn mv_to_ra(&mut self, rodata: &mut RoDataSection, ret_type: &SymbolWidth) {
+        //如果基本块内没指令，则无需进行处理
+        /* if !self.instrs.is_empty() {
+            if let AsmInstr::Ret(ret_value) = self.instrs.last().unwrap() {
+                //如果有返回值，则需要往a0或者fa0里写东西
+                if let Some(ret_value) = ret_value {
+                    match ret_type {
+                        //如果返回值是float类型的, 使用fa0寄存器
+                        SymbolWidth::Float => {
+                            //如果是浮点的立即数，需要在rodata段就把它声明
+                            if is_immediate(ret_value) {
+                                //llvm ir的前端float立即数是64bit的IEEE double(是规定，我也不懂为什么)
+                                //但是riscv asm又需要变回IEEE float
+                                //所以这一调用一个parse double to float
+                                let imm_float_ieee = double_to_float(ret_value);
+                                //浮点立即数需要在asm的rodata段插入一个标签，此时需要分配一个id
+                                let imm_float_id = rodata.push_float_imm(&imm_float_ieee);
+                                //生成一个浮点立即数在rodata段的标签
+                                let imm_float_label = format!(".float{}",imm_float_id);
+                            }
+                        }
+                        SymbolWidth::I32 => {
+
+                        }
+                        _ => panic!("illegal_ret_type")
                     }
-                } else {
-                    //如果是i32
-                    if is_immediate(&ret_val) {
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Li, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
+
+
+
+
+                    if *ty == SymbolWidth::Float {
+                        //如果float是立即数，则需要使用La指令
+                        if is_immediate(&ret_val) {
+                            let imm = double_to_float(&ret_val);
+                            let imm_id = rodata.push_float_imm(&imm);
+                            let imm_label = RoDataSection::format_float_imm(imm_id);
+                            self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], RETURN[0], "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
+                            self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::La, vec!(RETURN[0], imm_label.as_str()), None, vec!()));
+                        } else {
+                            //否则使用fmv即可
+                            self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], ret_val.as_str()), None, vec!(SymbolWidth::Float, SymbolWidth::Float)));
+                        }
                     } else {
-                        self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Mv, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
+                        //如果是i32
+                        if is_immediate(&ret_val) {
+                            self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Li, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
+                        } else {
+                            self.instrs.insert(len-1, AsmInstr::make_instr(AsmInstrType::Mv, vec!(RETURN[0], ret_val.as_str()), None, vec!()));
+                        }
                     }
                 }
             }
-        }
+        } */
     }
 }
 

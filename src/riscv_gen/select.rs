@@ -1,4 +1,5 @@
 use crate::utils::check::*;
+use crate::utils::float::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
@@ -779,12 +780,32 @@ impl Instruction {
                     }
                 }
             },
-            Instruction::Ret(_, ret_val) => {
+            Instruction::Ret(ret_type, ret_val) => {
                 if let Some(ret_val) = ret_val {
-                    asm.gen_instr(AsmInstrType::Ret, vec!(ret_val.as_str()), None, vec!());
-                } else {
-                    asm.gen_instr(AsmInstrType::Ret, vec!(), None, vec!());
+                    match ret_type.width {
+                        SymbolWidth::I32 => {
+                            if is_immediate(ret_val) {
+                                asm.gen_instr(AsmInstrType::Li, vec!(RETURN[0], &ret_val), None, vec!());
+                            } else {
+                                asm.gen_instr(AsmInstrType::Mv, vec!(RETURN[0], &ret_val), None, vec!());
+                            }
+                        }
+                        SymbolWidth::Float => {
+                            if is_immediate(ret_val) {
+                                let tmp_reg = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
+                                let imm = double_to_float(&ret_val);
+                                let imm_id = asm.rodata.push_float_imm(imm.as_str());
+                                let imm_label = RoDataSection::format_float_imm(imm_id);
+                                asm.gen_instr(AsmInstrType::La, vec!(&tmp_reg, &imm_label), None, vec!());
+                                asm.gen_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], &tmp_reg, "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!());
+                            } else {
+                                asm.gen_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], &ret_val), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
+                            }
+                        }
+                        _ => panic!("Error ret type")
+                    }
                 }
+                asm.gen_instr(AsmInstrType::Ret, vec!(), None, vec!());
             },
             Instruction::ZeroExt(CastOp{res, type_1: _, val, type_2: _}) => {
                 asm.insert_label_type(res, SymbolWidth::I32);
