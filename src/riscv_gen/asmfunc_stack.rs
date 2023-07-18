@@ -58,34 +58,18 @@ impl AsmFunc {
                             vec!()
                         ));
                     } else {
-                        // 看返回值使用了哪个寄存器
-                        if ret_val == FUNC_ARG[0] {
-                            block.instrs.insert(before_last, AsmInstr::make_instr(
-                                AsmInstrType::Add,
-                                vec!("sp", "sp", TEMPORARY[0]),
-                                None,
-                                vec!()
-                            ));
-                            block.instrs.insert(before_last, AsmInstr::make_instr(
-                                AsmInstrType::Li,
-                                vec!(TEMPORARY[0], free_size.as_str()),
-                                None,
-                                vec!()
-                            ));
-                        } else {
-                            block.instrs.insert(before_last, AsmInstr::make_instr(
-                                AsmInstrType::Add,
-                                vec!("sp", "sp", FUNC_ARG[0]),
-                                None,
-                                vec!()
-                            ));
-                            block.instrs.insert(before_last, AsmInstr::make_instr(
-                                AsmInstrType::Li,
-                                vec!(FUNC_ARG[0], free_size.as_str()),
-                                None,
-                                vec!()
-                            ));
-                        }
+                        block.instrs.insert(before_last, AsmInstr::make_instr(
+                            AsmInstrType::Add,
+                            vec!("sp", "sp", TEMPORARY[0]),
+                            None,
+                            vec!()
+                        ));
+                        block.instrs.insert(before_last, AsmInstr::make_instr(
+                            AsmInstrType::Li,
+                            vec!(TEMPORARY[0], free_size.as_str()),
+                            None,
+                            vec!()
+                        ));
                     }
                 }
             }
