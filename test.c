@@ -60,7 +60,7 @@ int main(){
         cns[list[i]] = cns[list[i]] + 1;
         i = i + 1;
     }
-
+}
 // int main() {
 //     int a = 4;
 //     int b = a * -8.0;
