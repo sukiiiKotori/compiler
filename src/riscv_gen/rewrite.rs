@@ -141,7 +141,7 @@ impl AsmInstr {
                     map_labels(Some(ret_val), params.iter_mut().collect());
                 }
             },
-            _ => panic!("ret instr should not be rewrited!")
+            _ => {}
         }
     }
 }
