@@ -1,3 +1,4 @@
+use std::fmt::format;
 use std::iter::zip;
 use std::collections::{HashSet, HashMap, BTreeSet};
 use crate::utils::check::*;
@@ -93,10 +94,7 @@ impl RoDataSection {
             float_imm_cnt: 0,
         }
     }
-    /// 格式化浮点数立即数的标签
-    pub fn format_float_imm(id: usize) -> String {
-        format!("float_imm.{}", id)
-    }
+    
     /// 将浮点数立即数添加到rodata段中，并返回其对应的标签id
     pub fn push_float_imm(&mut self, imm: &str) -> String {
         if self.labels.contains(imm) {
@@ -106,7 +104,7 @@ impl RoDataSection {
             let id = self.float_imm_cnt;
             self.float_imm_cnt += 1;
             // 格式化浮点数立即数的标签
-            let imm_label = Self::format_float_imm(id);
+            let imm_label = format!(".float{}",id);
             // 将浮点数立即数添加到数据段中，使用初始值为imm的DataSectionItem
             self.datas.push(DataSectionItem{
                 label: imm_label.clone(),
