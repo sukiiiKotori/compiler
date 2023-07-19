@@ -14,6 +14,7 @@ pub const NORMAL_WIDTH: isize = 4;
 pub const PTR_WIDTH: isize = 8;
 
 impl RiscV {
+    /// 创建一个新的RiscV结构体实例，并初始化各个部分的数据结构
     pub fn new() -> Self {
         RiscV {
             text: TextSection::new(),
@@ -21,33 +22,35 @@ impl RiscV {
             rodata: RoDataSection::new(),
         }
     }
-    
+    /// 向text段的函数列表中添加一个新的函数,使用给定的函数标签和函数类型
     pub fn push_func(&mut self, func_label: &str, func_type: SymbolWidth) {
         self.text.funcs.push(AsmFunc::new(func_label, func_type));
     }
-
+    /// 向代码块列表中添加一个新的代码块，使用给定的代码块标签和深度
     pub fn push_block(&mut self, block_label: &str, depth: usize) {
+        
         let curr_func = self.text.curr_func();
         curr_func.push_block(block_label, depth);
     }
-
+    /// 获取当前正在处理的函数和代码块，并向当前代码块的指令列表中添加一个新的指令
     pub fn push_instr(&mut self, instr: AsmInstr) {
         let curr_func = self.text.curr_func();
         let curr_block = curr_func.curr_block();
         curr_block.push_instr(instr);
     }
-
+    /// 根据给定的指令类型、字符串向量、宽度数值和类型向量生成一个新的指令<br>
+    /// 并将其添加到当前代码块的指令列表中
     pub fn gen_instr(&mut self, ty: AsmInstrType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) {
         let instr = AsmInstr::make_instr(ty, str_vec, width_num, ty_vec);
         self.push_instr(instr);
     }
-    
+    /// 获取当前正在处理的函数和代码块，并向当前代码块的后继列表中添加一个新的后继标签
     pub fn push_successor(&mut self, succ: &str) {
         let curr_func = self.text.curr_func();
         let curr_block = curr_func.curr_block();
         curr_block.push_successor(succ);
     }
-
+    /// 向data段的全局变量列表中添加一个新的全局变量，使用给定的标签、类型和初始值向量
     pub fn push_global_var(&mut self, label: &str, ty: &SymbolType, init_vals: Vec<&str>) {
         self.data.labels.insert(String::from(label));
         let val_vec = init_vals.iter().map(|v| String::from(*v)).collect::<Vec<_>>();
@@ -57,7 +60,7 @@ impl RiscV {
             init_vals: val_vec,
         });
     }
-
+    /// 向rodata段的全局常量列表中添加一个新的全局常量，使用给定的标签、类型和初始值向量
     pub fn push_global_const(&mut self, label: &str, ty: &SymbolType, init_vals: Vec<&str>) {
         self.data.labels.insert(String::from(label));
         let val_vec = init_vals.iter().map(|v| String::from(*v)).collect::<Vec<_>>();
@@ -67,29 +70,31 @@ impl RiscV {
             init_vals: val_vec,
         });
     }
-    
+    /// 标记当前正在处理的函数为调用函数
     pub fn mark_call(&mut self) {
         self.text.funcs.last_mut().unwrap().mark_call();
     }
-
+    /// 向当前正在处理的函数的标签类型映射中插入一个新的标签和类型的对应关系
     pub fn insert_label_type(&mut self, label: &str, width: SymbolWidth) {
         self.text.funcs.last_mut().unwrap().label_type.insert(String::from(label), width);
     }
-
+    /// 对每个函数进行寄存器分配
     pub fn alloc_regs<Alloc: RegisterAllocator>(&mut self) {
         for func in self.text.funcs.iter_mut() {
             let mut allocator = Alloc::new();
             allocator.alloc_regs(func);
             //把虚拟寄存器更改为物理寄存器
             func.assign_register(allocator.get_alloc_res());
-            //
+            // 展开函数调用，使用分配的寄存器
             func.unfold_call(&mut self.rodata, allocator.get_alloc_res());
+            // 对溢出的寄存器进行重写
             func.rewrite_spilled(allocator.get_spilled());
         }
     }
 } // imp
 
 impl RoDataSection {
+    /// 创建一个新的RoDataSection结构体实例，并初始化各个字段
     pub fn new() -> Self {
         RoDataSection{
             datas: Vec::new(), 
@@ -98,19 +103,27 @@ impl RoDataSection {
             float_imm_cnt: 0,
         }
     }
-
+    /// 格式化浮点数立即数的标签
     pub fn format_float_imm(id: usize) -> String {
         format!("float_imm.{}", id)
     }
-
+    /// 将浮点数立即数添加到数据段中，并返回其对应的标签id
     pub fn push_float_imm(&mut self, imm: &str) -> usize {
         if let Some(id) = self.float_imm.get(imm) {
             *id
         } else {
+            // 如果浮点数立即数不在映射中，则创建一个新的标签id
             let id = self.float_imm_cnt;
             self.float_imm_cnt += 1;
+            // 格式化浮点数立即数的标签
             let imm_label = Self::format_float_imm(id);
-            self.datas.push(DataSectionItem{label: imm_label, ty: SymbolType::new(SymbolWidth::Float, false), init_vals: vec!(String::from(imm))});
+            // 将浮点数立即数添加到数据段中，使用初始值为imm的DataSectionItem
+            self.datas.push(DataSectionItem{
+                label: imm_label,
+                ty: SymbolType::new(SymbolWidth::Float, false),
+                init_vals: vec!(String::from(imm)),
+            });
+            // 将浮点数立即数和标签id添加到浮点数立即数映射中
             self.float_imm.insert(String::from(imm), id);
             id
         }
