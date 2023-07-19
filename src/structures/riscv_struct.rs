@@ -14,7 +14,7 @@ pub struct RiscV {
 }
 
 /// 表示RISC-V汇编代码中的只读数据段。
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct RoDataSection {
     pub datas: Vec<DataSectionItem>,
     // 数据项
@@ -22,7 +22,7 @@ pub struct RoDataSection {
 }
 
 /// 表示RISC-V汇编代码中的数据段。
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DataSection {
     pub datas: Vec<DataSectionItem>,
     // 数据项
@@ -30,7 +30,7 @@ pub struct DataSection {
 }
 
 /// 数据段中的项。
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct DataSectionItem {
     pub label: String,
     // 标签
@@ -40,7 +40,7 @@ pub struct DataSectionItem {
 }
 
 /// 表示RISC-V汇编代码中的文本段。
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TextSection {
     pub funcs: Vec<AsmFunc>,    // 函数列表
 }

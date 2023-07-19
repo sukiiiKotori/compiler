@@ -1,4 +1,4 @@
-@A = global[5 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4]
+@A = global[5 x i32]  [i32 0, i32 1, i32 2, i32 3, i32 4]
 @B = global[4 x i32]  zeroinitializer
 @a = global float 0x3FF0000000000000, align 4
 @b = global float 0x4004000000000000, align 4

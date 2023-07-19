@@ -87,10 +87,7 @@ impl RiscV {
 impl RoDataSection {
     /// 创建一个新的RoDataSection结构体实例，并初始化各个字段
     pub fn new() -> Self {
-        RoDataSection{
-            datas: Vec::new(), 
-            labels: HashSet::new(),
-        }
+        Self::default()
     }
     
     /// 将浮点数立即数添加到rodata段中，并返回其对应的标签id
@@ -104,7 +101,7 @@ impl RoDataSection {
             self.datas.push(DataSectionItem{
                 label: imm_label.clone(),
                 ty: SymbolType::new(SymbolWidth::Float, false),
-                init_vals: vec!(String::from(imm)),
+                init_vals: vec!(imm.to_string()),
             });
             // 将浮点数立即数和标签id添加到浮点数立即数映射中
             self.labels.insert(imm_label.clone());
@@ -115,13 +112,13 @@ impl RoDataSection {
 
 impl DataSection {
     pub fn new() -> Self {
-        DataSection{datas: Vec::new(), labels: HashSet::new()}
+        Self::default()
     }
 }
 
 impl TextSection {
     pub fn new() -> Self {
-        TextSection{funcs: Vec::new()}
+        Self::default()
     }
     
     pub fn curr_func(&mut self) -> &mut AsmFunc {

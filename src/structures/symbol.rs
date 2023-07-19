@@ -40,7 +40,7 @@ pub enum SymbolVal {
 
 // 符号类型方法
 impl SymbolType {
-    pub fn new(width: SymbolWidth, is_const: bool) -> Self{
+    pub fn new(width: SymbolWidth, is_const: bool) -> Self {
         SymbolType {
             width,
             is_const,
