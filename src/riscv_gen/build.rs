@@ -60,16 +60,7 @@ impl RiscV {
             init_vals: val_vec,
         });
     }
-    /// 向rodata段的全局常量列表中添加一个新的全局常量，使用给定的标签、类型和初始值向量
-    pub fn push_global_const(&mut self, label: &str, ty: &SymbolType, init_vals: Vec<&str>) {
-        self.data.labels.insert(String::from(label));
-        let val_vec = init_vals.iter().map(|v| String::from(*v)).collect::<Vec<_>>();
-        self.rodata.datas.push(DataSectionItem{
-            label: String::from(label),
-            ty: ty.clone(),
-            init_vals: val_vec,
-        });
-    }
+    
     /// 标记当前正在处理的函数为调用函数
     pub fn mark_call(&mut self) {
         self.text.funcs.last_mut().unwrap().mark_call();

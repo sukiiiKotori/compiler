@@ -53,20 +53,6 @@ impl RegType {
             (true, true) => Self::SavedFloat,
         }
     }
-
-    pub fn is_float(&self) -> bool {
-        match self {
-            Self::TempInt | Self::SavedInt => false,
-            Self::TempFloat | Self::SavedFloat => true,
-        }
-    }
-
-    pub fn is_saved(&self) -> bool {
-        match self {
-            Self::TempInt | Self::TempFloat => false,
-            Self::SavedInt | Self::SavedFloat => true,
-        }
-    }
 }
 
 impl RegisterResource {
@@ -119,15 +105,6 @@ impl RegisterResource {
         self.free_regs[prio[0]].iter().enumerate().find_map(|(i, r)| Self::filter_map_regs(prio[0], i, r, filter_regs))
             .or(self.free_regs[prio[1]].iter().enumerate().find_map(|(i, r)| Self::filter_map_regs(prio[1], i, r, filter_regs)))
             .or(self.free_regs[prio[2]].iter().enumerate().find_map(|(i, r)| Self::filter_map_regs(prio[2], i, r, filter_regs)))
-    }
-
-    pub fn get_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool + Copy) -> Option<&'static str> {
-        if let Some((group_idx, idx)) = self.pick_register(ty, filter_regs) {
-            let reg = *self.free_regs.get_mut(group_idx).unwrap().get(idx).unwrap();
-            Some(reg)
-        } else {
-            None
-        }
     }
 
     pub fn pop_register(&mut self, ty: &RegType, filter_regs: impl Fn(&str) -> bool + Copy) -> Option<&'static str> {

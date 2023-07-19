@@ -41,20 +41,12 @@ impl LLVMProgram {
 
 impl GlobalVar {
     pub fn select_asm(&self, asm: &mut RiscV) {
-        if let SymbolType{width: SymbolWidth::Arr{tar, dims: _}, is_const: _} = &self.var_type {
-            if tar.is_const {
-                asm.push_global_const(
-                    self.var_name.as_str(),
-                    &self.var_type,
-                    self.init_num.iter().map(|v| v.init_val.as_str()).collect()
-                );
-            } else {
-                asm.push_global_var(
-                    self.var_name.as_str(),
-                    &self.var_type,
-                    self.init_num.iter().map(|v| v.init_val.as_str()).collect()
-                );
-            }
+        if let SymbolType{width: SymbolWidth::Arr{tar: _, dims: _}, is_const: _} = &self.var_type {
+            asm.push_global_var(
+                self.var_name.as_str(),
+                &self.var_type,
+                self.init_num.iter().map(|v| v.init_val.as_str()).collect()
+            );
         } else {
             match self.var_type {
                 SymbolType{width: SymbolWidth::I32, is_const: _} | SymbolType{width: SymbolWidth::Float, is_const: _} => {
@@ -197,7 +189,6 @@ impl Block {
 
 impl Instruction {
     fn load_float_imm(asm: &mut RiscV, select_cnt: &mut usize, op: &String) -> String {
-        use crate::utils::float::double_to_float;
         let imm = double_to_float(op.as_str());
         let imm_id = asm.rodata.push_float_imm(imm.as_str());
         let imm_label = RoDataSection::format_float_imm(imm_id);
