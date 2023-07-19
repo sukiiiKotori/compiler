@@ -958,9 +958,11 @@ impl Instruction {
             Instruction::Call(res, label, ty, params) => {
                 asm.mark_call();
                 if &label[1..] == "llvm.memset.p0i8.i64" {
-                    let str_vec = vec!(res.as_str(), "memset", params[0].0.as_str(), params[1].0.as_str(), params[2].0.as_str());
-                    let ty_vec = vec!(ty.width.clone(), params[0].1.width.clone(), params[1].1.width.clone(), params[2].1.width.clone());
-                    asm.gen_instr(AsmInstrType::Call, str_vec, None, ty_vec);
+                    let ptr = &params[0].0;
+                    let size_byte:u64 = (&params[2].0).parse().unwrap();
+                    for i in 0..(size_byte/4) {
+                        asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, &(i*4).to_string()), Some(NORMAL_WIDTH), vec!())
+                    }
                     return;
                 }
                 asm.insert_label_type(res.as_str(), ty.width.clone());
