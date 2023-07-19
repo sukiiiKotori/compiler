@@ -305,7 +305,9 @@ impl AsmInstr {
                 write!(output, "\tret\n").unwrap();
             },
             AsmInstr::Call(_, func_name, _, _) => {
-                write!(output, "\tcall\t{}\n",func_name).unwrap();
+                if func_name != "memset" {
+                    write!(output, "\tcall\t{}\n",func_name).unwrap();
+                }
             },
         }
     }

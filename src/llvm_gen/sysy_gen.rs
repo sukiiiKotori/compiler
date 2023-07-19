@@ -159,12 +159,12 @@ impl Generate for SysY {
 
         program.push_func_decl(
             &ty_void,
-            "llvm.memset.p018.i64",
+            "llvm.memset.p0i8.i64",
             vec!(&ty_i8_ptr, &ty_i8, &ty_i64, &ty_i1)
         );
         scopes.push(
             labels,
-            "llvm.memset.p018.i64",
+            "llvm.memset.p0i8.i64",
             &ty_void,
             &SymbolVal::Func(
                 ty_void.clone(),

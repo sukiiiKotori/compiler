@@ -328,7 +328,10 @@ impl AsmBlock {
         let params: Vec<String>;
 	    let types: Vec<SymbolWidth>;
         match self.instrs.get(position).unwrap() {
-	        AsmInstr::Call(r, _, p, t) => {
+	        AsmInstr::Call(r, name, p, t) => {
+                if name == "memset" {
+                    return;
+                }
 	            ret_val = String::from(r);
 		        params = p.iter()
 		            .map(|p| String::from(p))

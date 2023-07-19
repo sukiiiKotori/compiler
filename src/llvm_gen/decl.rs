@@ -173,7 +173,7 @@ fn decl_arr(
         // 数组初始化
         let memset_size = dims.iter().fold(1, |acc, x| acc * x) * 4;
         let memset_size_string = memset_size.to_string();
-        let memset_funcname = "@llvm.memset.p018.i64".to_string();
+        let memset_funcname = "@llvm.memset.p0i8.i64".to_string();
         let str_vec = vec!("", memset_funcname.as_str(), res.as_str(), "0", &memset_size_string, "false");
         // type向量是对应上面数据向量的类型
         let ty_void = SymbolType::new(SymbolWidth::Void, false);
