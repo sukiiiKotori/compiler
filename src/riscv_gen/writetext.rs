@@ -243,15 +243,11 @@ impl AsmInstr {
                 write!(output, "\tsrai\t").unwrap();
                 tri.writetext(output);
             },
-            AsmInstr::Fcvt(bin, dst, src) => {
-                if dst == src {
-                    panic!("Two types should be different");
+            AsmInstr::Fcvt(bin, dst, _) => {
+                if dst == &SymbolWidth::Float {
+                    write!(output, "\tfcvt.s.w\t{}, {}, rtz\n", bin.dst, bin.src).unwrap();
                 } else {
-                    if *dst == SymbolWidth::Float {
-                        write!(output, "\tfcvt.s.w\t{}, {}, rtz\n", bin.dst, bin.src).unwrap();
-                    } else {
-                        write!(output, "\tfcvt.w.s\t{}, {}, rtz\n", bin.dst, bin.src).unwrap();
-                    }
+                    write!(output, "\tfcvt.w.s\t{}, {}, rtz\n", bin.dst, bin.src).unwrap();
                 }
             },
             AsmInstr::Slt(tri) => {
