@@ -956,15 +956,17 @@ impl Instruction {
             },
             Instruction::Comment(_) => {}, // 跳过注释
             Instruction::Call(res, label, ty, params) => {
-                asm.mark_call();
                 if &label[1..] == "llvm.memset.p0i8.i64" {
                     let ptr = &params[0].0;
                     let size_byte:u64 = (&params[2].0).parse().unwrap();
                     for i in 0..(size_byte/4) {
                         asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, &(i*4).to_string()), Some(NORMAL_WIDTH), vec!())
                     }
+                    println!("{}",ptr);
+                    println!("{}",size_byte);
                     return;
                 }
+                asm.mark_call();
                 asm.insert_label_type(res.as_str(), ty.width.clone());
                 let mut str_vec = vec!(res.as_str(), &label[1..]);
                 let mut new_params = params.iter().map(|(s, _)| s.as_str()).collect::<Vec<_>>();
