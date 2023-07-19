@@ -19,8 +19,6 @@ pub struct RoDataSection {
     pub datas: Vec<DataSectionItem>,
     // 数据项
     pub labels: HashSet<String>,
-    // 标签集合
-    pub float_imm_cnt: usize,    // 浮点数立即数计数器
 }
 
 /// 表示RISC-V汇编代码中的数据段。

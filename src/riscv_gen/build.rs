@@ -90,7 +90,6 @@ impl RoDataSection {
         RoDataSection{
             datas: Vec::new(), 
             labels: HashSet::new(),
-            float_imm_cnt: 0,
         }
     }
     
@@ -99,11 +98,8 @@ impl RoDataSection {
         if self.labels.contains(imm) {
             imm.to_string()
         } else {
-            // 如果浮点数立即数不在映射中，则创建一个新的标签id
-            let id = self.float_imm_cnt;
-            self.float_imm_cnt += 1;
             // 格式化浮点数立即数的标签
-            let imm_label = format!(".float{}",id);
+            let imm_label = format!(".float{}",self.labels.len());
             // 将浮点数立即数添加到数据段中，使用初始值为imm的DataSectionItem
             self.datas.push(DataSectionItem{
                 label: imm_label.clone(),
