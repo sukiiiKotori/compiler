@@ -13,6 +13,17 @@ pub struct RiscV {
     // 只读数据段，常量如浮点立即数存储在这
 }
 
+impl RiscV {
+    /// 创建一个新的RiscV结构体实例，并初始化各个部分的数据结构
+    pub fn new() -> Self {
+        RiscV {
+            text: TextSection::new(),
+            data: DataSection::new(),
+            rodata: RoDataSection::new(),
+        }
+    }
+}
+
 /// 表示RISC-V汇编代码中的只读数据段。
 #[derive(Debug, Default)]
 pub struct RoDataSection {
@@ -21,12 +32,25 @@ pub struct RoDataSection {
     pub labels: HashSet<String>,
 }
 
+impl RoDataSection {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
 /// 表示RISC-V汇编代码中的数据段。
 #[derive(Debug, Default)]
 pub struct DataSection {
     pub datas: Vec<DataSectionItem>,
     // 数据项
     pub labels: HashSet<String>,    // 标签集合
+}
+
+impl DataSection {
+    /// 创建一个新的RoDataSection结构体实例，并初始化各个字段
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 /// 数据段中的项。
@@ -43,6 +67,12 @@ pub struct DataSectionItem {
 #[derive(Debug, Default)]
 pub struct TextSection {
     pub funcs: Vec<AsmFunc>,    // 函数列表
+}
+
+impl TextSection {
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 /// 表示RISC-V汇编代码中的函数。
@@ -66,6 +96,21 @@ pub struct AsmFunc {
     // 使用的保存寄存器
 }
 
+impl AsmFunc {
+    pub fn new(label: &str, ret_type: SymbolWidth) -> Self {
+        AsmFunc{
+            label: String::from(label), 
+            ret_type,
+            stack: StackSlot::new(), 
+            blocks: Vec::new(),
+            params: HashMap::new(),
+            label_type: HashMap::new(),
+            call_info: Vec::new(),
+            used_saved: HashSet::new(),
+        }
+    }
+}
+
 /// 表示函数中的基本块。
 #[derive(Debug)]
 pub struct AsmBlock {
@@ -80,6 +125,19 @@ pub struct AsmBlock {
     pub weight: usize,
     // 循环嵌套权重
     pub depth: usize,    // 循环嵌套深度
+}
+
+impl AsmBlock {
+    pub fn new(label: &str, pre_instr_cnt: usize, depth: usize) -> Self {
+        AsmBlock {
+            label: String::from(label),
+            instrs: Vec::new(),
+            successor: Vec::new(),
+            pre_instr_cnt,
+            weight: 10_usize.pow(depth as u32),
+            depth,
+        }
+    }
 }
 
 /// 表示汇编指令的类型。
@@ -207,12 +265,30 @@ pub struct BinInstr {
     pub src: String,    // 源寄存器
 }
 
+impl BinInstr {
+    pub fn new(dst: &str, src: &str) -> Self {
+        BinInstr {
+            dst: String::from(dst),
+            src: String::from(src),
+        }
+    }
+}
+
 /// 三元指令条件结构体，用于带有条件的三元指令。
 #[derive(Debug)]
 pub struct CondTriInstr {
     pub cond: String,
     // 条件寄存器
     pub tri: TriInstr,    // 三元指令
+}
+
+impl CondTriInstr {
+    pub fn new(cond: &str, width: Option<isize>, dst: &str, op1: &str, op2: &str) -> Self {
+        CondTriInstr {
+            cond: String::from(cond),
+            tri: TriInstr::new(width, dst, op1, op2),
+        }
+    }
 }
 
 /// 三元指令结构体，用于存储三个操作数的指令。
@@ -227,6 +303,17 @@ pub struct TriInstr {
     pub op2: String,    // 操作数2
 }
 
+impl TriInstr {
+    pub fn new(width: Option<isize>, dst: &str, op1: &str, op2: &str) -> Self {
+        TriInstr {
+            width,
+            dst: String::from(dst),
+            op1: String::from(op1),
+            op2: String::from(op2),
+        }
+    }
+}
+
 /// 存储/加载指令结构体。
 #[derive(Debug)]
 pub struct MemInstr {
@@ -238,6 +325,18 @@ pub struct MemInstr {
     // 基址寄存器
     pub offset: String,    // 偏移量
 }
+
+impl MemInstr {
+    pub fn new(width: isize, val: &str, base: &str, offset: &str) -> Self {
+        MemInstr {
+            width,
+            val: String::from(val),
+            base: String::from(base),
+            offset: String::from(offset),
+        }
+    }
+}
+
 
 impl RiscV {
     pub fn deterministic_stack(&mut self) {

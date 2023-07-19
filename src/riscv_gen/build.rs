@@ -14,14 +14,6 @@ pub const NORMAL_WIDTH: isize = 4;
 pub const PTR_WIDTH: isize = 8;
 
 impl RiscV {
-    /// 创建一个新的RiscV结构体实例，并初始化各个部分的数据结构
-    pub fn new() -> Self {
-        RiscV {
-            text: TextSection::new(),
-            data: DataSection::new(),
-            rodata: RoDataSection::new(),
-        }
-    }
     /// 向text段的函数列表中添加一个新的函数,使用给定的函数标签和函数类型
     pub fn push_func(&mut self, func_label: &str, func_type: SymbolWidth) {
         self.text.funcs.push(AsmFunc::new(func_label, func_type));
@@ -85,11 +77,6 @@ impl RiscV {
 } // imp
 
 impl RoDataSection {
-    /// 创建一个新的RoDataSection结构体实例，并初始化各个字段
-    pub fn new() -> Self {
-        Self::default()
-    }
-    
     /// 将浮点数立即数添加到rodata段中，并返回其对应的标签id
     pub fn push_float_imm(&mut self, imm: &str) -> String {
         if self.labels.contains(imm) {
@@ -110,36 +97,13 @@ impl RoDataSection {
     }
 }
 
-impl DataSection {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl TextSection {
-    pub fn new() -> Self {
-        Self::default()
-    }
-    
+impl TextSection {    
     pub fn curr_func(&mut self) -> &mut AsmFunc {
         self.funcs.last_mut().unwrap()
     }
 }
 
 impl AsmFunc {
-    pub fn new(label: &str, ret_type: SymbolWidth) -> Self {
-        AsmFunc{
-            label: String::from(label), 
-            ret_type,
-            stack: StackSlot::new(), 
-            blocks: Vec::new(),
-            params: HashMap::new(),
-            label_type: HashMap::new(),
-            call_info: Vec::new(),
-            used_saved: HashSet::new(),
-        }
-    }
-
     pub fn push_block(&mut self, block_label: &str, depth: usize) {
         if self.blocks.is_empty() {
             self.blocks.push(AsmBlock::new(block_label, 0, depth));
@@ -206,17 +170,6 @@ impl<'a> UnfoldCallContext<'a> {
 }
 
 impl AsmBlock {
-    pub fn new(label: &str, pre_instr_cnt: usize, depth: usize) -> Self {
-        AsmBlock {
-            label: String::from(label),
-            instrs: Vec::new(),
-            successor: Vec::new(),
-            pre_instr_cnt: pre_instr_cnt,
-            weight: 10_usize.pow(depth as u32),
-            depth: depth,
-        }
-    }
-
     pub fn push_instr(&mut self, instr: AsmInstr) {
         self.instrs.push(instr)
     }
@@ -428,46 +381,6 @@ impl AsmInstr {
             AsmInstrType::Call => {
                 AsmInstr::Call(String::from(str_vec[0]), String::from(str_vec[1]), str_vec.into_iter().skip(2).map(|s| String::from(s)).collect(), ty_vec)
             },
-        }
-    }
-}
-
-impl BinInstr {
-    pub fn new(dst: &str, src: &str) -> Self {
-        BinInstr {
-            dst: String::from(dst),
-            src: String::from(src),
-        }
-    }
-}
-
-impl CondTriInstr {
-    pub fn new(cond: &str, width: Option<isize>, dst: &str, op1: &str, op2: &str) -> Self {
-        CondTriInstr {
-            cond: String::from(cond),
-            tri: TriInstr::new(width, dst, op1, op2),
-        }
-    }
-}
-
-impl TriInstr {
-    pub fn new(width: Option<isize>, dst: &str, op1: &str, op2: &str) -> Self {
-        TriInstr {
-            width,
-            dst: String::from(dst),
-            op1: String::from(op1),
-            op2: String::from(op2),
-        }
-    }
-}
-
-impl MemInstr {
-    pub fn new(width: isize, val: &str, base: &str, offset: &str) -> Self {
-        MemInstr {
-            width,
-            val: String::from(val),
-            base: String::from(base),
-            offset: String::from(offset),
         }
     }
 }
