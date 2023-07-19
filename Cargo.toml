@@ -11,3 +11,6 @@ lazy_static = "1.4.0"
 
 [build-dependencies]
 lalrpop = "0.20.0"
+
+[profile.release]
+opt-level = 3
