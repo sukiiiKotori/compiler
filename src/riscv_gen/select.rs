@@ -987,11 +987,8 @@ impl Instruction {
                             asm.gen_instr(AsmInstrType::Store, vec!("zero", &imm_reg, "0"), Some(NORMAL_WIDTH), vec!());
                         }
                     }
-
                     asm.mark_call();
-                    let str_vec = vec!(res.as_str(), "memset", params[0].0.as_str(), params[1].0.as_str(), params[2].0.as_str());
-                    let ty_vec = vec!(ty.width.clone(), params[0].1.width.clone(), params[1].1.width.clone(), params[2].1.width.clone());
-                    asm.gen_instr(AsmInstrType::Call, str_vec, None, ty_vec);
+                    asm.gen_instr(AsmInstrType::Call, vec!["", "memset"], None, vec![]);
                     
                     return;
                 }
