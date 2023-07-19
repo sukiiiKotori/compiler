@@ -1006,8 +1006,7 @@ impl Instruction {
                 asm.gen_instr(AsmInstrType::Call, str_vec, None, ty_vec);
             },
             _ => {
-                eprintln!("{:?}", self);
-                todo!()
+                panic!("没这个指令啊。。。")
             },
         }
     }
