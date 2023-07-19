@@ -1,4 +1,3 @@
-use std::fmt::format;
 use std::iter::zip;
 use std::collections::{HashSet, HashMap, BTreeSet};
 use crate::utils::check::*;

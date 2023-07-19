@@ -185,31 +185,6 @@ impl AsmFunc {
     pub fn used_saved(&mut self, phy: &'static str) {
         self.used_saved.insert(phy);
     }
-
-    #[allow(unused)]
-    pub fn get_label_weight(&self) -> HashMap<String, usize> {
-        let mut res = HashMap::new();
-        for block in self.blocks.iter() {
-            for instr in block.instrs.iter() {
-                let (output, inputs) = instr.get_labels();
-                if let Some(output) = output {
-                    if res.contains_key(output) {
-                        *res.get_mut(output).unwrap() += block.weight;
-                    } else {
-                        res.insert(String::from(output), block.weight);
-                    }
-                }
-                for input in inputs.into_iter() {
-                    if res.contains_key(input) {
-                        *res.get_mut(input).unwrap() += block.weight;
-                    } else {
-                        res.insert(String::from(input), block.weight);
-                    }
-                } // for
-            } // for instr
-        } // for block
-        res
-    }
 } // impl
 
 impl AsmBlock {
@@ -261,22 +236,6 @@ impl AsmInstr {
         }
 
         (new_output, new_inputs)
-    }
-
-    #[allow(unused)]
-    pub fn get_virt_regs(&self) -> (Option<&str>, Vec<&str>) {
-        let (output, inputs) = self.get_labels();
-        AsmInstr::filter_regs(output, inputs, |reg| {
-            is_num_label(reg) || is_temp_opr(reg)
-        })
-    }
-
-    #[allow(unused)]
-    pub fn get_phy_regs(&self) -> (Option<&str>, Vec<&str>) {
-        let (output, inputs) = self.get_labels();
-        AsmInstr::filter_regs(output, inputs, |reg| {
-            ALL_REGS.contains(reg)
-        })
     }
 
     pub fn get_regs(&self) -> (Option<&str>, Vec<&str>) {
