@@ -959,11 +959,14 @@ impl Instruction {
                 if &label[1..] == "llvm.memset.p0i8.i64" {
                     let ptr = &params[0].0;
                     let size_byte:u64 = (&params[2].0).parse().unwrap();
-                    let imm_reg = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
+                    let mut imm_reg: String = String::new();
                     for i in 0..(size_byte/4) {
                         if i*4 < 2048 {
                             asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, &(i*4).to_string()), Some(NORMAL_WIDTH), vec!());
                         } else {
+                            if i*4 == 2048 {
+                                imm_reg = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
+                            }
                             asm.gen_instr(AsmInstrType::Li, vec!(&imm_reg, &(i*4).to_string()), None, vec!());
                             asm.gen_instr(AsmInstrType::Add, vec!(&imm_reg, ptr, &imm_reg), None, vec!());
                             asm.gen_instr(AsmInstrType::Store, vec!("zero", &imm_reg, "0"), Some(NORMAL_WIDTH), vec!());
