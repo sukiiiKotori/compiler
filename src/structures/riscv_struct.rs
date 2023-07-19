@@ -20,8 +20,6 @@ pub struct RoDataSection {
     // 数据项
     pub labels: HashSet<String>,
     // 标签集合
-    pub float_imm: HashMap<String, usize>,
-    // 浮点数立即数
     pub float_imm_cnt: usize,    // 浮点数立即数计数器
 }
 
