@@ -263,22 +263,43 @@ impl RiscV {
     }
 }
 
-impl AsmFunc {
-    /// 将包含指令的块转换为指令引用的向量。
-    pub fn make_instr_vec(blocks: &Vec<AsmBlock>) -> Vec<&AsmInstr> {
-        blocks
-            .iter()
-            .map(|b| b.instrs.iter().collect::<Vec<_>>())
-            .flatten()
-            .collect()
-    }
-
-    /// 将包含指令的块转换为可变指令引用的向量。
-    pub fn make_instr_vec_mut(blocks: &mut Vec<AsmBlock>) -> Vec<&mut AsmInstr> {
-        blocks
-            .iter_mut()
-            .map(|b| b.instrs.iter_mut().collect::<Vec<_>>())
-            .flatten()
-            .collect()
+impl AsmInstr {
+    pub fn fetch_type(&self) -> AsmInstrType {
+        match self {
+            AsmInstr::Li(_) => AsmInstrType::Li,
+            AsmInstr::La(_) => AsmInstrType::La,
+            AsmInstr::Mv(_) => AsmInstrType::Mv,
+            AsmInstr::Fmv(_, _, _) => AsmInstrType::Fmv,
+            AsmInstr::Sextw(_) => AsmInstrType::Sextw,
+            AsmInstr::Add(_) => AsmInstrType::Add,
+            AsmInstr::Addi(_) => AsmInstrType::Addi,
+            AsmInstr::Sub(_) => AsmInstrType::Sub,
+            AsmInstr::Mul(_) => AsmInstrType::Mul,
+            AsmInstr::Div(_) => AsmInstrType::Div,
+            AsmInstr::Rem(_) => AsmInstrType::Rem,
+            AsmInstr::Xori(_) => AsmInstrType::Xori,
+            AsmInstr::Slli(_) => AsmInstrType::Slli,
+            AsmInstr::Srli(_) => AsmInstrType::Srli,
+            AsmInstr::Srai(_) => AsmInstrType::Srai,
+            AsmInstr::Fadd(_) => AsmInstrType::Fadd,
+            AsmInstr::Fsub(_) => AsmInstrType::Fsub,
+            AsmInstr::Fmul(_) => AsmInstrType::Fmul,
+            AsmInstr::Fdiv(_) => AsmInstrType::Fdiv,
+            AsmInstr::Fcvt(_, _, _) => AsmInstrType::Fcvt,
+            AsmInstr::Slt(_) => AsmInstrType::Slt,
+            AsmInstr::Slti(_) => AsmInstrType::Slti,
+            AsmInstr::Sgt(_) => AsmInstrType::Sgt,
+            AsmInstr::Seqz(_) => AsmInstrType::Seqz,
+            AsmInstr::Snez(_) => AsmInstrType::Snez,
+            AsmInstr::Flt(_) => AsmInstrType::Flt,
+            AsmInstr::Fle(_) => AsmInstrType::Fle,
+            AsmInstr::Feq(_) => AsmInstrType::Feq,
+            AsmInstr::Store(_, _) => AsmInstrType::Store,
+            AsmInstr::Load(_, _) => AsmInstrType::Load,
+            AsmInstr::Branch(_) => AsmInstrType::Branch,
+            AsmInstr::Jump(_) => AsmInstrType::Jump,
+            AsmInstr::Ret() => AsmInstrType::Ret,
+            AsmInstr::Call(_, _, _, _) => AsmInstrType::Call,
+        }
     }
 }
