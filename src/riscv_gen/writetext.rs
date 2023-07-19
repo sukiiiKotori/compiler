@@ -30,7 +30,6 @@ impl WriteText for RoDataSection {
         if self.datas.is_empty() {
             return ;
         }
-        write!(output, "\t.text\n").unwrap();
         write!(output, "\t.section\t.rodata\n").unwrap();
         for data in self.datas.iter() {
             data.writetext(output);
@@ -43,7 +42,6 @@ impl WriteText for DataSection {
         if self.datas.is_empty() {
             return ;
         }
-        write!(output, "\t.text\n").unwrap();
         write!(output, "\t.section\t.data\n").unwrap();
         for data in self.datas.iter() {
             data.writetext(output);
@@ -105,7 +103,7 @@ impl WriteText for DataSectionItem {
                 write!(output, "\t.zero\t4\n").unwrap();
             } else {
                 let val = self.init_vals.get(0).unwrap();
-                if is_hex(val.as_str()) && val.len() == 18 {
+                if let SymbolWidth::Float = self.ty.width {
                     write!(output, "\t.word\t{}\n", double_to_float(val.as_str())).unwrap();
                 } else {
                     write!(output, "\t.word\t{}\n", val).unwrap();
