@@ -1,12 +1,10 @@
 use std::collections::{HashSet, HashMap, VecDeque};
-use crate::riscv_gen::build::PTR_WIDTH;
 use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::riscv_gen::linearscan::Interval;
 use crate::structures::symbol::SymbolWidth;
 use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::riscv_regs::*;
-
 
 pub trait RegisterAllocator {
     fn new() -> Self;
@@ -137,35 +135,7 @@ impl RegisterResource {
     }
 }
 
-impl RiscV {
-    pub fn save_registers(&mut self) {
-        for func in self.text.funcs.iter_mut() {
-            func.save_registers();
-        }
-    }
-}
-
 impl AsmFunc {
-    fn store_saved(&mut self, reg: &str) {
-        self.stack.push_normal(reg, 8);
-        let first_block = self.blocks.first_mut().unwrap();
-        if phy_is_float(reg) {
-            first_block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", reg, FLOAT_PREFIX), Some(PTR_WIDTH), vec!()));
-        } else {
-            first_block.instrs.insert(0, AsmInstr::make_instr(AsmInstrType::Store, vec!(reg, "sp", reg), Some(PTR_WIDTH), vec!()));
-        }
-    }
-
-    fn save_registers(&mut self) {
-        let regs = self.used_saved.iter().map(|r| (*r).clone()).collect::<Vec<_>>();
-        for reg in regs.iter() {
-            self.store_saved(reg);
-        }
-        for block in self.blocks.iter_mut() {
-            block.save_registers(&regs);
-        }
-    }
-
     pub fn interval_cross_call(&mut self, live: &Interval, virt: &str) -> bool {
         let mut res = false;
         for (_, depth_first_pos, cross_virts) in self.call_info.iter_mut() {
@@ -186,33 +156,6 @@ impl AsmFunc {
         self.used_saved.insert(phy);
     }
 } // impl
-
-impl AsmBlock {
-    fn restore_saved(&mut self, position: usize, reg: &str) {
-        if phy_is_float(reg) {
-            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(reg, "sp", reg, FLOAT_PREFIX), Some(PTR_WIDTH), vec!()));
-        } else {
-            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(reg, "sp", reg), Some(PTR_WIDTH), vec!()));
-        }
-    }
-
-    pub fn save_registers(&mut self, used_saved: &Vec<&'static str>) {
-        let positions = self.instrs.iter()
-            .enumerate()
-            .filter_map(|(idx, instr)| {
-                match instr {
-                    AsmInstr::Ret() => Some(idx),
-                    _ => None,
-                }
-            })
-            .collect::<Vec<_>>();
-        for position in positions.into_iter().rev() {
-            for reg in used_saved.into_iter() {
-                self.restore_saved(position, reg);
-            }
-        }
-    }
-}
 
 impl AsmInstr {
     pub fn filter_regs<'asm>(output: Option<&'asm str>, inputs: Vec<&'asm str>, filter_reg: impl Fn(&'asm str) -> bool) -> (Option<&'asm str>, Vec<&'asm str>) {

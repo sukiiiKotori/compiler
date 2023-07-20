@@ -7,6 +7,8 @@ pub mod rewrite;
 pub mod writetext;
 pub mod asmfunc_stack;
 pub mod globalvar;
+pub mod save_registers;
+pub mod restore_registers;
 
 use linearscan::*;
 use crate::structures::llvm_struct::*;
@@ -18,6 +20,7 @@ pub fn generate_asm(program: &LLVMProgram) -> RiscV {
     program.asm_select(&mut asm);
     asm.alloc_regs::<LinearScan>();
     asm.save_registers();
+    asm.restore_registers();
     asm.deterministic_stack();
     asm.stack_alloc_free();
     asm.map_stack_address();
