@@ -5,6 +5,8 @@
 @c = global[5 x float]  [float 0x3FB99999A0000000, float 0x3FC99999A0000000, float 0x3FD3333340000000, float 0, float 0]
 @d = global float 0.0, align 4
 @e = global i32 0, align 4
+@f = global[2 x [2 x float]]  [[2 x float]  [float 0x3FB99999A0000000, float 0x3FC99999A0000000], [2 x float]  [float 0x3FD3333340000000, float 0x3FD99999A0000000]]
+@g = global[2 x [2 x i32]]  [[2 x i32]  [i32 1, i32 2], [2 x i32]  [i32 3, i32 4]]
 
 declare i32 @getint()
 declare i32 @getch()
