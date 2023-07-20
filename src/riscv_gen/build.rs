@@ -97,61 +97,83 @@ impl RoDataSection {
     }
 }
 
-impl TextSection {    
+impl TextSection {
+    /// 获取当前函数
     pub fn curr_func(&mut self) -> &mut AsmFunc {
         self.funcs.last_mut().unwrap()
     }
 }
 
 impl AsmFunc {
+    /// 添加代码块
     pub fn push_block(&mut self, block_label: &str, depth: usize) {
+        // 如果代码块列表为空，则直接添加一个新的代码块到列表中
         if self.blocks.is_empty() {
             self.blocks.push(AsmBlock::new(block_label, 0, depth));
         } else {
+            // 否则，获取最后一个代码块的前驱指令数和自身指令数
             let last_block = self.blocks.last().unwrap();
             let new_pre_instr_cnt = last_block.pre_instr_cnt + last_block.instrs.len();
+            // 得到当前块的前驱指令数，push
             self.blocks.push(AsmBlock::new(block_label, new_pre_instr_cnt, depth));
         }
     }
-
+    /// 返回当前正在处理的函数的最后一个代码块的可变引用
     pub fn curr_block(&mut self) -> &mut AsmBlock{
         self.blocks.last_mut().unwrap()
     }
-
+    /// 标记当前正在处理的函数为调用函数
     fn mark_call(&mut self) {
+        // 标记寄存器"ra"为已使用
         self.used_saved("ra");
+        // 获取当前函数的最后一个代码块
         let last_block = self.blocks.last().unwrap();
-        self.call_info.push((last_block.pre_instr_cnt + last_block.instrs.len(), None, HashSet::new()));
+        // 计算当前函数的指令总数（前驱指令数 + 当前代码块的指令数）
+        let instr_cnt = last_block.pre_instr_cnt + last_block.instrs.len();
+        // 将调用函数的信息（指令总数、返回值位置为None、调用的寄存器集合为空）添加到函数的调用信息列表中
+        self.call_info.push((instr_cnt, None, HashSet::new()));
     }
-
+    /// 展开调用信息
     pub fn unfold_call(&mut self, rodata: &mut RoDataSection, alloc_res: &HashMap<String, &'static str>) {
         let mut call_info_ref = self.call_info.iter().collect::<Vec<_>>();
+        // 对当前函数中的代码块从后往前遍历
         for block in self.blocks.iter_mut().rev() {
             loop {
+                // 如果还存在待展开的函数调用信息
                 if let Some(this_call_info) = call_info_ref.last() {
                     let this_idx = this_call_info.0;
+                    // 如果待展开的函数调用信息的索引大于等于当前代码块的前驱指令数
                     if this_idx >= block.pre_instr_cnt {
                         let position = this_idx - block.pre_instr_cnt;
+                        // 在当前代码块中展开函数调用
                         block.unfold_call(&mut self.stack, this_call_info, alloc_res, rodata, position);
                         call_info_ref.pop();
                     } else {
                         break;
                     }
                 } else {
+                    // 不存在待展开的调用信息，返回
                     return;
                 }
             }
         }
     }
 }
-
+/// 用于展开函数调用的上下文结构体
 pub struct UnfoldCallContext<'a> {
+    /// 整型计数器
     pub int_cnt: usize,
+    /// 浮点型计数器
     pub float_cnt: usize,
+    /// 栈长度
     pub stack_len: isize,
+    /// 栈槽的可变引用
     pub stack: &'a mut StackSlot,
+    /// 只读数据段的可变引用
     pub rodata: &'a mut RoDataSection,
+    /// 无效寄存器的可变引用
     pub invalid_regs: &'a mut HashSet<&'static str>,
+    /// 被存储的寄存器的可变引用
     pub stored_regs: &'a mut BTreeSet<&'a str>,
 }
 
@@ -170,10 +192,11 @@ impl<'a> UnfoldCallContext<'a> {
 }
 
 impl AsmBlock {
+    /// 将指令添加到代码块的指令列表中
     pub fn push_instr(&mut self, instr: AsmInstr) {
         self.instrs.push(instr)
     }
-
+    /// 将后继代码块的标签添加到代码块的后继列表中
     fn push_successor(&mut self, succ: &str) {
         self.successor.push(String::from(succ));
     }
@@ -184,32 +207,75 @@ impl AsmBlock {
         position: usize, 
         context: &mut UnfoldCallContext<'a>,
     ) {
+        // 检查浮点数计数器是否超过了浮点型函数参数寄存器的数量
 	    if context.float_cnt >= FLOAT_FUNC_ARG.len() {
+            // 如果超过了数量，则需要将参数存储在栈上
 	        context.stack_len += 4;
             let stack_pos = format!("-{}", context.stack_len);
+            // 如果参数是一个立即数
 	        if is_immediate(param.as_str()) {
 	            let imm = double_to_float(param.as_str());
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(PRESERVED[1], "sp", stack_pos.as_str(), ), Some(NORMAL_WIDTH), vec!()));
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Li, vec!(PRESERVED[1], imm.as_str()), None, vec!()));
+                // 在指定位置插入存储立即数的指令
+	            self.instrs.insert(position, AsmInstr::make_instr(
+                    AsmInstrType::Store,
+                    vec!(PRESERVED[1], "sp",stack_pos.as_str(), ),
+                    Some(NORMAL_WIDTH),
+                    vec!()
+                ));
+                // 在指定位置插入加载立即数的指令
+	            self.instrs.insert(position, AsmInstr::make_instr(
+                    AsmInstrType::Li,
+                    vec!(PRESERVED[1], imm.as_str()),
+                    None,
+                    vec!()
+                ));
             } else if context.invalid_regs.contains(param.as_str()) {
-                panic!("Should not appear");
+                // 如果参数是一个无效的寄存器，则抛出错误
+                panic!("riscv_gen/build.rs:load_float_param,invalid regs");
             } else {
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Store, vec!(param.as_str(), "sp", stack_pos.as_str(), FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
+                // 正常参数，在指定位置插入存储参数的指令
+	            self.instrs.insert(position, AsmInstr::make_instr(
+                    AsmInstrType::Store,
+                    vec!(param.as_str(), "sp", stack_pos.as_str(), FLOAT_PREFIX),
+                    Some(NORMAL_WIDTH),
+                    vec!()
+                ));
 	        }
         } else {
+            // 如果浮点型计数器未超过浮点型函数参数的数量
             context.invalid_regs.remove(FLOAT_FUNC_ARG[context.float_cnt]);
 	        if is_immediate(param.as_str()) {
 	            let imm = double_to_float(param.as_str());
                 let imm_label = context.rodata.push_float_imm(imm.as_str());
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_FUNC_ARG[context.float_cnt], PRESERVED[1], "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
-                self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::La, vec!(PRESERVED[1], &imm_label), None, vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(
+                    AsmInstrType::Load,
+                    vec!(FLOAT_FUNC_ARG[context.float_cnt], PRESERVED[1], "0", FLOAT_PREFIX),
+                    Some(NORMAL_WIDTH),
+                    vec!()
+                ));
+                self.instrs.insert(position, AsmInstr::make_instr(
+                    AsmInstrType::La,
+                    vec!(PRESERVED[1], &imm_label),
+                    None,
+                    vec!()
+                ));
             } else if context.invalid_regs.contains(param.as_str()) {
 	            let stored_pos = format!("stored.{}", param);
 	            context.stored_regs.insert(param.as_str());
 	            context.stack.push_normal(stored_pos.as_str(), 8);
-	            self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Load, vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!()));
+	            self.instrs.insert(position, AsmInstr::make_instr(
+                    AsmInstrType::Load,
+                    vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), FLOAT_PREFIX),
+                    Some(NORMAL_WIDTH),
+                    vec!()
+                ));
 	        } else {
-                self.instrs.insert(position, AsmInstr::make_instr(AsmInstrType::Fmv, vec!(FLOAT_FUNC_ARG[context.float_cnt], param.as_str()), Some(NORMAL_WIDTH), vec!(SymbolWidth::Float, SymbolWidth::Float)));
+                self.instrs.insert(position, AsmInstr::make_instr(
+                    AsmInstrType::Fmv,
+                    vec!(FLOAT_FUNC_ARG[context.float_cnt], param.as_str()),
+                    Some(NORMAL_WIDTH),
+                    vec!(SymbolWidth::Float, SymbolWidth::Float)
+                ));
 	        }
         }
 	    context.float_cnt += 1;
