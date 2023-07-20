@@ -1,9 +1,7 @@
 use std::io;
-
 use crate::structures::symbol::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::writetext_trait::*;
-use crate::utils::float::double_to_float;
 
 fn width_name(width: isize) -> &'static str {
     match width {
@@ -57,7 +55,7 @@ impl WriteText for DataSectionItem {
         write!(output, "\t.align\t2\n").unwrap();
         write!(output, "\t.type\t{}, @object\n", self.label).unwrap();
         if let SymbolType{width: SymbolWidth::Arr{tar: _, dims}, is_const: _} = &self.ty {
-            let array_size = dims.iter().map(|d| *d as usize).product::<usize>()*4;
+            let array_size = dims.iter().fold(4, |acc, x| acc * x);
             write!(output, "\t.size\t{}, {}\n", self.label, array_size).unwrap();
             write!(output, "{}:\n", self.label).unwrap();
             if self.init_vals.is_empty() {
