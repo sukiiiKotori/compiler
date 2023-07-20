@@ -10,7 +10,7 @@ use std::fs;
 use std::env::args;
 use std::fs::read_to_string;
 use llvm_gen::generate_llvm;
-use riscv_gen::emit_asm;
+use riscv_gen::generate_asm;
 use crate::structures::writetext_trait::*;
 
 /*
@@ -65,7 +65,7 @@ fn main() {
             llvm.writetext(&mut llvm_file);
         }
         "-S" => {
-            let mut asm = emit_asm(&llvm);
+            let mut asm = generate_asm(&llvm);
             asm.optimise_riscv();
             
             let mut asm_file = fs::File::create(filename_without_suffix + ".s").unwrap();

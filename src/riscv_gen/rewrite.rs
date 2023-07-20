@@ -1,5 +1,5 @@
 use std::collections::{HashSet, HashMap};
-use crate::riscv_gen::select::FLOAT_PREFIX;
+use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::riscv_gen::build::PTR_WIDTH;
 use crate::riscv_gen::reg::{RegType, get_preserved_regs, phy_is_float};
 use crate::structures::riscv_struct::*;
