@@ -7,5 +7,10 @@ float b = 2.5;
 int main(){
     int a = A[3];
     float farr[5]= {0.1,0.2,0.3,0.4,0.5};
+    putfloat(farr[0]);
+    putfloat(farr[1]);
+    putfloat(farr[2]);
+    putfloat(farr[3]);
+    putfloat(farr[4]);
     return 0;
 }
