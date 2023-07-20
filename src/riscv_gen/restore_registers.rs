@@ -11,35 +11,39 @@ impl AsmFunc {
     pub fn restore_registers(&mut self) {
         self.blocks.iter_mut().for_each(|block| {
             //找到这个块的ret指令的下标
-            let position = block.instrs.iter().position(|instr| {
+            match block.instrs.iter().position(|instr| {
                 match instr {
                     AsmInstr::Ret() => true,
                     _ => false,
                 }
-            }).unwrap();
-            self.used_saved.iter().for_each(|saved_reg| {
-                if FLOAT_SAVED_SET.contains(saved_reg) {
-                    block.instrs.insert(
-                        position, 
-                        AsmInstr::make_instr(
-                            AsmInstrType::Load, 
-                            vec!(saved_reg, "sp", saved_reg, "f"), 
-                            Some(8), 
-                            vec!()
-                        )
-                    );
-                } else {
-                    block.instrs.insert(
-                        position, 
-                        AsmInstr::make_instr(
-                            AsmInstrType::Load, 
-                            vec!(saved_reg, "sp", saved_reg), 
-                            Some(8), 
-                            vec!()
-                        )
-                    );
+            }) {
+                Some(position) => {
+                    self.used_saved.iter().for_each(|saved_reg| {
+                        if FLOAT_SAVED_SET.contains(saved_reg) {
+                            block.instrs.insert(
+                                position, 
+                                AsmInstr::make_instr(
+                                    AsmInstrType::Load, 
+                                    vec!(saved_reg, "sp", saved_reg, "f"), 
+                                    Some(8), 
+                                    vec!()
+                                )
+                            );
+                        } else {
+                            block.instrs.insert(
+                                position, 
+                                AsmInstr::make_instr(
+                                    AsmInstrType::Load, 
+                                    vec!(saved_reg, "sp", saved_reg), 
+                                    Some(8), 
+                                    vec!()
+                                )
+                            );
+                        }
+                    })
                 }
-            })
+                None => {}
+            };
         });
     }
 }
