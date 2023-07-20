@@ -160,13 +160,12 @@ impl Block {
 
 impl Instruction {
     fn load_float_imm(asm: &mut RiscV, select_cnt: &mut usize, op: &String) -> String {
-        let imm = double_to_float(op.as_str());
-        let imm_label = asm.rodata.push_float_imm(imm.as_str());
-        let imm_addr = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
-        let final_op = pop_temp_label(select_cnt, asm, SymbolWidth::Float);
-        asm.gen_instr(AsmInstrType::La, vec!(imm_addr.as_str(), &imm_label), None, vec!());
-        asm.gen_instr(AsmInstrType::Load, vec!(final_op.as_str(), imm_addr.as_str(), "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!());
-        final_op
+        let imm = double_to_float(&op);
+        let imm_reg = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
+        let dst_reg = pop_temp_label(select_cnt, asm, SymbolWidth::Float);
+        asm.gen_instr(AsmInstrType::Li, vec!(&imm_reg, &imm), None, vec!());
+        asm.gen_instr(AsmInstrType::Fmv, vec!(&dst_reg, &imm_reg), None, vec!(SymbolWidth::Float, SymbolWidth::I32));
+        dst_reg
     }
 
     fn check_float_op(asm: &mut RiscV, select_cnt: &mut usize, op: &String) -> String {
@@ -753,11 +752,11 @@ impl Instruction {
                         }
                         SymbolWidth::Float => {
                             if is_immediate(ret_val) {
-                                let tmp_reg = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
-                                let imm = double_to_float(&ret_val);
-                                let imm_label = asm.rodata.push_float_imm(&imm);
-                                asm.gen_instr(AsmInstrType::La, vec!(&tmp_reg, &imm_label), None, vec!());
-                                asm.gen_instr(AsmInstrType::Load, vec!(FLOAT_RETURN[0], &tmp_reg, "0", FLOAT_PREFIX), Some(NORMAL_WIDTH), vec!());
+                                let imm = double_to_float(ret_val);
+                                let imm_reg = pop_temp_label(select_cnt, asm, SymbolWidth::I32);
+                                let dst_reg = pop_temp_label(select_cnt, asm, SymbolWidth::Float);
+                                asm.gen_instr(AsmInstrType::Li, vec!(&imm_reg, &imm), None, vec!());
+                                asm.gen_instr(AsmInstrType::Fmv, vec!(&dst_reg, &imm_reg), None, vec!(SymbolWidth::Float, SymbolWidth::I32));
                             } else {
                                 asm.gen_instr(AsmInstrType::Fmv, vec!(FLOAT_RETURN[0], &ret_val), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
                             }

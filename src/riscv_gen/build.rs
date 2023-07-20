@@ -65,27 +65,6 @@ impl RiscV {
     }
 } // imp
 
-impl RoDataSection {
-    /// 将浮点数立即数添加到rodata段中，并返回其对应的标签id
-    pub fn push_float_imm(&mut self, imm: &str) -> String {
-        if self.labels.contains(imm) {
-            imm.to_string()
-        } else {
-            // 格式化浮点数立即数的标签
-            let imm_label = format!(".float{}",self.labels.len());
-            // 将浮点数立即数添加到数据段中，使用初始值为imm的DataSectionItem
-            self.datas.push(DataSectionItem{
-                label: imm_label.clone(),
-                ty: SymbolType::new(SymbolWidth::Float, false),
-                init_vals: vec!(imm.to_string()),
-            });
-            // 将浮点数立即数和标签id添加到浮点数立即数映射中
-            self.labels.insert(imm_label.clone());
-            imm_label
-        }
-    }
-}
-
 impl TextSection {
     /// 获取当前函数
     pub fn curr_func(&mut self) -> &mut AsmFunc {
@@ -235,19 +214,24 @@ impl AsmBlock {
             context.invalid_regs.remove(FLOAT_FUNC_ARG[context.float_cnt]);
 	        if is_immediate(param.as_str()) {
 	            let imm = double_to_float(param.as_str());
-                let imm_label = context.rodata.push_float_imm(imm.as_str());
-	            self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Load,
-                    vec!(FLOAT_FUNC_ARG[context.float_cnt], PRESERVED[1], "0", FLOAT_PREFIX),
-                    Some(NORMAL_WIDTH),
-                    vec!()
-                ));
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::La,
-                    vec!(PRESERVED[1], &imm_label),
-                    None,
-                    vec!()
-                ));
+	            self.instrs.insert(
+                    position, 
+                    AsmInstr::make_instr(
+                        AsmInstrType::Fmv, 
+                        vec!(FLOAT_FUNC_ARG[context.float_cnt], PRESERVED[1]), 
+                        None, 
+                        vec!(SymbolWidth::Float, SymbolWidth::I32)
+                    )
+                );
+                self.instrs.insert(
+                    position, 
+                    AsmInstr::make_instr(
+                        AsmInstrType::Li, 
+                        vec!(PRESERVED[1], &imm), 
+                        None, 
+                        vec!()
+                    )
+                );
             } else if context.invalid_regs.contains(param.as_str()) {
 	            let stored_pos = format!("stored.{}", param);
 	            context.stored_regs.insert(param.as_str());
@@ -439,4 +423,3 @@ impl AsmInstr {
         }
     }
 }
-

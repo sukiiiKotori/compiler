@@ -6,5 +6,6 @@ float b = 2.5;
 
 int main(){
     int a = A[3];
+    float farr[5]= {0.1,0.2,0.3,0.4,0.5};
     return 0;
 }
