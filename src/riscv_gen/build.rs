@@ -47,8 +47,8 @@ impl RiscV {
         self.text.funcs.last_mut().unwrap().mark_call();
     }
     /// 向当前正在处理的函数的标签类型映射中插入一个新的标签和类型的对应关系
-    pub fn insert_label_type(&mut self, label: &str, width: SymbolWidth) {
-        self.text.funcs.last_mut().unwrap().label_type.insert(String::from(label), width);
+    pub fn insert_label_type(&mut self, label: &str, width: &SymbolWidth) {
+        self.text.funcs.last_mut().unwrap().label_type.insert(label.to_string(), width.clone());
     }
     /// 对每个函数进行寄存器分配
     pub fn alloc_regs<Alloc: RegisterAllocator>(&mut self) {
