@@ -50,36 +50,6 @@ impl WriteText for AsmFunc {
     }
 }
 
-
-fn writetext_init(output: &mut impl io::Write, init_vals: &Vec<String>) {
-    // 状态码
-    // 0 => 初始状态
-    // 1 => 读取记录零的长度的状态
-    let mut state = 0;
-    let mut cnt = 0;
-    for val in init_vals.iter() {
-        match val.as_str() {
-            "0" | "0.0" => {
-                if state == 0 {
-                    state = 1;
-                }
-                cnt += 4;
-            },
-            _ => {
-                if state == 1 {
-                    write!(output, "\t.zero\t{}\n", cnt).unwrap();
-                    state = 0;
-                    cnt = 0;
-                }
-                write!(output, "\t.word\t{}\n", val).unwrap();
-            },
-        }
-    }
-    if state == 1 {
-        write!(output, "\t.zero\t{}\n", cnt).unwrap();
-    }
-}
-
 impl WriteText for DataSectionItem {
     fn writetext(&self, output: &mut impl io::Write){
         write!(output, "\t.globl\t{}\n", self.label).unwrap();
@@ -93,21 +63,17 @@ impl WriteText for DataSectionItem {
             if self.init_vals.is_empty() {
                 write!(output, "\t.zero\t{}\n", array_size).unwrap();
             } else {
-                writetext_init(output, &self.init_vals);
+                self.init_vals.iter().for_each(|value| {
+                    write!(output, "\t.word\t{}\n", value).unwrap();
+                })
             }
         } else {
             write!(output, "\t.size\t{}, 4\n", self.label).unwrap();
             write!(output, "{}:\n", self.label).unwrap();
-            if self.init_vals.is_empty() {
-                write!(output, "\t.zero\t4\n").unwrap();
-            } else {
-                let val = self.init_vals.get(0).unwrap();
-                if let SymbolWidth::Float = self.ty.width {
-                    write!(output, "\t.word\t{}\n", double_to_float(val.as_str())).unwrap();
-                } else {
-                    write!(output, "\t.word\t{}\n", val).unwrap();
-                }
-            }
+            match self.init_vals.first() {
+                Some(value) => write!(output, "\t.word\t{}\n", value).unwrap(),
+                None => write!(output, "\t.zero\t4\n").unwrap(),
+            };
         }
     }
 }
