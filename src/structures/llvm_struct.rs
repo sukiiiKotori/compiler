@@ -156,16 +156,7 @@ pub struct GlobalVar {
     /// 变量类型
     pub var_type: SymbolType,
     /// 初始化值列表
-    pub init_num: Vec<InitNumber>,
-}
-
-/// 初始化值
-#[derive(Debug)]
-pub struct InitNumber {
-    /// 初始化值类型
-    pub init_type: SymbolType,
-    /// 初始化值
-    pub init_val: String,
+    pub init_values: Vec<String>,
 }
 
 /// 函数声明

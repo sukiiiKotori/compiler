@@ -28,26 +28,26 @@ impl WriteText for GlobalVar {
             SymbolWidth::I32 => {
                 write!(output, " {}", self.var_type.get_typename()).unwrap();
                 //如果没有赋值，则全局变量默认赋0
-                if self.init_num.is_empty() {
+                if self.init_values.is_empty() {
                     write!(output, " 0").unwrap();
                 } else {
-                    write!(output, " {}", self.init_num.first().unwrap().init_val).unwrap();
+                    write!(output, " {}", self.init_values.first().unwrap()).unwrap();
                 }
                 write!(output, ", align 4").unwrap();
             },
             SymbolWidth::Float => {
                 write!(output, " {}", self.var_type.get_typename()).unwrap();
-                if self.init_num.is_empty() {
+                if self.init_values.is_empty() {
                     write!(output, " 0.0").unwrap();
                 } else {
-                    write!(output, " {}", self.init_num.first().unwrap().init_val).unwrap();
+                    write!(output, " {}", self.init_values.first().unwrap()).unwrap();
                 }
                 write!(output, ", align 4").unwrap();
             },
             // 特别的，对于数组初始化，需要调用
             SymbolWidth::Arr{tar: _, dims} => {
                 let mut pos: Vec<i32> = vec!();
-                GlobalVar::dump_arr_init(output, dims, &self.var_type, &self.init_num.iter().map(|x| x.init_val.clone()).collect(), &mut pos);
+                GlobalVar::dump_arr_init(output, dims, &self.var_type, &self.init_values.iter().map(|x| x.to_string()).collect(), &mut pos);
             },
             _ => panic!("Don't support"),
         }

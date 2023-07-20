@@ -32,36 +32,7 @@ fn pop_temp_label(cnt: &mut usize, asm: &mut RiscV, ty: SymbolWidth) -> String {
 
 impl LLVMProgram {
     pub fn select_asm(&self, asm: &mut RiscV) {
-        self.global_var.iter()
-            .for_each(|v| { v.select_asm(asm); });
-        self.func_def.iter()
-            .for_each(|f| { f.select_asm(asm); });
-    }
-}
-
-impl GlobalVar {
-    pub fn select_asm(&self, asm: &mut RiscV) {
-        if let SymbolType{width: SymbolWidth::Arr{tar: _, dims: _}, is_const: _} = &self.var_type {
-            asm.push_global_var(
-                self.var_name.as_str(),
-                &self.var_type,
-                self.init_num.iter().map(|v| v.init_val.as_str()).collect()
-            );
-        } else {
-            match self.var_type {
-                SymbolType{width: SymbolWidth::I32, is_const: _} | SymbolType{width: SymbolWidth::Float, is_const: _} => {
-                    asm.push_global_var(
-                        self.var_name.as_str(),
-                        &self.var_type,
-                        self.init_num.iter().map(|v| v.init_val.as_str()).collect()
-                    );
-                },
-                _ => {
-                    eprintln!("{:#?}", self);
-                    todo!();
-                },
-            }
-        }
+        self.func_def.iter().for_each(|func| func.select_asm(asm));
     }
 }
 

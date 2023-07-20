@@ -143,9 +143,8 @@ fn decl_arr(
     if let Some(label) = scopes.push(labels, id.as_str(), &ty_arr, &SymbolVal::Void, None) {
         // 如果是全局作用域，放到Program中
         if scopes.is_global_scope() {
-            let init_types: Vec<&SymbolType> = types.iter().collect();
             let init_vals: Vec<&String> = val_init.iter().collect();
-            program.push_global_var(&id, &ty_arr, init_types, init_vals);
+            program.push_global_var(&id, &ty_arr, init_vals);
             return;
         }
 
@@ -398,14 +397,14 @@ impl Generate for VarDecl {
                 if scopes.is_global_scope() {
                     // 判断是否初始化
                     if init_val.is_empty() {
-                        program.push_global_var(&id, &ty, Vec::new(), Vec::new());
+                        program.push_global_var(&id, &ty, Vec::new());
                     } else {
-                        let (symbol_width, init) = match &symbol_val {
+                        let (_, init) = match &symbol_val {
                             SymbolVal::I32(init) => (SymbolWidth::I32, init),
                             SymbolVal::Float(init) => (SymbolWidth::Float, init),
                             _ => panic!("{:?} is not supported!", symbol_val),
                         };
-                        program.push_global_var(&id, &ty, vec!(&SymbolType::new(symbol_width, false)), vec!(init));
+                        program.push_global_var(&id, &ty,vec!(init));
                     }
                 } else {
                     let str_vec = vec!(label.as_str(), "4");

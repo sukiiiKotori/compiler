@@ -7,32 +7,12 @@ impl LLVMProgram {
         self.func_def.last_mut()
     }
 
-    pub fn push_global_var(&mut self, id: &String, ty: &SymbolType, init_types: Vec<&SymbolType>, init_vals: Vec<&String>) {
-        let mut types: Vec<SymbolType> = vec!();
-        let mut vals: Vec<String> = vec!();
-        let mut init_numbers: Vec<InitNumber> = Vec::new();
-
-        for init_type in init_types.iter() {
-            types.push((*init_type).clone());
-        }
-        for init_val in init_vals.iter() {
-            vals.push(String::from(*init_val));
-        }
-        
-        for i in 0..types.len() {
-            let init_number = InitNumber {
-                init_type: types[i].clone(),
-                init_val: vals[i].clone(),
-            };
-            init_numbers.push(init_number);
-        }
-        let global_var = GlobalVar {
-            var_name: String::from(id),
+    pub fn push_global_var(&mut self, id: &str, ty: &SymbolType, init_vals: Vec<&String>) {
+        self.global_var.push(GlobalVar {
+            var_name: id.to_string(),
             var_type: ty.clone(),
-            init_num: init_numbers,
-        };
-        self.global_var.push(global_var);
-        
+            init_values: init_vals.iter().map(|value| value.to_string()).collect(),
+        });
     }
 
     pub fn push_func_decl(&mut self, func_type: &SymbolType, func_name: &str, types: Vec<&SymbolType>) {
