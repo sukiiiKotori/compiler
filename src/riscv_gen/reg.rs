@@ -1,6 +1,6 @@
 use std::collections::{HashSet, HashMap, VecDeque};
 use crate::riscv_gen::build::PTR_WIDTH;
-use crate::riscv_gen::select::FLOAT_PREFIX;
+use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::riscv_gen::linearscan::Interval;
 use crate::structures::symbol::SymbolWidth;
 use crate::utils::check::*;

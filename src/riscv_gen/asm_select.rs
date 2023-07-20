@@ -31,13 +31,13 @@ fn pop_temp_label(cnt: &mut usize, asm: &mut RiscV, ty: SymbolWidth) -> String {
 }
 
 impl LLVMProgram {
-    pub fn select_asm(&self, asm: &mut RiscV) {
-        self.func_def.iter().for_each(|func| func.select_asm(asm));
+    pub fn asm_select(&self, asm: &mut RiscV) {
+        self.func_def.iter().for_each(|func| func.asm_select(asm));
     }
 }
 
 impl FuncDef {
-    pub fn select_asm(&self, asm: &mut RiscV) {
+    pub fn asm_select(&self, asm: &mut RiscV) {
         asm.push_func(&self.func_name.as_str()[1..], self.func_type.width.clone());
         let curr_func = asm.text.curr_func();
         let stack = &mut curr_func.stack;

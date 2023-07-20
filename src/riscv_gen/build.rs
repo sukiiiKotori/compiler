@@ -6,7 +6,7 @@ use crate::structures::riscv_struct::*;
 use crate::structures::riscv_regs::*;
 use crate::structures::symbol::*;
 use crate::riscv_gen::stack_slot::StackSlot;
-use crate::riscv_gen::select::FLOAT_PREFIX;
+use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::riscv_gen::reg::RegisterAllocator;
 
 
