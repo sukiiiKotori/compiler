@@ -58,7 +58,7 @@ impl RiscV {
             //把虚拟寄存器更改为物理寄存器
             func.assign_register(allocator.get_alloc_res());
             // 展开函数调用，使用分配的寄存器
-            func.unfold_call(&mut self.rodata, allocator.get_alloc_res());
+            func.unfold_call( allocator.get_alloc_res());
             // 对溢出的寄存器进行重写
             func.rewrite_spilled(allocator.get_spilled());
         }
@@ -102,7 +102,7 @@ impl AsmFunc {
         self.call_info.push((instr_cnt, None, HashSet::new()));
     }
     /// 展开调用信息
-    pub fn unfold_call(&mut self, rodata: &mut RoDataSection, alloc_res: &HashMap<String, &'static str>) {
+    pub fn unfold_call(&mut self, alloc_res: &HashMap<String, &'static str>) {
         let mut call_info_ref = self.call_info.iter().collect::<Vec<_>>();
         // 对当前函数中的代码块从后往前遍历
         for block in self.blocks.iter_mut().rev() {
@@ -114,7 +114,7 @@ impl AsmFunc {
                     if this_idx >= block.pre_instr_cnt {
                         let position = this_idx - block.pre_instr_cnt;
                         // 在当前代码块中展开函数调用
-                        block.unfold_call(&mut self.stack, this_call_info, alloc_res, rodata, position);
+                        block.unfold_call(&mut self.stack, this_call_info, alloc_res,  position);
                         call_info_ref.pop();
                     } else {
                         break;
@@ -137,8 +137,6 @@ pub struct UnfoldCallContext<'a> {
     pub stack_len: isize,
     /// 栈槽的可变引用
     pub stack: &'a mut StackSlot,
-    /// 只读数据段的可变引用
-    pub rodata: &'a mut RoDataSection,
     /// 无效寄存器的可变引用
     pub invalid_regs: &'a mut HashSet<&'static str>,
     /// 被存储的寄存器的可变引用
@@ -151,11 +149,10 @@ impl<'a> UnfoldCallContext<'a> {
     	float_cnt: usize,
     	stack_len: isize,
     	stack: &'a mut StackSlot,
-        rodata: &'a mut RoDataSection,
     	invalid_regs: &'a mut HashSet<&'static str>,
         stored_regs: &'a mut BTreeSet<&'a str>,
     ) -> Self {
-        UnfoldCallContext{int_cnt, float_cnt, stack_len, stack, rodata, invalid_regs, stored_regs}
+        UnfoldCallContext{int_cnt, float_cnt, stack_len, stack, invalid_regs, stored_regs}
     }
 }
 
@@ -293,7 +290,7 @@ impl AsmBlock {
         stack: &mut StackSlot,
         this_call_info: &(usize, Option<usize>, HashSet<String>),
         alloc_res: &HashMap<String, &'static str>,
-        rodata: &mut RoDataSection, position: usize
+        position: usize
     ) {
         let ret_val: String;
         let params: Vec<String>;
@@ -362,7 +359,7 @@ impl AsmBlock {
         }
 	
         // 将参数值装载到指定寄存器或者栈槽位置
-        let mut context = UnfoldCallContext::new(0, 0, 0, stack, rodata, &mut invalid_regs, &mut stored_regs);
+        let mut context = UnfoldCallContext::new(0, 0, 0, stack, &mut invalid_regs, &mut stored_regs);
         for (_, (param, ty)) in zip(params.iter(), types.iter().skip(1)).enumerate() {
 	        if *ty == SymbolWidth::Float {
                 self.load_float_param(param, position, &mut context);

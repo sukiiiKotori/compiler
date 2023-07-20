@@ -719,7 +719,7 @@ impl Instruction {
                 } else if inside_stack {
                     // 如果在函数的栈里面，则需要通过栈偏移来load，具体值需要到分配完栈大小才能确定
                     asm.gen_instr(AsmInstrType::Load, vec!(&load_res, "sp", ptr, prefix), width_num, vec!());
-                } else if asm.data.labels.contains(pure_ptr) || asm.rodata.labels.contains(pure_ptr) {
+                } else if asm.data.labels.contains(pure_ptr) {
                     //如果是全局变量，比如说预先声明的一个int A。则需要用La指令来移动。
                     //先加载到临时寄存器，再store到目标地址
                     let load_addr = pop_temp_label(select_cnt, asm, SymbolWidth::I64);
@@ -781,7 +781,7 @@ impl Instruction {
                     let ptr_pos = format!("#{}", ptr);
                     asm.gen_instr(AsmInstrType::Addi, vec!(res, "sp", ptr_pos.as_str()), None, vec!());
                 } else {
-                    if asm.rodata.labels.contains(ptr.as_str()) || asm.data.labels.contains(ptr.as_str()) {
+                    if asm.data.labels.contains(ptr.as_str()) {
                         asm.gen_instr(AsmInstrType::La, vec!(res, ptr.as_str()), None, vec!());
                     } else {
                         asm.gen_instr(AsmInstrType::Mv, vec!(res, ptr.as_str()), None, vec!());
@@ -843,7 +843,7 @@ impl Instruction {
                     } else {
                         //如果是全局变量的标签，直接La
                         let pure_ptr = &ptr[1..];
-                        if asm.rodata.labels.contains(pure_ptr) || asm.data.labels.contains(pure_ptr) {
+                        if asm.data.labels.contains(pure_ptr) {
                             if idx.len() == 1 {
                                 asm.gen_instr(AsmInstrType::La, vec!(dst.as_str(), pure_ptr), None, vec!());
                                 return;

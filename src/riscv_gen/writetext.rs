@@ -19,21 +19,8 @@ fn width_name(width: isize) -> &'static str {
 impl WriteText for RiscV {
     fn writetext(&self, output: &mut impl io::Write) {
         write!(output, "\t.option nopic\n").unwrap();
-        self.rodata.writetext(output);
         self.data.writetext(output);
         self.text.writetext(output);
-    }
-}
-
-impl WriteText for RoDataSection {
-    fn writetext(&self, output: &mut impl io::Write){
-        if self.datas.is_empty() {
-            return ;
-        }
-        write!(output, "\t.section\t.rodata\n").unwrap();
-        for data in self.datas.iter() {
-            data.writetext(output);
-        }
     }
 }
 

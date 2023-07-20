@@ -9,8 +9,6 @@ pub struct RiscV {
     // 文本段
     pub data: DataSection,
     // 数据段
-    pub rodata: RoDataSection,    
-    // 只读数据段，常量如浮点立即数存储在这
 }
 
 impl RiscV {
@@ -19,22 +17,7 @@ impl RiscV {
         RiscV {
             text: TextSection::new(),
             data: DataSection::new(),
-            rodata: RoDataSection::new(),
         }
-    }
-}
-
-/// 表示RISC-V汇编代码中的只读数据段。
-#[derive(Debug, Default)]
-pub struct RoDataSection {
-    pub datas: Vec<DataSectionItem>,
-    // 数据项
-    pub labels: HashSet<String>,
-}
-
-impl RoDataSection {
-    pub fn new() -> Self {
-        Self::default()
     }
 }
 
