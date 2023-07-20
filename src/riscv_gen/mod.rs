@@ -6,7 +6,7 @@ pub mod asm_select;
 pub mod rewrite;
 pub mod writetext;
 pub mod asmfunc_stack;
-pub mod globalvar;
+pub mod push_datasection;
 pub mod save_registers;
 pub mod restore_registers;
 
@@ -16,7 +16,7 @@ use crate::structures::riscv_struct::*;
 
 pub fn generate_asm(program: &LLVMProgram) -> RiscV {
     let mut asm = RiscV::new();
-    program.push_globalvars(&mut asm);
+    program.push_datasection(&mut asm);
     program.asm_select(&mut asm);
     asm.alloc_regs::<LinearScan>();
     asm.save_registers();

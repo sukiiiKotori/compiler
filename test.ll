@@ -2,6 +2,9 @@
 @B = global[4 x i32]  zeroinitializer
 @a = global float 0x3FF0000000000000, align 4
 @b = global float 0x4004000000000000, align 4
+@c = global[5 x float]  [float 0x3FB99999A0000000, float 0x3FC99999A0000000, float 0x3FD3333340000000, float 0, float 0]
+@d = global float 0.0, align 4
+@e = global i32 0, align 4
 
 declare i32 @getint()
 declare i32 @getch()
@@ -42,6 +45,21 @@ _entry:
   %7 = getelementptr inbounds [5 x float], [5 x float]* %farr_0, i32 0, i32 4
   store float 0x3FE0000000000000, float* %7, align 4
 
+  %8 = getelementptr inbounds [5 x float], [5 x float]* %farr_0, i32 0, i32 0
+  %9 = load float, float* %8, align 4
+  call void @putfloat(float noundef %9)
+  %10 = getelementptr inbounds [5 x float], [5 x float]* %farr_0, i32 0, i32 1
+  %11 = load float, float* %10, align 4
+  call void @putfloat(float noundef %11)
+  %12 = getelementptr inbounds [5 x float], [5 x float]* %farr_0, i32 0, i32 2
+  %13 = load float, float* %12, align 4
+  call void @putfloat(float noundef %13)
+  %14 = getelementptr inbounds [5 x float], [5 x float]* %farr_0, i32 0, i32 3
+  %15 = load float, float* %14, align 4
+  call void @putfloat(float noundef %15)
+  %16 = getelementptr inbounds [5 x float], [5 x float]* %farr_0, i32 0, i32 4
+  %17 = load float, float* %16, align 4
+  call void @putfloat(float noundef %17)
   ret i32 0
 
 }

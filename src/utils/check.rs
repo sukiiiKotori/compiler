@@ -17,6 +17,10 @@ pub fn is_immediate(s: &str) -> bool {
     is_decimal(s) || is_hex(s) || s == "0.0"
 }
 
+pub fn is_float_immediate(s: &str) -> bool {
+    is_hex(s) && s.len() == 18
+}
+
 //检查立即数是否为2的幂
 pub fn is_poweroftwo(s: &str) -> Option<i32> {
     let num = s.parse::<i32>().unwrap();

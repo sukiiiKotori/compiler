@@ -4,7 +4,6 @@ use crate::structures::symbol::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::writetext_trait::*;
 use crate::utils::float::double_to_float;
-use crate::utils::check::*;
 
 fn width_name(width: isize) -> &'static str {
     match width {
@@ -18,6 +17,7 @@ fn width_name(width: isize) -> &'static str {
 
 impl WriteText for RiscV {
     fn writetext(&self, output: &mut impl io::Write) {
+        //声明改汇编为位置无关代码，便于链接器做静态链接
         write!(output, "\t.option nopic\n").unwrap();
         self.data.writetext(output);
         self.text.writetext(output);
@@ -26,15 +26,30 @@ impl WriteText for RiscV {
 
 impl WriteText for DataSection {
     fn writetext(&self, output: &mut impl io::Write){
-        if self.datas.is_empty() {
-            return ;
-        }
-        write!(output, "\t.section\t.data\n").unwrap();
-        for data in self.datas.iter() {
-            data.writetext(output);
+        if !self.datas.is_empty() {
+            write!(output, "\t.section\t.data\n").unwrap();
+            self.datas.iter().for_each(|data| data.writetext(output)); 
         }
     }
 }
+
+impl WriteText for TextSection {
+    fn writetext(&self, output: &mut impl io::Write){
+        self.funcs.iter().for_each(|fun| fun.writetext(output));
+    }
+}
+
+impl WriteText for AsmFunc {
+    fn writetext(&self, output: &mut impl io::Write){
+        write!(output, "\t.text\n").unwrap();
+        write!(output, "\t.align\t1\n").unwrap();
+        write!(output, "\t.global\t{}\n", self.label).unwrap();
+        write!(output, "\t.type\t{}, @function\n", self.label).unwrap();
+        write!(output, "{}:\n", self.label).unwrap();
+        self.blocks.iter().for_each(|block| block.writetext(output));
+    }
+}
+
 
 fn writetext_init(output: &mut impl io::Write, init_vals: &Vec<String>) {
     // 状态码
@@ -56,11 +71,7 @@ fn writetext_init(output: &mut impl io::Write, init_vals: &Vec<String>) {
                     state = 0;
                     cnt = 0;
                 }
-                if is_hex(val.as_str()) && val.len() == 18 {
-                    write!(output, "\t.word\t{}\n", double_to_float(val.as_str())).unwrap();
-                } else {
-                    write!(output, "\t.word\t{}\n", val).unwrap();
-                }
+                write!(output, "\t.word\t{}\n", val).unwrap();
             },
         }
     }
@@ -72,6 +83,7 @@ fn writetext_init(output: &mut impl io::Write, init_vals: &Vec<String>) {
 impl WriteText for DataSectionItem {
     fn writetext(&self, output: &mut impl io::Write){
         write!(output, "\t.globl\t{}\n", self.label).unwrap();
+        //因为类型只有i32和float或其数组，所以对齐值都是4B
         write!(output, "\t.align\t2\n").unwrap();
         write!(output, "\t.type\t{}, @object\n", self.label).unwrap();
         if let SymbolType{width: SymbolWidth::Arr{tar: _, dims}, is_const: _} = &self.ty {
@@ -100,35 +112,10 @@ impl WriteText for DataSectionItem {
     }
 }
 
-impl WriteText for TextSection {
-    fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "\t.text\n").unwrap();
-        write!(output, "\t.align\t1\n").unwrap();
-        for func in self.funcs.iter() {
-            func.writetext(output);
-        }
-    }
-}
-
-impl WriteText for AsmFunc {
-    fn writetext(&self, output: &mut impl io::Write){
-        write!(output, "\t.global\t{}\n", self.label).unwrap();
-        write!(output, "\t.type\t{}, @function\n", self.label).unwrap();
-        write!(output, "{}:\n", self.label).unwrap();
-        for block in self.blocks.iter() {
-            block.writetext(output);
-        }
-    }
-}
-
 impl AsmBlock {
     fn writetext(&self, output: &mut impl io::Write) {
-        if !self.label.contains("._entry") {
-            write!(output, "{}:\n", self.label).unwrap();
-        }
-        for instr in self.instrs.iter() {
-            instr.writetext(output);
-        }
+        write!(output, "{}:\n", self.label).unwrap();
+        self.instrs.iter().for_each(|instr| instr.writetext(output));
     }
 }
 

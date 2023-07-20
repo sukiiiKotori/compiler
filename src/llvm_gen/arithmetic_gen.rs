@@ -277,7 +277,7 @@ impl Generate for UnaryExp {
                         InstructionType::Fsub, 
                         vec!(
                             &result, 
-                            &String::from("0.0"), 
+                            "0.0", 
                             &op2
                         ),
                         vec!(&ty), 
