@@ -1,4 +1,4 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet, HashMap, BTreeSet};
 use crate::riscv_gen::stack_slot::StackSlot;
 use crate::structures::symbol::*;
 
@@ -78,7 +78,7 @@ pub struct AsmFunc {
     // 标签类型映射
     pub call_info: Vec<(usize, Option<usize>, HashSet<String>)>,
     // 函数调用信息
-    pub used_saved: HashSet<&'static str>,    
+    pub used_saved: BTreeSet<&'static str>,    
     // 使用的保存寄存器
 }
 
@@ -92,7 +92,7 @@ impl AsmFunc {
             params: HashMap::new(),
             label_type: HashMap::new(),
             call_info: Vec::new(),
-            used_saved: HashSet::new(),
+            used_saved: BTreeSet::new(),
         }
     }
 }
