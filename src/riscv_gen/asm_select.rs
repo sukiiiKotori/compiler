@@ -915,22 +915,26 @@ impl Instruction {
                     let size_byte: usize = (&params[2].0).parse().unwrap();
                     let mut filled_size: usize = 0;
                     let mut inner_filled_size: usize = 0;
+                    let mut imm_dst = String::new();
                     while filled_size < size_byte - 4 {
-                        if filled_size < 2040 {
+                        if filled_size < 2048 {
                             asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, &filled_size.to_string()), Some(PTR_WIDTH), vec!());
                             filled_size += 8;
-                        } else if filled_size == 2040 {//第一次达到2040，需要用addi加一下
-                            asm.gen_instr(AsmInstrType::Addi, vec!(ptr, ptr, "2040"), None, vec!());
+                        } else if filled_size == 2048 {//第一次达到2040，需要用addi加一下
+                            imm_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I64);
+                            asm.gen_instr(AsmInstrType::Li, vec!(&imm_dst, "2048"), None, vec!());
+                            asm.gen_instr(AsmInstrType::Add, vec!(ptr, ptr, &imm_dst), None, vec!());
                             asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, "0"), Some(PTR_WIDTH), vec!());
                             filled_size += 8;
                         } else {
                             inner_filled_size += 8;
-                            if inner_filled_size < 2040 {
+                            if inner_filled_size < 2048 {
                                 asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, &inner_filled_size.to_string()), Some(PTR_WIDTH), vec!());
-                            } else if inner_filled_size == 2040 {
-                                asm.gen_instr(AsmInstrType::Addi, vec!(ptr, ptr, "2040"), None, vec!());
+                            } else if inner_filled_size == 2048 {
+                                asm.gen_instr(AsmInstrType::Li, vec!(&imm_dst, "2048"), None, vec!());
+                                asm.gen_instr(AsmInstrType::Add, vec!(ptr, ptr, &imm_dst), None, vec!());
                                 asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, "0"), Some(PTR_WIDTH), vec!());
-                                inner_filled_size -= 2040;
+                                inner_filled_size -= 2048;
                             }
                             filled_size += 8;
                         }
@@ -940,14 +944,13 @@ impl Instruction {
                         if filled_size < 2048 {
                             asm.gen_instr(AsmInstrType::Store, vec!("zero", ptr, &filled_size.to_string()), Some(NORMAL_WIDTH), vec!());
                         } else {
-                            let imm_reg = pop_temp_label(select_cnt, asm, &SymbolWidth::I64);
-                            asm.gen_instr(AsmInstrType::Li, vec!(&imm_reg, &filled_size.to_string()), None, vec!());
-                            asm.gen_instr(AsmInstrType::Add, vec!(&imm_reg, ptr, &imm_reg), None, vec!());
-                            asm.gen_instr(AsmInstrType::Store, vec!("zero", &imm_reg, "0"), Some(NORMAL_WIDTH), vec!());
+                            asm.gen_instr(AsmInstrType::Li, vec!(&imm_dst, &filled_size.to_string()), None, vec!());
+                            asm.gen_instr(AsmInstrType::Add, vec!(&imm_dst, ptr, &imm_dst), None, vec!());
+                            asm.gen_instr(AsmInstrType::Store, vec!("zero", &imm_dst, "0"), Some(NORMAL_WIDTH), vec!());
                         }
                     }
-                    //asm.mark_call();
-                    //asm.gen_instr(AsmInstrType::Call, vec!["", "memset"], None, vec![]);
+                    asm.mark_call();
+                    asm.gen_instr(AsmInstrType::Call, vec!["", "memset"], None, vec![]);
                     
                     return;
                 }
