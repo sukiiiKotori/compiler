@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
-use crate::riscv_gen::stack_slot::StackSlot;
-use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::riscv_gen::register_alloc::RegisterAllocator;
 
 
