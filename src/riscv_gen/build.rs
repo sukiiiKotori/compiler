@@ -56,7 +56,7 @@ impl RiscV {
             //把虚拟寄存器更改为物理寄存器
             func.assign_register(allocator.get_alloc_res());
             // 展开函数调用，使用分配的寄存器
-            func.unfold_call( allocator.get_alloc_res());
+            func.handel_call( allocator.get_alloc_res());
             // 对溢出的寄存器进行重写
             func.rewrite_spilled(allocator.get_spilled());
         }
@@ -100,7 +100,7 @@ impl AsmFunc {
         self.call_info.push((instr_cnt, None, HashSet::new()));
     }
     /// 展开调用信息
-    pub fn unfold_call(&mut self, alloc_res: &HashMap<String, &'static str>) {
+    pub fn handel_call(&mut self, alloc_res: &HashMap<String, &'static str>) {
         let mut call_info_ref = self.call_info.iter().collect::<Vec<_>>();
         // 对当前函数中的代码块从后往前遍历
         for block in self.blocks.iter_mut().rev() {
@@ -112,7 +112,7 @@ impl AsmFunc {
                     if this_idx >= block.pre_instr_cnt {
                         let position = this_idx - block.pre_instr_cnt;
                         // 在当前代码块中展开函数调用
-                        block.unfold_call(&mut self.stack, this_call_info, alloc_res,  position);
+                        block.handel_call(&mut self.stack, this_call_info, alloc_res,  position);
                         call_info_ref.pop();
                     } else {
                         break;
@@ -312,9 +312,14 @@ impl AsmBlock {
         }
         context.int_cnt += 1;
     }
-    /// 对调用指令进行展开<br>
-    /// 处理函数调用的参数传递和返回值处理。
-    fn unfold_call(
+    /// 处理函数调用call指令<br>
+    /// 1. 解析调用指令，获取返回值、参数和参数类型。<br>
+    /// 2. 恢复在调用指令中被存储的临时寄存器。<br>
+    /// 3. 存储调用的返回值。<br>
+    /// 4. 获取用于存储参数的寄存器，并将其加入无效寄存器集合中。<br>
+    /// 5. 将参数值加载到指定的寄存器或栈槽位置。<br>
+    /// 6. 保存参数冲突的寄存器和穿越生命周期的寄存器。<br>
+    fn handel_call(
         &mut self,
         stack: &mut StackSlot,
         this_call_info: &(usize, Option<usize>, HashSet<String>),
