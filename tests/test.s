@@ -99,18 +99,18 @@ sort.while_end_0:
 param32_rec:
 param32_rec._entry:
 	addi	sp, sp, -424
-	sd	s3, 0(sp)
-	sd	s4, 8(sp)
-	sd	s0, 16(sp)
+	sd	ra, 0(sp)
+	sd	s2, 8(sp)
+	sd	s3, 16(sp)
 	sd	s1, 24(sp)
-	sd	s10, 32(sp)
-	sd	s11, 40(sp)
-	sd	s9, 48(sp)
-	sd	s5, 56(sp)
-	sd	s8, 64(sp)
-	sd	ra, 72(sp)
-	sd	s2, 80(sp)
-	sd	s6, 88(sp)
+	sd	s5, 32(sp)
+	sd	s4, 40(sp)
+	sd	s0, 48(sp)
+	sd	s10, 56(sp)
+	sd	s11, 64(sp)
+	sd	s6, 72(sp)
+	sd	s9, 80(sp)
+	sd	s8, 88(sp)
 	sd	s7, 96(sp)
 	sw	a0, 324(sp)
 	sw	a1, 320(sp)
@@ -177,18 +177,18 @@ param32_rec.if_then_0:
 	lw	t2, 320(sp)
 	sext.w	t2, t2
 	mv	a0, t2
-	ld	s3, 0(sp)
-	ld	s4, 8(sp)
-	ld	s0, 16(sp)
+	ld	ra, 0(sp)
+	ld	s2, 8(sp)
+	ld	s3, 16(sp)
 	ld	s1, 24(sp)
-	ld	s10, 32(sp)
-	ld	s11, 40(sp)
-	ld	s9, 48(sp)
-	ld	s5, 56(sp)
-	ld	s8, 64(sp)
-	ld	ra, 72(sp)
-	ld	s2, 80(sp)
-	ld	s6, 88(sp)
+	ld	s5, 32(sp)
+	ld	s4, 40(sp)
+	ld	s0, 48(sp)
+	ld	s10, 56(sp)
+	ld	s11, 64(sp)
+	ld	s6, 72(sp)
+	ld	s9, 80(sp)
+	ld	s8, 88(sp)
 	ld	s7, 96(sp)
 	addi	sp, sp, 424
 	ret
@@ -315,18 +315,18 @@ param32_rec.if_else_0:
 	call	param32_rec
 	mv	t2, a0
 	mv	a0, t2
-	ld	s3, 0(sp)
-	ld	s4, 8(sp)
-	ld	s0, 16(sp)
+	ld	ra, 0(sp)
+	ld	s2, 8(sp)
+	ld	s3, 16(sp)
 	ld	s1, 24(sp)
-	ld	s10, 32(sp)
-	ld	s11, 40(sp)
-	ld	s9, 48(sp)
-	ld	s5, 56(sp)
-	ld	s8, 64(sp)
-	ld	ra, 72(sp)
-	ld	s2, 80(sp)
-	ld	s6, 88(sp)
+	ld	s5, 32(sp)
+	ld	s4, 40(sp)
+	ld	s0, 48(sp)
+	ld	s10, 56(sp)
+	ld	s11, 64(sp)
+	ld	s6, 72(sp)
+	ld	s9, 80(sp)
+	ld	s8, 88(sp)
 	ld	s7, 96(sp)
 	addi	sp, sp, 424
 	ret
@@ -786,19 +786,19 @@ param32_arr._entry:
 param16:
 param16._entry:
 	addi	sp, sp, -408
-	sd	s9, 0(sp)
-	sd	s6, 8(sp)
-	sd	s11, 16(sp)
-	sd	s3, 24(sp)
-	sd	s7, 32(sp)
-	sd	ra, 40(sp)
-	sd	s10, 48(sp)
-	sd	s8, 56(sp)
-	sd	s1, 64(sp)
-	sd	s4, 72(sp)
-	sd	s2, 80(sp)
-	sd	s5, 88(sp)
-	sd	s0, 96(sp)
+	sd	s2, 0(sp)
+	sd	s3, 8(sp)
+	sd	s1, 16(sp)
+	sd	s8, 24(sp)
+	sd	s11, 32(sp)
+	sd	s9, 40(sp)
+	sd	ra, 48(sp)
+	sd	s7, 56(sp)
+	sd	s5, 64(sp)
+	sd	s0, 72(sp)
+	sd	s6, 80(sp)
+	sd	s4, 88(sp)
+	sd	s10, 96(sp)
 	sw	a0, 372(sp)
 	sw	a1, 368(sp)
 	sw	a2, 364(sp)
@@ -871,67 +871,52 @@ param16._entry:
 	addi	t2, sp, 248
 	sw	s0, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 4
-	add	t2, t2, t3
+	addi	t2, t2, 4
 	sw	s1, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 8
-	add	t2, t2, t3
+	addi	t2, t2, 8
 	sw	s2, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 12
-	add	t2, t2, t3
+	addi	t2, t2, 12
 	sw	s3, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 16
-	add	t2, t2, t3
+	addi	t2, t2, 16
 	sw	s4, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 20
-	add	t2, t2, t3
+	addi	t2, t2, 20
 	sw	s5, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 24
-	add	t2, t2, t3
+	addi	t2, t2, 24
 	sw	s6, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 28
-	add	t2, t2, t3
+	addi	t2, t2, 28
 	sw	s7, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 32
-	add	t2, t2, t3
+	addi	t2, t2, 32
 	sw	s8, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 36
-	add	t2, t2, t3
+	addi	t2, t2, 36
 	sw	s9, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 40
-	add	t2, t2, t3
+	addi	t2, t2, 40
 	sw	s10, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 44
-	add	t2, t2, t3
+	addi	t2, t2, 44
 	sw	s11, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 48
-	add	t2, t2, t3
+	addi	t2, t2, 48
 	ld	t0, 104(sp)
 	sw	t0, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 52
-	add	t2, t2, t3
+	addi	t2, t2, 52
 	ld	t0, 112(sp)
 	sw	t0, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 56
-	add	t2, t2, t3
+	addi	t2, t2, 56
 	ld	t0, 120(sp)
 	sw	t0, 0(t2)
 	addi	t2, sp, 248
-	li	t3, 60
-	add	t2, t2, t3
+	addi	t2, t2, 60
 	ld	t0, 128(sp)
 	sw	t0, 0(t2)
 	addi	t2, sp, 248
@@ -942,78 +927,63 @@ param16._entry:
 	lw	t2, 0(t2)
 	sext.w	t2, t2
 	addi	t3, sp, 248
-	li	t4, 4
-	add	t3, t3, t4
+	addi	t3, t3, 4
 	lw	t3, 0(t3)
 	sext.w	t3, t3
 	addi	t4, sp, 248
-	li	t5, 8
-	add	t4, t4, t5
+	addi	t4, t4, 8
 	lw	t4, 0(t4)
 	sext.w	t4, t4
 	addi	t5, sp, 248
-	li	t6, 12
-	add	t5, t5, t6
+	addi	t5, t5, 12
 	lw	t5, 0(t5)
 	sext.w	t5, t5
 	addi	t6, sp, 248
-	li	a0, 16
-	add	t6, t6, a0
+	addi	t6, t6, 16
 	lw	t6, 0(t6)
 	sext.w	t6, t6
 	addi	a0, sp, 248
-	li	a1, 20
-	add	a0, a0, a1
+	addi	a0, a0, 20
 	lw	a0, 0(a0)
 	sext.w	a0, a0
 	addi	a1, sp, 248
-	li	a2, 24
-	add	a1, a1, a2
+	addi	a1, a1, 24
 	lw	a1, 0(a1)
 	sext.w	a1, a1
 	addi	a2, sp, 248
-	li	a3, 28
-	add	a2, a2, a3
+	addi	a2, a2, 28
 	lw	a2, 0(a2)
 	sext.w	a2, a2
 	addi	a3, sp, 248
-	li	a4, 32
-	add	a3, a3, a4
+	addi	a3, a3, 32
 	lw	a3, 0(a3)
 	sext.w	a3, a3
 	addi	a4, sp, 248
-	li	a5, 36
-	add	a4, a4, a5
+	addi	a4, a4, 36
 	lw	a4, 0(a4)
 	sext.w	a4, a4
 	addi	a5, sp, 248
-	li	a6, 40
-	add	a5, a5, a6
+	addi	a5, a5, 40
 	lw	a5, 0(a5)
 	sext.w	a5, a5
 	addi	a6, sp, 248
-	li	a7, 44
-	add	a6, a6, a7
+	addi	a6, a6, 44
 	lw	a6, 0(a6)
 	sext.w	a6, a6
 	addi	a7, sp, 248
-	li	s11, 48
-	add	a7, a7, s11
+	addi	a7, a7, 48
 	lw	a7, 0(a7)
 	sext.w	a7, a7
 	addi	s11, sp, 248
-	li	s10, 52
-	add	s11, s11, s10
+	addi	s11, s11, 52
 	lw	s11, 0(s11)
 	sext.w	s11, s11
 	addi	s10, sp, 248
-	li	s9, 56
-	add	s10, s10, s9
+	addi	s10, s10, 56
 	lw	s10, 0(s10)
 	sext.w	s10, s10
 	addi	s9, sp, 248
-	li	s8, 60
-	add	s9, s9, s8
+	addi	s9, s9, 60
 	lw	s9, 0(s9)
 	sext.w	s9, s9
 	lw	s8, 372(sp)
@@ -1103,19 +1073,19 @@ param16._entry:
 	call	param32_rec
 	mv	t2, a0
 	mv	a0, t2
-	ld	s9, 0(sp)
-	ld	s6, 8(sp)
-	ld	s11, 16(sp)
-	ld	s3, 24(sp)
-	ld	s7, 32(sp)
-	ld	ra, 40(sp)
-	ld	s10, 48(sp)
-	ld	s8, 56(sp)
-	ld	s1, 64(sp)
-	ld	s4, 72(sp)
-	ld	s2, 80(sp)
-	ld	s5, 88(sp)
-	ld	s0, 96(sp)
+	ld	s2, 0(sp)
+	ld	s3, 8(sp)
+	ld	s1, 16(sp)
+	ld	s8, 24(sp)
+	ld	s11, 32(sp)
+	ld	s9, 40(sp)
+	ld	ra, 48(sp)
+	ld	s7, 56(sp)
+	ld	s5, 64(sp)
+	ld	s0, 72(sp)
+	ld	s6, 80(sp)
+	ld	s4, 88(sp)
+	ld	s10, 96(sp)
 	addi	sp, sp, 408
 	ret
 	.text
@@ -1124,20 +1094,20 @@ param16._entry:
 	.type	main, @function
 main:
 main._entry:
-	addi	sp, sp, -620
-	sd	s2, 0(sp)
-	sd	s6, 8(sp)
-	sd	s4, 16(sp)
-	sd	s11, 24(sp)
-	sd	s0, 32(sp)
-	sd	ra, 40(sp)
-	sd	s9, 48(sp)
-	sd	s5, 56(sp)
-	sd	s7, 64(sp)
-	sd	s3, 72(sp)
-	sd	s8, 80(sp)
-	sd	s10, 88(sp)
-	sd	s1, 96(sp)
+	addi	sp, sp, -556
+	sd	s1, 0(sp)
+	sd	s2, 8(sp)
+	sd	s6, 16(sp)
+	sd	s7, 24(sp)
+	sd	s9, 32(sp)
+	sd	s11, 40(sp)
+	sd	s3, 48(sp)
+	sd	s4, 56(sp)
+	sd	s8, 64(sp)
+	sd	s10, 72(sp)
+	sd	s5, 80(sp)
+	sd	ra, 88(sp)
+	sd	s0, 96(sp)
 	call	getint
 	mv	s0, a0
 	call	getint
@@ -1164,21 +1134,21 @@ main._entry:
 	mv	s11, a0
 	call	getint
 	mv	t0, a0
-	sd	t0, 352(sp)
+	sd	t0, 288(sp)
 	call	getint
 	mv	t0, a0
-	sd	t0, 344(sp)
+	sd	t0, 280(sp)
 	call	getint
 	mv	t0, a0
-	sd	t0, 336(sp)
+	sd	t0, 272(sp)
 	call	getint
 	mv	t2, a0
 	sw	t2, -32(sp)
-	ld	t0, 336(sp)
+	ld	t0, 272(sp)
 	sw	t0, -28(sp)
-	ld	t0, 344(sp)
+	ld	t0, 280(sp)
 	sw	t0, -24(sp)
-	ld	t0, 352(sp)
+	ld	t0, 288(sp)
 	sw	t0, -20(sp)
 	sw	s11, -16(sp)
 	sw	s10, -12(sp)
@@ -1194,7 +1164,7 @@ main._entry:
 	mv	a0, s0
 	call	param16
 	mv	s0, a0
-	addi	t2, sp, 364
+	addi	t2, sp, 300
 	sd	zero, 0(t2)
 	sd	zero, 8(t2)
 	sd	zero, 16(t2)
@@ -1227,210 +1197,154 @@ main._entry:
 	sd	zero, 232(t2)
 	sd	zero, 240(t2)
 	sd	zero, 248(t2)
-	addi	t2, sp, 364
+	addi	t2, sp, 300
 	mv	t3, t2
 	sw	s0, 0(t3)
-	li	t3, 4
-	add	t2, t2, t3
+	addi	t2, t2, 4
 	li	t3, 8848
 	sw	t3, 0(t2)
 	li	t2, 1
-	sw	t2, 360(sp)
+	sw	t2, 296(sp)
 main.while_entry_0:
-	lw	t2, 360(sp)
+	lw	t2, 296(sp)
 	sext.w	t2, t2
 	slti	t2, t2, 32
 	beq	t2, zero, main.while_end_0
 main.while_body_0:
-	lw	t2, 360(sp)
+	lw	t2, 296(sp)
 	sext.w	t2, t2
-	addi	t3, sp, 364
+	addi	t3, sp, 300
 	slli	t2, t2, 3
 	add	t3, t3, t2
-	lw	t2, 360(sp)
+	lw	t2, 296(sp)
 	sext.w	t2, t2
 	addi	t2, t2, -1
-	addi	t4, sp, 364
+	addi	t4, sp, 300
 	slli	t2, t2, 3
 	add	t4, t4, t2
-	li	t2, 4
-	add	t4, t4, t2
+	addi	t4, t4, 4
 	lw	t4, 0(t4)
 	sext.w	t4, t4
 	addi	t4, t4, -1
 	sw	t4, 0(t3)
-	lw	t3, 360(sp)
+	lw	t3, 296(sp)
 	sext.w	t3, t3
-	addi	t4, sp, 364
+	addi	t4, sp, 300
 	slli	t3, t3, 3
 	add	t4, t4, t3
-	li	t3, 4
-	add	t4, t4, t3
-	lw	t3, 360(sp)
+	addi	t4, t4, 4
+	lw	t3, 296(sp)
 	sext.w	t3, t3
 	addi	t3, t3, -1
-	addi	t2, sp, 364
+	addi	t2, sp, 300
 	slli	t3, t3, 3
 	add	t2, t2, t3
 	lw	t2, 0(t2)
 	sext.w	t2, t2
 	addi	t2, t2, -2
 	sw	t2, 0(t4)
-	lw	t4, 360(sp)
+	lw	t4, 296(sp)
 	sext.w	t4, t4
 	addi	t4, t4, 1
-	sw	t4, 360(sp)
+	sw	t4, 296(sp)
 	j	main.while_entry_0
 main.while_end_0:
-	addi	t4, sp, 364
-	addi	t2, sp, 364
-	li	t3, 8
-	add	t2, t2, t3
-	addi	t3, sp, 364
-	li	t5, 16
-	add	t3, t3, t5
-	addi	t5, sp, 364
-	li	t6, 24
-	add	t5, t5, t6
-	addi	t6, sp, 364
-	li	a0, 32
-	add	t6, t6, a0
-	addi	a0, sp, 364
-	li	a1, 40
-	add	a0, a0, a1
-	addi	a1, sp, 364
-	li	a2, 48
-	add	a1, a1, a2
-	addi	a2, sp, 364
-	li	a3, 56
-	add	a2, a2, a3
-	addi	a3, sp, 364
-	li	a4, 64
-	add	a3, a3, a4
-	addi	a4, sp, 364
-	li	a5, 72
-	add	a4, a4, a5
-	addi	a5, sp, 364
-	li	a6, 80
-	add	a5, a5, a6
-	addi	a6, sp, 364
-	li	a7, 88
-	add	a6, a6, a7
-	addi	a7, sp, 364
-	li	s0, 96
-	add	a7, a7, s0
-	addi	s0, sp, 364
-	li	s1, 104
-	add	s0, s0, s1
-	addi	s1, sp, 364
-	li	s2, 112
-	add	s1, s1, s2
-	addi	s2, sp, 364
-	li	s3, 120
-	add	s2, s2, s3
-	addi	s3, sp, 364
-	li	s4, 128
-	add	s3, s3, s4
-	addi	s4, sp, 364
-	li	s5, 136
-	add	s4, s4, s5
-	addi	s5, sp, 364
-	li	s6, 144
-	add	s5, s5, s6
-	addi	s6, sp, 364
-	li	s7, 152
-	add	s6, s6, s7
-	addi	s7, sp, 364
-	li	s8, 160
-	add	s7, s7, s8
-	addi	s8, sp, 364
-	li	s9, 168
-	add	s8, s8, s9
-	addi	s9, sp, 364
-	li	s10, 176
-	add	s9, s9, s10
-	addi	s10, sp, 364
-	li	s11, 184
-	add	s10, s10, s11
-	addi	s11, sp, 364
-	li	t0, 192
+	addi	t4, sp, 300
+	addi	t2, sp, 300
+	addi	t2, t2, 8
+	addi	t3, sp, 300
+	addi	t3, t3, 16
+	addi	t5, sp, 300
+	addi	t5, t5, 24
+	addi	t6, sp, 300
+	addi	t6, t6, 32
+	addi	a0, sp, 300
+	addi	a0, a0, 40
+	addi	a1, sp, 300
+	addi	a1, a1, 48
+	addi	a2, sp, 300
+	addi	a2, a2, 56
+	addi	a3, sp, 300
+	addi	a3, a3, 64
+	addi	a4, sp, 300
+	addi	a4, a4, 72
+	addi	a5, sp, 300
+	addi	a5, a5, 80
+	addi	a6, sp, 300
+	addi	a6, a6, 88
+	addi	a7, sp, 300
+	addi	a7, a7, 96
+	addi	s0, sp, 300
+	addi	s0, s0, 104
+	addi	s1, sp, 300
+	addi	s1, s1, 112
+	addi	s2, sp, 300
+	addi	s2, s2, 120
+	addi	s3, sp, 300
+	addi	s3, s3, 128
+	addi	s4, sp, 300
+	addi	s4, s4, 136
+	addi	s5, sp, 300
+	addi	s5, s5, 144
+	addi	s6, sp, 300
+	addi	s6, s6, 152
+	addi	s7, sp, 300
+	addi	s7, s7, 160
+	addi	s8, sp, 300
+	addi	s8, s8, 168
+	addi	s9, sp, 300
+	addi	s9, s9, 176
+	addi	s10, sp, 300
+	addi	s10, s10, 184
+	addi	s11, sp, 300
+	addi	s11, s11, 192
+	addi	t0, sp, 300
 	sd	t0, 104(sp)
-	add	s11, s11, t0
-	addi	t0, sp, 364
-	sd	t0, 120(sp)
-	li	t0, 200
+	addi	t0, t0, 200
 	sd	t0, 112(sp)
-	mv	t1, t0
-	ld	t0, 120(sp)
-	add	t0, t0, t1
-	sd	t0, 128(sp)
-	sd	t0, 328(sp)
-	addi	t0, sp, 364
-	sd	t0, 144(sp)
-	li	t0, 208
-	sd	t0, 136(sp)
-	mv	t1, t0
-	ld	t0, 144(sp)
-	add	t0, t0, t1
-	sd	t0, 152(sp)
-	sd	t0, 320(sp)
-	addi	t0, sp, 364
-	sd	t0, 168(sp)
-	li	t0, 216
-	sd	t0, 160(sp)
-	mv	t1, t0
-	ld	t0, 168(sp)
-	add	t0, t0, t1
-	sd	t0, 176(sp)
-	sd	t0, 312(sp)
-	addi	t0, sp, 364
-	sd	t0, 192(sp)
-	li	t0, 224
-	sd	t0, 184(sp)
-	mv	t1, t0
-	ld	t0, 192(sp)
-	add	t0, t0, t1
-	sd	t0, 200(sp)
-	sd	t0, 304(sp)
-	addi	t0, sp, 364
-	sd	t0, 216(sp)
-	li	t0, 232
-	sd	t0, 208(sp)
-	mv	t1, t0
-	ld	t0, 216(sp)
-	add	t0, t0, t1
-	sd	t0, 224(sp)
-	sd	t0, 296(sp)
-	addi	t0, sp, 364
-	sd	t0, 240(sp)
-	li	t0, 240
-	sd	t0, 232(sp)
-	mv	t1, t0
-	ld	t0, 240(sp)
-	add	t0, t0, t1
-	sd	t0, 248(sp)
-	sd	t0, 288(sp)
-	addi	t0, sp, 364
 	sd	t0, 264(sp)
-	li	t0, 248
+	addi	t0, sp, 300
+	sd	t0, 120(sp)
+	addi	t0, t0, 208
+	sd	t0, 128(sp)
 	sd	t0, 256(sp)
-	mv	t1, t0
-	ld	t0, 264(sp)
-	add	t0, t0, t1
-	sd	t0, 272(sp)
-	sd	t0, 280(sp)
+	addi	t0, sp, 300
+	sd	t0, 136(sp)
+	addi	t0, t0, 216
+	sd	t0, 144(sp)
+	sd	t0, 248(sp)
+	addi	t0, sp, 300
+	sd	t0, 152(sp)
+	addi	t0, t0, 224
+	sd	t0, 160(sp)
+	sd	t0, 240(sp)
+	addi	t0, sp, 300
+	sd	t0, 168(sp)
+	addi	t0, t0, 232
+	sd	t0, 176(sp)
+	sd	t0, 232(sp)
+	addi	t0, sp, 300
+	sd	t0, 184(sp)
+	addi	t0, t0, 240
+	sd	t0, 192(sp)
+	sd	t0, 224(sp)
+	addi	t0, sp, 300
+	sd	t0, 200(sp)
+	addi	t0, t0, 248
+	sd	t0, 208(sp)
+	sd	t0, 216(sp)
 	sd	t0, -192(sp)
-	ld	t0, 288(sp)
+	ld	t0, 224(sp)
 	sd	t0, -184(sp)
-	ld	t0, 296(sp)
+	ld	t0, 232(sp)
 	sd	t0, -176(sp)
-	ld	t0, 304(sp)
+	ld	t0, 240(sp)
 	sd	t0, -168(sp)
-	ld	t0, 312(sp)
+	ld	t0, 248(sp)
 	sd	t0, -160(sp)
-	ld	t0, 320(sp)
+	ld	t0, 256(sp)
 	sd	t0, -152(sp)
-	ld	t0, 328(sp)
+	ld	t0, 264(sp)
 	sd	t0, -144(sp)
 	sd	s11, -136(sp)
 	sd	s10, -128(sp)
@@ -1464,18 +1378,18 @@ main.while_end_0:
 	li	a0, 10
 	call	putch
 	li	a0, 0
-	ld	s2, 0(sp)
-	ld	s6, 8(sp)
-	ld	s4, 16(sp)
-	ld	s11, 24(sp)
-	ld	s0, 32(sp)
-	ld	ra, 40(sp)
-	ld	s9, 48(sp)
-	ld	s5, 56(sp)
-	ld	s7, 64(sp)
-	ld	s3, 72(sp)
-	ld	s8, 80(sp)
-	ld	s10, 88(sp)
-	ld	s1, 96(sp)
-	addi	sp, sp, 620
+	ld	s1, 0(sp)
+	ld	s2, 8(sp)
+	ld	s6, 16(sp)
+	ld	s7, 24(sp)
+	ld	s9, 32(sp)
+	ld	s11, 40(sp)
+	ld	s3, 48(sp)
+	ld	s4, 56(sp)
+	ld	s8, 64(sp)
+	ld	s10, 72(sp)
+	ld	s5, 80(sp)
+	ld	ra, 88(sp)
+	ld	s0, 96(sp)
+	addi	sp, sp, 556
 	ret
