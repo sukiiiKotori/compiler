@@ -11,6 +11,7 @@ pub mod save_registers;
 pub mod restore_registers;
 pub mod register_alloc;
 pub mod register_type;
+pub mod handle_call;
 
 use linearscan::*;
 use crate::structures::llvm_struct::*;
