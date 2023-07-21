@@ -4,7 +4,6 @@ use crate::structures::llvm_struct::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
 use crate::structures::riscv_regs::*;
-use crate::riscv_gen::build::{NORMAL_WIDTH, PTR_WIDTH};
 
 pub const FLOAT_PREFIX: &str = "f";
 

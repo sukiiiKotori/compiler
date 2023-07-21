@@ -2,6 +2,9 @@ use std::collections::{HashSet, HashMap};
 use crate::riscv_gen::stack_slot::StackSlot;
 use crate::structures::symbol::*;
 
+pub const NORMAL_WIDTH: isize = 4;
+pub const PTR_WIDTH: isize = 8;
+
 /// 表示RISC-V汇编代码的结构体。
 #[derive(Debug)]
 pub struct RiscV {
