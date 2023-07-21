@@ -941,6 +941,10 @@ impl Instruction {
                             asm.gen_instr(AsmInstrType::Store, vec!("zero", &imm_reg, "0"), Some(NORMAL_WIDTH), vec!());
                         }
                     }
+                    asm.mark_call();
+                    asm.gen_instr(AsmInstrType::Call, vec!["", "memset"], None, vec![]);
+                    
+                    return;
                 }
                 asm.mark_call();
                 asm.insert_label_type(res, &ty.width);
