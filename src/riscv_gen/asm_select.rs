@@ -874,10 +874,13 @@ impl Instruction {
                         if this_idx == 0 {
                             asm.gen_instr(AsmInstrType::Mv, vec!(&next_addr, &last_addr), None, vec!());
                         } else {
-                            let this_idx = format!("{}", this_idx);
-                            let index = pop_temp_label(select_cnt, asm, &SymbolWidth::I64);
-                            asm.gen_instr(AsmInstrType::Li, vec!(&index, &this_idx), None, vec!());
-                            asm.gen_instr(AsmInstrType::Add, vec!(&next_addr, &last_addr, &index), None, vec!());
+                            if inside_imm_range(&this_idx.to_string()) {
+                                asm.gen_instr(AsmInstrType::Addi, vec!(&next_addr, &last_addr, &this_idx.to_string()), None, vec!());
+                            } else {
+                                let imm_reg = pop_temp_label(select_cnt, asm, &SymbolWidth::I64);
+                                asm.gen_instr(AsmInstrType::Li, vec!(&imm_reg, &this_idx.to_string()), None, vec!());
+                                asm.gen_instr(AsmInstrType::Add, vec!(&next_addr, &last_addr, &imm_reg), None, vec!());
+                            }
                         }
                     } else {
                         //如果索引不是立即数，则生成一系列指令来计算偏移量。
