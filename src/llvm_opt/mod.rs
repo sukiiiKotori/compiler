@@ -10,7 +10,6 @@ use crate::structures::llvm_struct::*;
 use crate::llvm_opt::eliminate::*;
 
 
-pub fn optimise_llvm(program: LLVMProgram) -> LLVMProgram {
-    let program = eliminate_all(program);
-    program
+pub fn optimise_llvm(program: &mut LLVMProgram) {
+    eliminate_all(program);
 }

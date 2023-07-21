@@ -28,30 +28,3 @@ pub fn eliminate(func: &FuncDef) -> HashSet<String> {
     // 计算活跃变量并返回结果
     calc_active(&succs, preds)
 }
-
-#[allow(unused)]
-pub fn debug(func: &FuncDef) {
-    let actives = eliminate(func);
-
-    println!("[Origin] size: {}", func.blocks.len());
-    for bb in func.blocks.iter() {
-        println!("{}", bb.block_label);
-    }
-    println!("");
-
-    println!("[Active] size: {}", actives.len());
-    for active in actives.iter() {
-        println!("{}", active);
-    }
-    println!("");
-
-    let eliminated: Vec<_> = func.blocks.iter()
-        .map(|x| x.block_label.as_str())
-        .filter(|&x| !actives.contains(x))
-        .collect();
-    println!("[Eliminated] size: {}", eliminated.len());
-    for e in eliminated.iter() {
-        println!("{}", e);
-    }
-    println!("");
-}

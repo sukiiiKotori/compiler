@@ -221,7 +221,7 @@ pub struct LocalVar {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Instruction {
     // 算术运算
     // int
@@ -281,6 +281,9 @@ pub enum Instruction {
     /// 返回指令
     Ret(SymbolType, Option<String>),
     /// 分支指令
+    /// .0表示条件 可以没有条件
+    /// .1表示如果为真，跳转到的分支
+    /// .2表示如果为假，跳转到的分支，可以没有该分支
     Br(Option<String>, String, Option<String>),
 }
 
@@ -314,7 +317,7 @@ pub enum InstructionType {
 
 
 /// 二元操作
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct BinaryOp {
     /// 结果
     pub res: String,
@@ -327,7 +330,7 @@ pub struct BinaryOp {
 }
 
 /// 转换操作
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CastOp {
     /// 结果
     pub res: String,

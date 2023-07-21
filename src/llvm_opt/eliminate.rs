@@ -2,31 +2,22 @@ use std::collections::{HashMap, HashSet};
 use crate::llvm_opt::{dead_code_eliminate, unreachable_eliminate};
 use crate::llvm_opt::deadcode::update_label;
 use crate::structures::llvm_struct::*;
-use crate::structures::rewrite_fundef::*;
 use crate::structures::scopes::*;
 
-
-#[allow(unused)]
-pub fn eliminate_all(mut program: LLVMProgram) -> LLVMProgram {
+pub fn eliminate_all(program: &mut LLVMProgram) {
     // 对每个函数进行处理
-    program.func_def = program
-        .func_def
-        .into_iter()
-        .map(|f| {
+    program.func_def.iter_mut().for_each(|func| {
             // 消除不可达基本块，返回活跃的基本块集合
-            let active_bb = unreachable_eliminate::eliminate(&f);
+            let active_bb = unreachable_eliminate::eliminate(func);
 
             // 消除死代码，返回活跃的标签集合
-            let active_labels = dead_code_eliminate::eliminate(&f, &active_bb);
+            let active_labels = dead_code_eliminate::eliminate(func, &active_bb);
 
             // 统计指令的数量
-            let instr_cnt = f.count_instr();
+            let instr_cnt = func.count_instr();
 
             // 存储活跃的指令索引的集合
-            let mut active_instrs: HashSet<usize> = f
-                .blocks
-                .iter()
-                .map(|b| {
+            let mut active_instrs: HashSet<usize> = func.blocks.iter().map(|b| {
                     let mut res: HashSet<usize> = HashSet::new();
                     let mut instr_cnt = b.ins_num.clone();
 
@@ -61,14 +52,9 @@ pub fn eliminate_all(mut program: LLVMProgram) -> LLVMProgram {
                 });
 
             // 存储活跃的分配（alloc）指令索引的集合
-            let mut active_allocs: HashSet<usize> = f
-                .local_vars
-                .iter()
-                .enumerate()
-                // 过滤出活跃的分配指令，并将其索引转换为实际的指令索引
-                .filter(|(_, a)| a.ins.is_active(&active_labels))
-                .map(|(i, _)| instr_cnt + i)
-                .collect();
+            let active_allocs = func.local_vars.iter().enumerate().filter(|(_, a)| {
+                a.ins.is_active(&active_labels)}
+            ).map(|(i, _)| instr_cnt + i).collect::<HashSet<usize>>();
 
             // 将活跃的分配指令索引添加到活跃的指令索引集合中
             active_allocs.into_iter().for_each(|i| {
@@ -80,13 +66,10 @@ pub fn eliminate_all(mut program: LLVMProgram) -> LLVMProgram {
             let mut label_map = HashMap::new();
 
             // 重新加载函数的内容，根据活跃的基本块、指令和标签进行更新
-            f.rewrite(
+            func.rewrite(
                 &mut |s| update_label(&mut labels, &mut label_map, s),
                 &|s| active_bb.contains(s),
                 &|i| active_instrs.contains(&(i as usize)),
-            )
-        })
-        .collect();
-
-    program
+            );
+        });
 }

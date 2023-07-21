@@ -1,107 +1,70 @@
 use crate::structures::llvm_struct::*;
 
-pub trait ReWrite {
-    type ReWriteResult;
-    fn rewrite<UpdateLabel, BlockFilter, InstrFilter>(
-        self,
+impl FuncDef {
+    pub fn rewrite<UpdateLabel, BlockFilter, InstrFilter>(
+        &mut self,
         update_label: &mut UpdateLabel,
         bb_filter: &BlockFilter,
         instr_filter: &InstrFilter,
-    ) -> Self::ReWriteResult
+    )
         where
             UpdateLabel: FnMut(&str) -> String,
             BlockFilter: Fn(&str) -> bool,
-            InstrFilter: Fn(usize) -> bool;
-}
-
-impl ReWrite for FuncDef {
-    type ReWriteResult = Self;
-
-    fn rewrite<UpdateLabel, BlockFilter, InstrFilter>(
-        mut self,
-        update_label: &mut UpdateLabel,
-        bb_filter: &BlockFilter,
-        instr_filter: &InstrFilter,
-    ) -> Self::ReWriteResult
-        where
-            UpdateLabel: FnMut(&str) -> String,
-            BlockFilter: Fn(&str) -> bool,
-            InstrFilter: Fn(usize) -> bool,
+            InstrFilter: Fn(i32) -> bool,
     {
-        let instr_cnt = self.count_instr();
-        let new_local_vars = self
-            .local_vars
-            .into_iter()
-            .enumerate()
-            .filter(|(i, a)| bb_filter(a.label.as_str()) && instr_filter(instr_cnt + i))
-            .map(|(_, info)| info)
-            .collect();
-        self.local_vars = new_local_vars;
+        let mut instr_cnt = self.count_instr() as i32 - 1;
+        //过滤掉不需要的局部变量
+        self.local_vars.retain(|var| {
+            instr_cnt += 1;
+            bb_filter(&var.label) && instr_filter(instr_cnt)
+        });
+        //过滤掉不需要的基本块
+        self.blocks.retain(|block| bb_filter(&block.block_label));
+        //将留下的基本块做修改
+        self.blocks.iter_mut().for_each(|block| block.rewrite(update_label, instr_filter));
 
-        let mut new_blocks: Vec<Block> = self
-            .blocks
-            .into_iter()
-            .filter_map(|b| b.rewrite(update_label, bb_filter, instr_filter))
-            .collect();
-        new_blocks.first_mut().unwrap().ins_num = 0;
-        for i in 1..new_blocks.len() {
-            new_blocks[i].ins_num = new_blocks[i.clone() - 1].count_instr();
+        self.blocks.first_mut().unwrap().ins_num = 0;
+        for i in 1..self.blocks.len() {
+            self.blocks[i].ins_num = self.blocks[i - 1].count_instr();
         }
-        self.blocks = new_blocks;
-
-        self
     }
 }
 
 impl Block {
-    fn rewrite<UpdateLabel, BlockFilter, InstrFilter>(
-        mut self,
+    fn rewrite<UpdateLabel, InstrFilter>(
+        &mut self,
         update_label: &mut UpdateLabel,
-        bb_filter: &BlockFilter,
         instr_filter: &InstrFilter,
-    ) -> Option<Self>
+    )
         where
             UpdateLabel: FnMut(&str) -> String,
-            BlockFilter: Fn(&str) -> bool,
-            InstrFilter: Fn(usize) -> bool,
+            InstrFilter: Fn(i32) -> bool,
     {
-        if !bb_filter(self.block_label.as_str()) {
-            return None;
+        let mut instr_cnt = self.ins_num as i32 - 1;
+
+        self.phi_ins.retain_mut(|phi_instr| {
+            instr_cnt += 1;
+            if instr_filter(instr_cnt) {
+                phi_instr.rewrite(update_label);
+                true
+            } else {
+                false
+            }
+        });
+
+        self.nor_ins.retain_mut(|nor_instr| {
+            instr_cnt += 1;
+            if instr_filter(instr_cnt) {
+                nor_instr.rewrite(update_label);
+                true
+            } else {
+                false
+            }
+        });
+
+        if let Some(ter) = &mut self.ter_ins {
+            ter.rewrite(update_label);
         }
-        let mut instr_cnt = self.ins_num;
-
-        let new_phi_instr: Vec<Instruction> = self
-            .phi_ins
-            .into_iter()
-            .filter(|_| {
-                let cond = instr_filter(instr_cnt.clone());
-                instr_cnt += 1;
-                cond
-            })
-            .map(|p| p.rewrite(update_label))
-            .collect();
-
-        let new_instrs: Vec<Instruction> = self
-            .nor_ins
-            .into_iter()
-            .filter(|_| {
-                let cond = instr_filter(instr_cnt.clone());
-                instr_cnt += 1;
-                cond
-            })
-            .map(|i| i.rewrite(update_label))
-            .collect();
-
-        let ter_instr: Option<Instruction>;
-        if let Some(ter) = self.ter_ins {
-            ter_instr = Some(ter.rewrite(update_label));
-        } else {
-            ter_instr = None;
-        }
-        self.phi_ins = new_phi_instr;
-        self.nor_ins = new_instrs;
-        self.ter_ins = ter_instr;
-        Some(self)
     }
 }
 
@@ -113,13 +76,14 @@ impl Instruction {
         str_vec.into_iter().map(|s| update_label(s)).collect()
     }
 
-    fn rewrite<UpdateLabel>(self, update_label: &mut UpdateLabel) -> Self
+    fn rewrite<UpdateLabel>(&mut self, update_label: &mut UpdateLabel)
         where
             UpdateLabel: FnMut(&str) -> String,
     {
-        let (ty, str_vec, ty_vec) = self.fetch_info();
+        let another = self.clone();
+        let (_, str_vec, ty_vec) = another.fetch_info();
         let str_vec = Self::update_labels(str_vec, update_label);
         let str_vec_ref = str_vec.iter().map(|s| s.as_str()).collect();
-        Instruction::make_instruction(ty, str_vec_ref, ty_vec)
+        self.update_instr(str_vec_ref, ty_vec);
     }
 }

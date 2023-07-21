@@ -30,7 +30,7 @@ pub struct Settings {
 
 static SETTINGS: Settings = Settings {
     use_phi: false,
-    optimise: false,
+    optimise: true,
     debug: true,
     log: false,
     all_allocs_in_entry: true,
@@ -55,7 +55,7 @@ fn main() {
     //生成llvm
     let mut llvm = generate_llvm(&mut ast);
     if SETTINGS.optimise {
-        llvm = optimise_llvm(llvm);
+        optimise_llvm(&mut llvm);
     }
     let filename_without_suffix= file_name.split(".").collect::<Vec<_>>()[0].to_string();
     //编译选项，可选-llvm和-S
