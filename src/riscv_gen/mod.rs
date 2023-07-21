@@ -9,6 +9,7 @@ pub mod asmfunc_stack;
 pub mod push_datasection;
 pub mod save_registers;
 pub mod restore_registers;
+pub mod handle_call;
 
 use linearscan::*;
 use crate::structures::llvm_struct::*;
