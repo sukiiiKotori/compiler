@@ -53,7 +53,7 @@ fn main() {
     //用lalrpop解析得到ast
     let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
     //生成llvm
-    let mut llvm = generate_llvm(&mut ast).unwrap();
+    let mut llvm = generate_llvm(&mut ast);
     if SETTINGS.optimise {
         llvm = optimise_llvm(llvm);
     }

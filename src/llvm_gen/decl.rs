@@ -1,4 +1,3 @@
-use std::error::Error;
 use crate::ast::ConstDecl;
 use crate::ast::ConstDef;
 use crate::ast::Decl;
@@ -14,7 +13,7 @@ use crate::llvm_gen::symbol::*;
 
 // 获取某元素在多维数组中，实际偏移位置量
 fn get_pos(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {
-    let mut sub_size = dims.iter().skip(1).fold(1, | res, &a | res * a);
+    let mut sub_size = dims.iter().skip(1).fold(1, | res, a | res * a);
 
     let mut res = pos.first().unwrap().clone();
     res *= sub_size;
@@ -205,7 +204,7 @@ impl Generate for Decl {
             program: &mut LLVMProgram,
             scopes: &mut Scopes,
             labels: &mut Labels
-        ) -> Result<Self::Out, Box<dyn Error>> {
+        ) -> Self::Out {
         match self {
             Decl::ConstDecl(constdecl) => constdecl.generate(program, scopes, labels),
             Decl::VarDecl(vardecl) => vardecl.generate(program, scopes, labels),
@@ -221,13 +220,13 @@ impl Generate for ConstDecl {
             program: &mut LLVMProgram,
             scopes: &mut Scopes,
             labels: &mut Labels
-        ) -> Result<Self::Out, Box<dyn Error>> {
-            let mut ty = self.ty.generate()?;
+        ) -> Self::Out {
+            let mut ty = self.ty.generate();
             ty.is_const = true;
             
             // 解析常量定义
             for def in &self.defs {
-                let (id, init_ty, init_val, dims) = def.generate(program, scopes, labels)?;
+                let (id, init_ty, init_val, dims) = def.generate(program, scopes, labels);
                 let is_arr = !dims.is_empty();
                 
                 if is_arr {
@@ -246,7 +245,7 @@ impl Generate for ConstDecl {
                 }
             }
             
-            Ok(())
+            
     }
 }
 
@@ -258,7 +257,7 @@ impl Generate for ConstDef {
             program: &mut LLVMProgram,
             scopes: &mut Scopes,
             labels: &mut Labels
-        ) -> Result<Self::Out, Box<dyn Error>> {
+        ) -> Self::Out {
             if !self.dims.is_empty() {
                 if !scopes.is_global_scope() {
                     program.push_comment(&format!("; init {}\n", self.id));
@@ -267,12 +266,12 @@ impl Generate for ConstDef {
             
             let dims: Vec<i32> = self.dims
                 .iter()
-                .map(|dim| dim.generate(program, scopes, labels).map(|(_, val)| val.parse().expect("Not an integer")))
-                .collect::<Result<Vec<i32>, Box<dyn Error>>>()?;
+                .map(|dim| dim.generate(program, scopes, labels).1.parse().unwrap())
+                .collect::<Vec<i32>>();
             
-            let (ty, val) = self.init.generate(program, scopes, labels, &dims)?;
+            let (ty, val) = self.init.generate(program, scopes, labels, &dims);
             
-            Ok((String::from(self.id.as_str()), ty, val, dims))
+            (String::from(self.id.as_str()), ty, val, dims)
     }
 }
 
@@ -315,7 +314,7 @@ impl InitVal {
         for item in items {
             match item {
                 InitVal::Exp(exp) => {
-                    let (ty, val) = exp.generate(program, scopes, labels).unwrap();
+                    let (ty, val) = exp.generate(program, scopes, labels);
                     tys.push(ty);
                     vals.push(val);
                     fill += 1;
@@ -342,11 +341,11 @@ impl InitVal {
         scopes: &mut Scopes, 
         labels: &mut Labels, 
         dims: &Vec<i32>
-    ) -> Result<(Vec<SymbolType>, Vec<String>), Box<dyn Error>> {
+    ) -> (Vec<SymbolType>, Vec<String>) {
         match self {
             InitVal::Exp(exp) => {
-                let (ty, val) = exp.generate(program, scopes, labels)?;
-                Ok((vec!(ty), vec!(val)))
+                let (ty, val) = exp.generate(program, scopes, labels);
+                (vec!(ty), vec!(val))
             },
             InitVal::Arr(arr) => {
                 let mut ty: Vec<SymbolType> = vec!();
@@ -354,7 +353,7 @@ impl InitVal {
                 if !arr.is_empty() {
                     InitVal::init_padding(program, scopes, labels, &arr, dims, &mut ty, &mut val, 0);
                 }
-                Ok((ty, val))
+                (ty, val)
             },
         }
     }
@@ -364,13 +363,13 @@ impl InitVal {
 impl Generate for VarDecl {
     type Out = ();
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
-        let mut ty = self.ty.generate()?;
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
+        let mut ty = self.ty.generate();
         ty.is_const = false;
 
         // 遍历定义
         for def in &self.defs {
-            let (id, init_ty, init_val, dims) = def.generate(program, scopes, labels)?;
+            let (id, init_ty, init_val, dims) = def.generate(program, scopes, labels);
 
             // 数组
             if !dims.is_empty() {
@@ -437,7 +436,7 @@ impl Generate for VarDecl {
                 panic!("{} has been defined!", id);
             }
         }
-        Ok(())
+        
     }
 }
 
@@ -445,10 +444,10 @@ impl Generate for VarDecl {
 impl Generate for VarDef {
     type Out = (String, Vec<SymbolType>, Vec<String>, Vec<i32>);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         let mut dims: Vec<i32> = vec!();
         for dim in self.dims.iter() {
-            let (_, val) = dim.generate(program, scopes, labels)?;
+            let (_, val) = dim.generate(program, scopes, labels);
             dims.push(val.parse().expect(&format!("{} is not integer", val)));
         }
 
@@ -457,13 +456,13 @@ impl Generate for VarDef {
             if !scopes.is_global_scope() {
                 program.push_comment(format!("; init {}\n", self.id).as_str());
             }
-            let (ty, val) = init.generate(program, scopes, labels, &dims)?;
-            Ok((String::from(self.id.as_str()), ty, val, dims))
+            let (ty, val) = init.generate(program, scopes, labels, &dims);
+            (String::from(self.id.as_str()), ty, val, dims)
         } else {
             if !scopes.is_global_scope() && !dims.is_empty() {
                 program.push_comment(format!("; init {}\n", self.id).as_str());
             }
-            Ok((String::from(self.id.as_str()), vec!(), vec!(), dims))
+            (String::from(self.id.as_str()), vec!(), vec!(), dims)
         }
     }
 }

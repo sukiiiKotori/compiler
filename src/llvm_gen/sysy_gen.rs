@@ -1,4 +1,3 @@
-use std::error::Error;
 use crate::ast::*;
 use crate::structures::llvm_struct::{LLVMProgram, Instruction, InstructionType};
 use crate::structures::symbol::*;
@@ -12,7 +11,7 @@ pub trait Generate {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>>;
+    ) -> Self::Out;
 }
 
 /// 首先添加库函数的声明
@@ -25,7 +24,7 @@ impl Generate for SysY {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         let ty_void = SymbolType::new(SymbolWidth::Void, false);
         let ty_i32 = SymbolType::new(SymbolWidth::I32, false);
         let ty_i32_clone = ty_i32.clone();
@@ -174,9 +173,8 @@ impl Generate for SysY {
         );
 
         for unit in self.units.iter() {
-            unit.generate(program, scopes, labels)?;
+            unit.generate(program, scopes, labels);
         }
-        Ok(())
     }
 }
 
@@ -189,7 +187,7 @@ impl Generate for CompUnit {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         match self {
             CompUnit::FuncDef(func_def) => func_def.generate(program, scopes, labels),
             CompUnit::Decl(decl) => decl.generate(program, scopes, labels),
@@ -206,14 +204,14 @@ impl Generate for FuncDef {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
-        let func_type = self.func_type.generate()?;
+    ) -> Self::Out {
+        let func_type = self.func_type.generate();
         let mut all_info: Vec<(SymbolType, String, String)> = vec!();
         let mut label_info: Vec<(String, SymbolType)> = vec!();
         let mut types: Vec<SymbolType> = vec!();
         if let Some(params) = &self.params {
             for param in params.iter() {
-                let (ty, id) = param.generate(program, scopes, labels)?;
+                let (ty, id) = param.generate(program, scopes, labels);
                 let label = labels.pop_local(&id);
                 all_info.push((ty.clone(), String::from(&id), String::from(&label)));
                 label_info.push((String::from(&label), ty.clone()));
@@ -270,20 +268,19 @@ impl Generate for FuncDef {
                     panic!("Global or local scope error");
                 }
             }
-            self.block.generate(program, scopes, labels)?;
+            self.block.generate(program, scopes, labels);
             scopes.exit_current_scope();
             labels.clear();
         } else {
             panic!("Multi definition of {}", self.id);
         }
-        Ok(())
     }
 }
 
 /// 返回类型的克隆
 impl Type {
-    pub fn generate(&self) -> Result<SymbolType, Box<dyn Error>> {
-        Ok(self.ty.clone())
+    pub fn generate(&self) -> SymbolType {
+        self.ty.clone()
     }
 }
 
@@ -296,16 +293,16 @@ impl Generate for FuncFParam {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
-        let ty = self.ty.generate()?;
+    ) -> Self::Out {
+        let ty = self.ty.generate();
         if self.idx.is_empty() {
-            Ok((ty, String::from(&self.id)))
+            (ty, String::from(&self.id))
         } else {
             let mut dims: Vec<i32> = vec!();
             for index in self.idx.iter() {
                 match index {
                     Index::Exp(exp) => {
-                        let (_, val) = exp.generate(program, scopes, labels)?;
+                        let (_, val) = exp.generate(program, scopes, labels);
                         let dim: i32 = val.parse().expect(&format!("{} is not integer", val));
                         dims.push(dim);
                     },
@@ -316,7 +313,7 @@ impl Generate for FuncFParam {
                 SymbolWidth::Arr{tar: Box::new(ty), dims: dims},
                 false
             );
-            Ok((arr_ty, String::from(&self.id)))
+            (arr_ty, String::from(&self.id))
         }
     }
 }
@@ -330,11 +327,10 @@ impl Generate for Block {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         for item in self.items.iter() {
-            item.generate(program, scopes, labels)?;
+            item.generate(program, scopes, labels);
         }
-        Ok(())
     }
 }
 
@@ -347,7 +343,7 @@ impl Generate for BlockItem {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         match self {
             BlockItem::Decl(decl) => decl.generate(program, scopes, labels),
             BlockItem::Stmt(stmt) => stmt.generate(program, scopes, labels),
@@ -365,26 +361,26 @@ impl Generate for Stmt {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         match self {
             Stmt::Assign(assign) => assign.generate(program, scopes, labels),
             Stmt::Exp(exp_option) => {
                 if let Some(exp) = exp_option {
-                    exp.generate(program, scopes, labels)?;
+                    exp.generate(program, scopes, labels);
                 }
-                Ok(())
+                
             },
             Stmt::Block(block) => {
                 scopes.enter_basis_block();
-                block.generate(program, scopes, labels)?;
+                block.generate(program, scopes, labels);
                 scopes.exit_current_scope();
-                Ok(())
+                
             },
             Stmt::Return(ret) => {
                 let ret_then = labels.pop_block("ret_then");
-                ret.generate(program, scopes, labels)?;
+                ret.generate(program, scopes, labels);
                 program.push_bb(ret_then.as_str(), scopes);
-                Ok(())
+                
             }
             Stmt::Break => {
                 if let Some(end) = scopes.get_while_end() {
@@ -394,7 +390,7 @@ impl Generate for Stmt {
 
                     let break_then = labels.pop_block("break_then");
                     program.push_bb(break_then.as_str(), scopes);
-                    Ok(())
+                    
                 } else {
                     panic!("Break appears in non-while scope");
                 }
@@ -407,13 +403,13 @@ impl Generate for Stmt {
 
                     let continue_then = labels.pop_block("continue_then");
                     program.push_bb(continue_then.as_str(), scopes);
-                    Ok(())
+                    
                 } else {
                     panic!("Continue appears in non-while scope");
                 }
             },
             Stmt::If{exp, stmt1, stmt2} => {
-                let (sym_type, res) = exp.generate(program, scopes, labels)?;
+                let (sym_type, res) = exp.generate(program, scopes, labels);
                 let res = type_conver(
                     program,
                     labels,
@@ -433,7 +429,7 @@ impl Generate for Stmt {
                     
                     scopes.enter_if_scope();
                     program.push_bb(if_then.as_str(), scopes);
-                    stmt1.generate(program, scopes, labels)?;
+                    stmt1.generate(program, scopes, labels);
                     let ty_vec = vec!();
                     let str_vec = vec!("", if_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
@@ -441,7 +437,7 @@ impl Generate for Stmt {
 
                     scopes.enter_if_scope();
                     program.push_bb(if_else.as_str(), scopes);
-                    false_stmt.generate(program, scopes, labels)?;
+                    false_stmt.generate(program, scopes, labels);
                     let ty_vec = vec!();
                     let str_vec = vec!("", if_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
@@ -458,14 +454,14 @@ impl Generate for Stmt {
                     
                     scopes.enter_if_scope();
                     program.push_bb(if_then.as_str(), scopes);
-                    stmt1.generate(program, scopes, labels)?;
+                    stmt1.generate(program, scopes, labels);
                     let ty_vec = vec!();
                     let str_vec = vec!("", if_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
                     scopes.exit_current_scope();
                     program.push_bb(if_end.as_str(), scopes);
                 }
-                Ok(())
+                
             },
             Stmt::While{exp, stmt} => {
                 let while_entry = labels.pop_block("while_entry");
@@ -478,7 +474,7 @@ impl Generate for Stmt {
 
                 // while_entry
                 program.push_bb(while_entry.as_str(), scopes);
-                let (ty, res) = exp.generate(program, scopes, labels)?;
+                let (ty, res) = exp.generate(program, scopes, labels);
                 let cond = type_conver(
                     program,
                     labels,
@@ -494,7 +490,7 @@ impl Generate for Stmt {
                 // while_body
                 scopes.enter_while_scope(&while_entry, &while_end);
                 program.push_bb(while_body.as_str(), scopes);
-                stmt.generate(program, scopes, labels)?;
+                stmt.generate(program, scopes, labels);
                 
                 let ty_vec = vec!();
                 let str_vec = vec!("", while_entry.as_str(), "");
@@ -503,7 +499,7 @@ impl Generate for Stmt {
 
                 // while_end
                 program.push_bb(while_end.as_str(), scopes);
-                Ok(())
+                
             },
         }
     }
@@ -518,9 +514,9 @@ impl Generate for Assign {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
-        let (ty1, label1) = self.val.generate(program ,scopes, labels)?;
-        let (ty2, label2) = self.exp.generate(program, scopes, labels)?;
+    ) -> Self::Out {
+        let (ty1, label1) = self.val.generate(program ,scopes, labels);
+        let (ty2, label2) = self.exp.generate(program, scopes, labels);
         let label2 = type_conver(program, labels, label2, &ty2, &ty1);
         let str_vec = vec!(label2.as_str(), label1.as_str(), "4");
         let type_vec = vec!(&ty1);
@@ -529,7 +525,7 @@ impl Generate for Assign {
             str_vec,
             type_vec,
         );
-        Ok(())
+        
     }
 }
 
@@ -542,24 +538,24 @@ impl Generate for Return {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         let func_type = scopes.get_current_function_type().expect(
             "Should not appear @ llvm_gen/generate.rs impl Generate for Return "
         );
         if let Some(exp) = &self.val {
-            let (ty, exp_val) = exp.generate(program, scopes, labels)?;
+            let (ty, exp_val) = exp.generate(program, scopes, labels);
             let ret_val: String;
             ret_val = type_conver(program, labels, exp_val, &ty, &func_type);
 
             let str_vec = vec!(ret_val.as_str());
             let ty_vec = vec!(&func_type);
             program.push_ter_instr(InstructionType::Ret, str_vec, ty_vec);
-            Ok(())
+            
         } else {
             let str_vec = vec!();
             let ty_vec = vec!(&func_type);
             program.push_ter_instr(InstructionType::Ret, str_vec, ty_vec);
-            Ok(())
+            
         }
     }
 }
@@ -567,7 +563,7 @@ impl Generate for Return {
 impl Generate for Exp {
     type Out = (SymbolType, String);
     /// 递归
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         self.exp.generate(program, scopes, labels)
     }
 }

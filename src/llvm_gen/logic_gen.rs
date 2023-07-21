@@ -1,4 +1,3 @@
-use std::error::Error;
 use crate::get_settings;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
@@ -9,7 +8,7 @@ use crate::llvm_gen::symbol::*;
 use crate::utils::check::*;
 use crate::utils::float::*;
 
-fn logic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
+fn logic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> (SymbolType, String) {
     if all_is_int(ty1, ty2) {
         let num1 = op1.parse::<i32>().unwrap();
         let num2 = op2.parse::<i32>().unwrap();
@@ -26,7 +25,7 @@ fn logic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &
                 _ => panic!("Don't support!"),
             }
         );
-        Ok((SymbolType::new(SymbolWidth::Bool, true), res.to_string()))
+        (SymbolType::new(SymbolWidth::Bool, true), res.to_string())
     } else {
         let num1 = parse_float(op1) as f64;
         let num2 = parse_float(op2) as f64;
@@ -43,7 +42,7 @@ fn logic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &
                 _ => panic!("Don't support!"),
             }
         );
-        Ok((SymbolType::new(SymbolWidth::Bool, true), res.to_string()))
+        (SymbolType::new(SymbolWidth::Bool, true), res.to_string())
     }
 }
 
@@ -57,12 +56,12 @@ impl RelExpBody {
         scopes: &mut Scopes,
         labels: &mut Labels,
         op_ty: &str,
-    ) -> Result<(SymbolType, String), Box<dyn Error>> {
+    ) -> (SymbolType, String) {
         // 生成第一个表达式的代码和结果
-        let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
+        let (ty1, op1) = self.exp1.generate(program, scopes, labels);
 
         // 生成第二个表达式的代码和结果
-        let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
+        let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
         // 进行常量折叠
         if all_is_const(&ty1, &ty2) {
@@ -98,7 +97,7 @@ impl RelExpBody {
             program.push_instr(InstructionType::Cmp, str_vec, ty_vec);
         }
 
-        Ok((SymbolType::new(SymbolWidth::Bool, false), result))
+        (SymbolType::new(SymbolWidth::Bool, false), result)
     }
 }
 
@@ -111,7 +110,7 @@ impl Generate for RelExp {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels,
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         // 根据不同的 RelExp 枚举类型，调用对应的生成方法
         match self {
             RelExp::AddExp(exp) => exp.generate(program, scopes, labels),
@@ -133,12 +132,12 @@ impl EqExpBody {
         scopes: &mut Scopes,
         labels: &mut Labels,
         op_ty: &str,
-    ) -> Result<(SymbolType, String), Box<dyn Error>> {
+    ) -> (SymbolType, String) {
         // 生成第一个表达式的代码和结果
-        let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
+        let (ty1, op1) = self.exp1.generate(program, scopes, labels);
 
         // 生成第二个表达式的代码和结果
-        let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
+        let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
         // 如果两个表达式都是常量，则直接计算结果
         if all_is_const(&ty1, &ty2) {
@@ -170,7 +169,7 @@ impl EqExpBody {
             program.push_instr(InstructionType::Cmp, str_vec, ty_vec);
         }
 
-        Ok((SymbolType::new(SymbolWidth::Bool, false), result))
+        (SymbolType::new(SymbolWidth::Bool, false), result)
     }
 }
 
@@ -183,7 +182,7 @@ impl Generate for EqExp {
         program: &mut LLVMProgram,
         scopes: &mut Scopes,
         labels: &mut Labels,
-    ) -> Result<Self::Out, Box<dyn Error>> {
+    ) -> Self::Out {
         // 根据不同的 EqExp 枚举类型，调用对应的生成方法
         match self {
             EqExp::RelExp(exp) => exp.generate(program, scopes, labels),
@@ -205,13 +204,13 @@ impl Generate for EqExp {
 impl Generate for LAndExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         match self {
             LAndExp::EqExp(exp) => exp.generate(program, scopes, labels),
             LAndExp::And(exp1, exp2) => {
                 // 计算LHS
                 let boolean = SymbolWidth::Bool;
-                let (ty1, mut op1) = exp1.generate(program, scopes, labels)?;
+                let (ty1, mut op1) = exp1.generate(program, scopes, labels);
 
                 if ty1.is_const {
                     let is_zero = num_is_zero(&ty1, &op1);
@@ -222,7 +221,7 @@ impl Generate for LAndExp {
                         is_const = true;
                     } else { // 结果为假
                         // 计算RHS
-                        let (ty2, mut op2) = exp2.generate(program, scopes, labels)?;
+                        let (ty2, mut op2) = exp2.generate(program, scopes, labels);
                         if ty2.is_const { 
                             let is_zero2 = num_is_zero(&ty2, &op2);
                             if is_zero2 {
@@ -244,7 +243,7 @@ impl Generate for LAndExp {
                             is_const = false;
                         } // ty2 const else
                     }
-                    Ok((SymbolType::new(SymbolWidth::Bool, is_const), res))
+                    (SymbolType::new(SymbolWidth::Bool, is_const), res)
                 } else {
                     let and_true = labels.pop_block("and_true");
                     let and_end = labels.pop_block("and_end");
@@ -276,7 +275,7 @@ impl Generate for LAndExp {
                     program.push_bb(and_true.as_str(), scopes);
 
                     // 计算RHS
-                    let (ty2, mut op2) = exp2.generate(program, scopes, labels)?;
+                    let (ty2, mut op2) = exp2.generate(program, scopes, labels);
                     if ty2.is_const {
                         let is_zero = num_is_zero(&ty2, &op2);
                         if is_zero {
@@ -315,7 +314,7 @@ impl Generate for LAndExp {
                         let str_vec = vec!(result.as_str(), "%replace_phi_0", "1");
                         program.push_instr(InstructionType::Load, str_vec, ty_vec); 
                     }
-                    Ok((i1_ty, result))
+                    (i1_ty, result)
                 } // if const else
             }, // LOrExp::Or
         } // match self
@@ -326,13 +325,13 @@ impl Generate for LAndExp {
 impl Generate for LOrExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         match self {
             LOrExp::LAndExp(exp) => exp.generate(program, scopes, labels),
             LOrExp::Or(exp1, exp2) => {
                 // 计算LHS
                 let boolean = SymbolWidth::Bool;
-                let (ty1, mut op1) = exp1.generate(program, scopes, labels)?;
+                let (ty1, mut op1) = exp1.generate(program, scopes, labels);
 
                 if ty1.is_const {
                     let not_zero = !num_is_zero(&ty1, &op1);
@@ -343,7 +342,7 @@ impl Generate for LOrExp {
                         is_const = true;
                     } else { // 结果为假
                         // 计算RHS
-                        let (ty2, mut op2) = exp2.generate(program, scopes, labels)?;
+                        let (ty2, mut op2) = exp2.generate(program, scopes, labels);
                         if ty2.is_const { 
                             let not_zero2 = !num_is_zero(&ty2, &op2);
                             if not_zero2 {
@@ -365,7 +364,7 @@ impl Generate for LOrExp {
                             is_const = false;
                         } // ty2 const else
                     }
-                    Ok((SymbolType::new(SymbolWidth::Bool, is_const), res))
+                    (SymbolType::new(SymbolWidth::Bool, is_const), res)
                 } else {
                     let or_false = labels.pop_block("or_false");
                     let or_end = labels.pop_block("or_end");
@@ -397,7 +396,7 @@ impl Generate for LOrExp {
                     program.push_bb(or_false.as_str(), scopes);
 
                     // 计算RHS
-                    let (ty2, mut op2) = exp2.generate(program, scopes, labels)?;
+                    let (ty2, mut op2) = exp2.generate(program, scopes, labels);
                     
                     if ty2.is_const {
                         let not_zero = !num_is_zero(&ty2, &op2);
@@ -438,7 +437,7 @@ impl Generate for LOrExp {
                         let str_vec = vec!(result.as_str(), "%replace_phi_0", "1");
                         program.push_instr(InstructionType::Load, str_vec, ty_vec);
                     }
-                    Ok((i1_ty, result))
+                    (i1_ty, result)
                 } // if const else
             }, // LOrExp::Or
         } // match self
