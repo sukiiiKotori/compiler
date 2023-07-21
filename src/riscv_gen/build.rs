@@ -1,4 +1,3 @@
-use std::iter::zip;
 use std::collections::{HashSet, HashMap, BTreeSet};
 use crate::utils::check::*;
 use crate::utils::float::*;
@@ -144,11 +143,11 @@ pub struct UnfoldCallContext<'a> {
 
 impl<'a> UnfoldCallContext<'a> {
     pub fn new(
-    	int_cnt: usize,
-    	float_cnt: usize,
-    	stack_len: isize,
-    	stack: &'a mut StackSlot,
-    	invalid_regs: &'a mut HashSet<&'static str>,
+        int_cnt: usize,
+        float_cnt: usize,
+        stack_len: isize,
+        stack: &'a mut StackSlot,
+        invalid_regs: &'a mut HashSet<&'static str>,
         stored_regs: &'a mut BTreeSet<&'a str>,
     ) -> Self {
         UnfoldCallContext{int_cnt, float_cnt, stack_len, stack, invalid_regs, stored_regs}
@@ -172,22 +171,22 @@ impl AsmBlock {
         context: &mut UnfoldCallContext<'a>,
     ) {
         // 检查浮点数计数器是否超过了浮点型函数参数寄存器的数量
-	    if context.float_cnt >= FLOAT_FUNC_ARG.len() {
+        if context.float_cnt >= FLOAT_FUNC_ARG.len() {
             // 如果超过了数量，则需要将参数存储在栈上
-	        context.stack_len += 4;
+            context.stack_len += 4;
             let stack_pos = format!("-{}", context.stack_len);
             // 如果参数是一个立即数
-	        if is_immediate(param.as_str()) {
-	            let imm = double_to_float(param.as_str());
+            if is_immediate(param.as_str()) {
+                let imm = double_to_float(param.as_str());
                 // 在指定位置插入存储立即数的指令
-	            self.instrs.insert(position, AsmInstr::make_instr(
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Store,
                     vec!(PRESERVED[1], "sp",stack_pos.as_str(), ),
                     Some(NORMAL_WIDTH),
                     vec!()
                 ));
                 // 在指定位置插入加载立即数的指令
-	            self.instrs.insert(position, AsmInstr::make_instr(
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Li,
                     vec!(PRESERVED[1], imm.as_str()),
                     None,
@@ -198,19 +197,19 @@ impl AsmBlock {
                 panic!("riscv_gen/build.rs:load_float_param,invalid regs");
             } else {
                 // 正常参数，在指定位置插入存储参数的指令
-	            self.instrs.insert(position, AsmInstr::make_instr(
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Store,
                     vec!(param.as_str(), "sp", stack_pos.as_str(), FLOAT_PREFIX),
                     Some(NORMAL_WIDTH),
                     vec!()
                 ));
-	        }
+            }
         } else {
             // 如果浮点型计数器未超过浮点型函数参数的数量
             context.invalid_regs.remove(FLOAT_FUNC_ARG[context.float_cnt]);
-	        if is_immediate(param.as_str()) {
-	            let imm = double_to_float(param.as_str());
-	            self.instrs.insert(
+            if is_immediate(param.as_str()) {
+                let imm = double_to_float(param.as_str());
+                self.instrs.insert(
                     position, 
                     AsmInstr::make_instr(
                         AsmInstrType::Fmv, 
@@ -229,25 +228,25 @@ impl AsmBlock {
                     )
                 );
             } else if context.invalid_regs.contains(param.as_str()) {
-	            let stored_pos = format!("stored.{}", param);
-	            context.stored_regs.insert(param.as_str());
-	            context.stack.push_normal(stored_pos.as_str(), 8);
-	            self.instrs.insert(position, AsmInstr::make_instr(
+                let stored_pos = format!("stored.{}", param);
+                context.stored_regs.insert(param.as_str());
+                context.stack.push_normal(stored_pos.as_str(), 8);
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Load,
                     vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), FLOAT_PREFIX),
                     Some(NORMAL_WIDTH),
                     vec!()
                 ));
-	        } else {
+            } else {
                 self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Fmv,
                     vec!(FLOAT_FUNC_ARG[context.float_cnt], param.as_str()),
                     Some(NORMAL_WIDTH),
                     vec!(SymbolWidth::Float, SymbolWidth::Float)
                 ));
-	        }
+            }
         }
-	    context.float_cnt += 1;
+        context.float_cnt += 1;
     }
 
     pub fn load_int_param<'a>(
@@ -257,63 +256,64 @@ impl AsmBlock {
         param_size: isize, 
         context: &mut UnfoldCallContext<'a>,
     ) {
-	    if context.int_cnt >= FUNC_ARG.len() {
-	        context.stack_len += param_size;
-	        let stack_pos = format!("-{}", context.stack_len);
-	        if is_immediate(param.as_str()) {
-	            self.instrs.insert(position, AsmInstr::make_instr(
+        if context.int_cnt >= FUNC_ARG.len() {
+            context.stack_len += param_size;
+            let stack_pos = format!("-{}", context.stack_len);
+            if is_immediate(param.as_str()) {
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Store,
                     vec!(PRESERVED[1], "sp", stack_pos.as_str()),
                     Some(param_size),
                     vec!()
                 ));
-	            self.instrs.insert(position, AsmInstr::make_instr(
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Li,
                     vec!(PRESERVED[1], param.as_str()),
                     None,
                     vec!()
                 ));
-	        } else if context.invalid_regs.contains(param.as_str()) {
+            } else if context.invalid_regs.contains(param.as_str()) {
                 panic!("Should not appear");
-	        } else {
-	            self.instrs.insert(position, AsmInstr::make_instr(
+            } else {
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Store,
                     vec!(param.as_str(), "sp", stack_pos.as_str()),
                     Some(param_size),
                     vec!()
                 ));
             }
-	    } else {
+        } else {
             context.invalid_regs.remove(FUNC_ARG[context.int_cnt]);
-	        if is_immediate(param.as_str()) {
-	            self.instrs.insert(position, AsmInstr::make_instr(
+            if is_immediate(param.as_str()) {
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Li,
                     vec!(FUNC_ARG[context.int_cnt], param.as_str()),
                     Some(param_size),
                     vec!()
                 ));
-	        } else if context.invalid_regs.contains(param.as_str()) {
-	            let stored_pos = format!("stored.{}", param);
-	            context.stored_regs.insert(param.as_str());
-	            context.stack.push_normal(stored_pos.as_str(), 8);
-	            self.instrs.insert(position, AsmInstr::make_instr(
+            } else if context.invalid_regs.contains(param.as_str()) {
+                let stored_pos = format!("stored.{}", param);
+                context.stored_regs.insert(param.as_str());
+                context.stack.push_normal(stored_pos.as_str(), 8);
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Load,
                     vec!(FUNC_ARG[context.int_cnt], stored_pos.as_str()),
                     Some(PTR_WIDTH),
                     vec!()
                 ));
             } else {
-	            self.instrs.insert(position, AsmInstr::make_instr(
+                self.instrs.insert(position, AsmInstr::make_instr(
                     AsmInstrType::Mv,
                     vec!(FUNC_ARG[context.int_cnt], param.as_str()),
                     None,
                     vec!()
                 ));
-	        }
-	    }
+            }
+        }
         context.int_cnt += 1;
     }
-
+    /// 对调用指令进行展开<br>
+    /// 处理函数调用的参数传递和返回值处理。
     fn unfold_call(
         &mut self,
         stack: &mut StackSlot,
@@ -321,39 +321,34 @@ impl AsmBlock {
         alloc_res: &HashMap<String, &'static str>,
         position: usize
     ) {
-        let ret_val: String;
-        let params: Vec<String>;
-        let types: Vec<SymbolWidth>;
-        match self.instrs.get(position).unwrap() {
+        let (ret_val, params, types) = match self.instrs.get(position).unwrap() {
             AsmInstr::Call(r, name, p, t) => {
                 if name == "memset" {
                     return;
                 }
-                ret_val = String::from(r);
-                params = p.iter()
-                    .map(|p| String::from(p))
-                    .collect();
-                types = t.iter()
-                    .map(|t| t.clone())
-                    .collect();
+                (
+                String::from(r),
+                p.iter().map(|p| String::from(p)).collect::<Vec<_>>(),
+                t.iter().cloned().collect::<Vec<_>>()
+                )
             },
             _ => panic!("Position error"),
-        }
-
+        };
+    
         // 获取穿过当前Call指令的Temporary寄存器
         let mut stored_regs = this_call_info.2.iter()
             .filter_map(|r| alloc_res.get(r)
                 .filter(|phy| TEMP_SET.contains(*phy) || FLOAT_TEMP_SET.contains(*phy))
             )
-            .map(|r| *r)
+            .cloned()
             .collect::<BTreeSet<_>>();
-
+    
         // 恢复穿过当前Call指令的Temporary寄存器
         for temp in stored_regs.iter() {
             let stored_pos = format!("stored.{}", temp);
             stack.push_normal(stored_pos.as_str(), 8);
             let mut prefix = "";
-            if FLOAT_TEMP_SET.contains(*temp) {
+            if FLOAT_TEMP_SET.contains(temp) {
                 prefix = FLOAT_PREFIX;
             }
             self.instrs.insert(position+1, AsmInstr::make_instr(
@@ -363,9 +358,9 @@ impl AsmBlock {
                 vec!()
             ));
         }
-
+    
         // 存储调用返回值
-        if ret_val != "" {
+        if !ret_val.is_empty() {
             if types[0] == SymbolWidth::Float {
                 self.instrs.insert(position+1, AsmInstr::make_instr(
                     AsmInstrType::Fmv,
@@ -382,7 +377,7 @@ impl AsmBlock {
                 ));
             }
         }
-
+    
         // 获取存储参数的寄存器，并把它加入invalid_regs的集合中
         let mut int_pos = 0;
         let mut float_pos = 0;
@@ -395,7 +390,7 @@ impl AsmBlock {
                 float_pos += 1;
             } else {
                 if int_pos < FUNC_ARG.len() {
-                    invalid_regs.insert(FUNC_ARG[float_pos]);
+                    invalid_regs.insert(FUNC_ARG[int_pos]);
                 }
                 int_pos += 1;
             }
@@ -413,7 +408,7 @@ impl AsmBlock {
             &mut invalid_regs,
             &mut stored_regs
         );
-        for (_, (param, ty)) in zip(params.iter(), types.iter().skip(1)).enumerate() {
+        for (_, (param, ty)) in params.iter().zip(types.iter().skip(1)).enumerate() {
             if *ty == SymbolWidth::Float {
                 self.load_float_param(param, position, &mut context);
             } else if let SymbolWidth::Arr{tar: _, dims: _} = ty {
@@ -428,9 +423,9 @@ impl AsmBlock {
             let stored_reg = format!("stored.{}", reg);
             self.instrs.insert(position, AsmInstr::make_instr(
                 AsmInstrType::Store,
-                vec!(reg, "sp", stored_reg.as_str()),
+                vec![reg, "sp", stored_reg.as_str()],
                 Some(PTR_WIDTH),
-                vec!()
+                vec![]
             ));
         }
     }
