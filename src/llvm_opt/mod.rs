@@ -7,9 +7,9 @@ pub mod dead_code_eliminate;
 pub mod reload;
 
 use crate::structures::llvm_struct::*;
-use crate::llvm_opt::eliminate::*;
 
-
-pub fn optimise_llvm(program: &mut LLVMProgram) {
-    eliminate_all(program);
+impl LLVMProgram {
+    pub fn optimise_llvm(&mut self) {
+        self.eliminate_all();
+    }
 }

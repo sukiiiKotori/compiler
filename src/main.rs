@@ -41,7 +41,6 @@ pub fn get_settings() -> &'static Settings {
 }
 
 use lalrpop_util::lalrpop_mod;
-use crate::llvm_opt::optimise_llvm;
 lalrpop_mod!(parser);
 
 fn main() {
@@ -55,7 +54,7 @@ fn main() {
     //生成llvm
     let mut llvm = generate_llvm(&mut ast);
     if SETTINGS.optimise {
-        optimise_llvm(&mut llvm);
+        llvm.optimise_llvm();
     }
     let filename_without_suffix= file_name.split(".").collect::<Vec<_>>()[0].to_string();
     //编译选项，可选-llvm和-S
