@@ -1,7 +1,7 @@
 use std::collections::{HashSet, HashMap};
 use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::riscv_gen::build::PTR_WIDTH;
-use crate::riscv_gen::reg::{RegType, get_preserved_regs, phy_is_float};
+use crate::riscv_gen::register_type::{RegType, get_preserved_regs, type_is_float};
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::SymbolWidth;
 
@@ -25,7 +25,7 @@ impl AsmFunc {
                     |output, inputs| {
                     if let Some(output) = output {
                         if spilled.contains(output.as_str()) {
-                            let reg_ty = RegType::classify_label(self.label_type.get(output.as_str()).unwrap() == &SymbolWidth::Float, false);
+                            let reg_ty = RegType::get_regtype(self.label_type.get(output.as_str()).unwrap() == &SymbolWidth::Float, false);
                             let phy_reg = new_preserved_regs.get_mut(&reg_ty).unwrap().last().unwrap();
                             output_map = Some((String::from(output.as_str()), *phy_reg));
                             *output = String::from(*phy_reg);
@@ -33,7 +33,7 @@ impl AsmFunc {
                     }
                     for input in inputs.into_iter() {
                         if spilled.contains(input.as_str()) {
-                            let reg_ty = RegType::classify_label(self.label_type.get(input.as_str()).unwrap() == &SymbolWidth::Float, false);
+                            let reg_ty = RegType::get_regtype(self.label_type.get(input.as_str()).unwrap() == &SymbolWidth::Float, false);
                             let phy_reg = new_preserved_regs.get_mut(&reg_ty).unwrap().pop().unwrap();
                             inputs_map.push((String::from(input.as_str()), phy_reg));
                             *input = String::from(phy_reg);
@@ -43,7 +43,7 @@ impl AsmFunc {
                 //若是输入，则溢出到栈里后调用store指令，
                 if let Some((virt, phy)) = output_map {
                     let mut prefix = "";
-                    if phy_is_float(phy) {
+                    if type_is_float(phy) {
                         prefix = FLOAT_PREFIX;
                     }
                     let spilled_mark = format!("spilled.{}", virt);
@@ -53,7 +53,7 @@ impl AsmFunc {
                 //若是输出，则溢出到栈里调用load
                 for (virt, phy) in inputs_map.into_iter() {
                     let mut prefix = "";
-                    if phy_is_float(phy) {
+                    if type_is_float(phy) {
                         prefix = FLOAT_PREFIX;
                     }
                     let spilled_mark = format!("spilled.{}", virt);

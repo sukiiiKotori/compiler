@@ -6,7 +6,7 @@ use crate::structures::riscv_regs::*;
 use crate::structures::symbol::*;
 use crate::riscv_gen::stack_slot::StackSlot;
 use crate::riscv_gen::asm_select::FLOAT_PREFIX;
-use crate::riscv_gen::reg::RegisterAllocator;
+use crate::riscv_gen::register_alloc::RegisterAllocator;
 
 
 pub const NORMAL_WIDTH: isize = 4;
@@ -91,7 +91,7 @@ impl AsmFunc {
     /// 标记当前正在处理的函数为调用函数
     fn mark_call(&mut self) {
         // 标记寄存器"ra"为已使用
-        self.used_saved("ra");
+        self.used_saved.insert("ra");
         // 获取当前函数的最后一个代码块
         let last_block = self.blocks.last().unwrap();
         // 计算当前函数的指令总数（前驱指令数 + 当前代码块的指令数）

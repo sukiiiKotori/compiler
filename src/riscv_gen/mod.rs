@@ -1,14 +1,16 @@
 pub mod stack_slot;
-pub mod reg;
+pub mod register_resource;
 pub mod linearscan;
 pub mod build;
 pub mod asm_select;
 pub mod rewrite;
-pub mod writetext;
+pub mod write_text;
 pub mod asmfunc_stack;
 pub mod push_datasection;
 pub mod save_registers;
 pub mod restore_registers;
+pub mod register_alloc;
+pub mod register_type;
 
 use linearscan::*;
 use crate::structures::llvm_struct::*;

@@ -245,7 +245,8 @@ pub enum AsmInstr {
 pub struct BinInstr {
     pub dst: String,
     // 目标寄存器
-    pub src: String,    // 源寄存器
+    pub src: String,
+    // 源寄存器
 }
 
 impl BinInstr {
@@ -283,7 +284,8 @@ pub struct TriInstr {
     // 目标寄存器
     pub op1: String,
     // 操作数1
-    pub op2: String,    // 操作数2
+    pub op2: String,
+    // 操作数2
 }
 
 impl TriInstr {
@@ -306,7 +308,8 @@ pub struct MemInstr {
     // 存储/加载的值
     pub base: String,
     // 基址寄存器
-    pub offset: String,    // 偏移量
+    pub offset: String,
+    // 偏移量
 }
 
 impl MemInstr {
