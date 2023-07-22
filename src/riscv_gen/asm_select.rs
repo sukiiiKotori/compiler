@@ -38,7 +38,7 @@ impl LLVMProgram {
 impl FuncDef {
     pub fn asm_select(&self, asm: &mut RiscV) {
         asm.push_func(&self.func_name[1..], self.func_type.width.clone());
-        let curr_func = asm.text.curr_func();
+        let curr_func = asm.text.funcs.last_mut().unwrap();
         let stack = &mut curr_func.stack;
         let label_type = &mut curr_func.label_type;
         let mut select_cnt = 0;
@@ -196,32 +196,22 @@ impl Instruction {
             Instruction::Sub(BinaryOp{res, op_type, op1, op2}) => {
                 asm.insert_label_type(res, &op_type.width);
                 if is_immediate(op2) {
-                    let imm: String;
-                    if &op2[0..1] == "-" {
-                        imm = format!("{}", &op2[1..]);
+                    //求出op2的相反数
+                    let imm_neg = op2.parse::<i32>().map(|num| -num).unwrap().to_string();
+                    if inside_imm_range(&imm_neg) {
+                        //如果能在2^11之内，则用Addi指令。
+                        asm.gen_instr(AsmInstrType::Addi, vec!(res, op1, &imm_neg), None, vec!())
                     } else {
-                        imm = format!("-{}", op2);
+                        let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
+                        asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, &imm_neg), None, vec!());
+                        asm.gen_instr(AsmInstrType::Add, vec!(res, op1, &li_dst), None, vec!());
                     }
-
-                    if inside_imm_range(&imm) {
-                        asm.gen_instr(AsmInstrType::Addi, vec!(res, op1, &imm), None, vec!())
-                    } else {
-                        let li_res = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
-                        asm.gen_instr(AsmInstrType::Li, vec!(&li_res, &imm), None, vec!());
-                        asm.gen_instr(AsmInstrType::Add, vec!(res, op1, &li_res), None, vec!());
-                    }
+                } else if is_immediate(op1){
+                    let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
+                    asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
+                    asm.gen_instr(AsmInstrType::Sub, vec!(res, &li_dst, op2), None, vec!());
                 } else {
-                    let op: &str;
-                    let li_dst = gen_temp_label(select_cnt);
-                    if is_immediate(op1) {
-                        incre_cnt(select_cnt);
-                        asm.insert_label_type(&li_dst, &imm_width(op1));
-                        asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
-                        op = &li_dst;
-                    } else {
-                        op = op1;
-                    }
-                    asm.gen_instr(AsmInstrType::Sub, vec!(res, op, op2), None, vec!())
+                    asm.gen_instr(AsmInstrType::Sub, vec!(res, op1, op2), None, vec!())
                 }
             },
             
@@ -231,9 +221,9 @@ impl Instruction {
                 asm.insert_label_type(res, &op_type.width);
 
                 if is_immediate(op1) { //如果op1是立即数
-                    if &op1[0..1] == "-" {//如果是负数
-                        let op1_positive = &op1[1..];//转成正数
-                        match is_poweroftwo(op1_positive) {//如果是2的幂次
+                    if op1.contains("-") {//如果是负数
+                        let op1_positive = op1.replace("-", "");//转成正数
+                        match is_poweroftwo(&op1_positive) {//如果是2的幂次
                             Some(pow) => {
                                 asm.gen_instr(AsmInstrType::Slli, vec![res, op2, &pow.to_string()], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Sub, vec![res, "zero", res], None, vec![]);
@@ -249,7 +239,6 @@ impl Instruction {
                         match is_poweroftwo(op1) {
                             Some(pow) => {
                                 asm.gen_instr(AsmInstrType::Slli, vec![res, op2, &pow.to_string()], None, vec![]);
-
                             },
                             None => {
                                 let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op1));
@@ -604,7 +593,7 @@ impl Instruction {
             },
             Instruction::Store{ty, value, ptr, len: _} => {
                 asm.insert_label_type(ptr, &SymbolWidth::I64);
-                let curr_func = asm.text.curr_func();
+                let curr_func = asm.text.funcs.last_mut().unwrap();
                 // 如果value为函数参数
                 if let Some(idx) = curr_func.params.get(value) { 
                     let idx = *idx;
@@ -661,7 +650,7 @@ impl Instruction {
                     _ => ""
                 };
 
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 let pure_ptr = &ptr[1..];
                 //如果是llvm的临时标号，其实就是store分配出来的那些临时标号，比如%c_0，直接store即可。
                 if is_num_label(&ptr) {
@@ -702,7 +691,7 @@ impl Instruction {
 
                 
                 let load_res = pop_temp_label(select_cnt, asm, &ty.width);
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 let pure_ptr = &ptr[1..];
                 //和store指令的步骤一样
                 if is_num_label(ptr) {
@@ -768,7 +757,7 @@ impl Instruction {
             },
             Instruction::BitCast(res, _, ptr, _) => {
                 asm.insert_label_type(res, &SymbolWidth::I64);
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 if inside_stack { // 在栈内
                     let ptr_pos = format!("#{}", ptr);
                     asm.gen_instr(AsmInstrType::Addi, vec!(res, "sp", &ptr_pos), None, vec!());
@@ -784,7 +773,7 @@ impl Instruction {
                 //把dst和I64类型做map映射
                 asm.insert_label_type(dst, &SymbolWidth::I64);
 
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 let start_addr: String;
 
                 //接下来的一个大if，目的是设置开始的地址
