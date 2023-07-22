@@ -1,6 +1,5 @@
 pub mod eliminate;
 pub mod flow;
-pub mod deadcode;
 pub mod flow_graph;
 pub mod unreachable_eliminate;
 pub mod dead_code_eliminate;

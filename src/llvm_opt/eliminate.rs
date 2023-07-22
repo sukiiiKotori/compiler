@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use crate::llvm_opt::{dead_code_eliminate, unreachable_eliminate};
-use crate::llvm_opt::deadcode::update_label;
 use crate::structures::llvm_struct::*;
 use crate::structures::scopes::*;
+use crate::utils::check::is_num_label;
 
 impl LLVMProgram {
     pub fn eliminate_unused_code(&mut self) {
@@ -52,4 +52,20 @@ fn collect_active_allocations(func: &mut FuncDef, active_labels: &HashSet<String
 
 fn initialize_label_maps() -> (Labels, HashMap<String, usize>) {
     (Labels::new(), HashMap::new())
+}
+
+pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, usize>, old_label: &str) -> String {
+    if !old_label.contains("%") {
+        return String::from(old_label);
+    }
+    if !is_num_label(old_label) {
+        return label_map.get(old_label)
+            .map_or(String::from(old_label), |x| String::from(x.to_string()));
+    }
+    if let Some(new_label) = label_map.get(old_label) {
+        return String::from(new_label.to_string());
+    }
+    let new_label = labels.pop_num_str();
+    label_map.insert(String::from(old_label), String::from(&new_label).parse().unwrap());
+    new_label
 }
