@@ -1,9 +1,9 @@
 use std::collections::{HashSet, HashMap};
 use crate::riscv_gen::asm_select::FLOAT_PREFIX;
-use crate::riscv_gen::build::PTR_WIDTH;
 use crate::riscv_gen::register_type::{RegType, get_preserved_regs, type_is_float};
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::SymbolWidth;
+use crate::structures::riscv_struct::PTR_WIDTH;
 
 impl AsmFunc {
     //将被临时分配到内存中的寄存器替换为对应的内存位置，并插入相关的指令以加载和存储这些寄存器的值。
