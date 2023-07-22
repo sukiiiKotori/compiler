@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use crate::llvm_opt::{dead_code_eliminate, unreachable_eliminate};
+use crate::llvm_opt::flow_graph::{build_map, calc_active};
 use crate::structures::llvm_struct::*;
 use crate::structures::scopes::*;
 use crate::utils::check::is_num_label;
@@ -7,10 +7,10 @@ use crate::utils::check::is_num_label;
 impl LLVMProgram {
     pub fn eliminate_unused_code(&mut self) {
         self.func_def.iter_mut().for_each(|func| {
-            let active_bb = unreachable_eliminate::eliminate(func);
-            let active_labels = dead_code_eliminate::eliminate(func, &active_bb);
+            let active_bb = unreachable_code_eliminate(func);
+            let active_labels = dead_code_eliminate(func, &active_bb);
             let instr_cnt = func.count_instr();
-            let mut active_instrs = collect_active_instructions(func, &active_labels, instr_cnt);
+            let mut active_instrs = collect_active_instructions(func, &active_labels);
             let active_allocs = collect_active_allocations(func, &active_labels, instr_cnt);
             active_allocs.into_iter().for_each(|i| { active_instrs.insert(i); });
             let (mut labels, mut label_map) = initialize_label_maps();
@@ -23,7 +23,7 @@ impl LLVMProgram {
     }
 }
 
-fn collect_active_instructions(func: &mut FuncDef, active_labels: &HashSet<String>, instr_cnt: usize) -> HashSet<usize> {
+fn collect_active_instructions(func: &mut FuncDef, active_labels: &HashSet<String>) -> HashSet<usize> {
     func.blocks.iter().map(|block| {
         let mut res: HashSet<usize> = HashSet::new();
         let mut instr_cnt = block.ins_num.clone();
@@ -42,6 +42,38 @@ fn collect_active_instructions(func: &mut FuncDef, active_labels: &HashSet<Strin
         acc
     })
 }
+
+pub fn dead_code_eliminate(func: &FuncDef, active_bb: &HashSet<String>) -> HashSet<String> {
+    let items: Vec<&Instruction> = func.make_blocks()
+        .iter()
+        .filter(|b| active_bb.contains(&b.block_label))
+        .map(|b| b.make_block_instrs())
+        .flatten()
+        .collect();
+    let (succs, mut preds) = build_map(items.clone());
+    preds = preds.into_iter()
+        .filter(|(s, _)| s.contains("@") || s.contains("%"))
+        .collect();
+
+    calc_active(&succs, preds)
+}
+
+pub fn unreachable_code_eliminate(func: &FuncDef) -> HashSet<String> {
+    let items: Vec<_> = func.make_blocks();
+
+    let (succs, mut preds) = build_map(items.clone());
+
+    if !preds.contains_key("_entry") {
+        preds.insert(String::from("_entry"), HashSet::new());
+    }
+
+    preds.get_mut("_entry")
+        .unwrap()
+        .insert(String::from(""));
+
+    calc_active(&succs, preds)
+}
+
 
 fn collect_active_allocations(func: &mut FuncDef, active_labels: &HashSet<String>, instr_cnt: usize) -> HashSet<usize> {
     func.local_vars.iter().enumerate().filter(|(_, alloc)| {
