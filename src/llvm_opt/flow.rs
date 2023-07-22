@@ -36,12 +36,12 @@ impl FlowItem for Instruction {
             | Instruction::Fadd(bin_op)
             | Instruction::Fsub(bin_op)
             | Instruction::Fmul(bin_op)
-            | Instruction::Fdiv(bin_op)
-            | Instruction::Cmp(_, bin_op)
-            | Instruction::Fcmp(_, bin_op)
-            | Instruction::ZeroExt(conver_op)
-            | Instruction::I32ToFloat(conver_op)
-            | Instruction::FloatToI32(conver_op) => bin_op.flow_info(),
+            | Instruction::Fdiv(bin_op) => bin_op.flow_info(),
+            Instruction::Cmp(_, bin_op)
+            | Instruction::Fcmp(_, bin_op) => bin_op.flow_info(),
+            Instruction::ZeroExt(castop)
+            | Instruction::I32ToFloat(castop)
+            | Instruction::FloatToI32(castop) => castop.flow_info(),
             Instruction::Phi(res, _, candidates) => {
                 let src: Vec<&str> = candidates.iter().map(|x| x.0.as_str()).collect();
                 (Some(res.as_str()), src)
@@ -72,8 +72,11 @@ impl FlowItem for Instruction {
                 (None, src)
             }
             Instruction::Br(cond, _, _) => {
-                let cond_val = cond.map(|v| v.as_str());
-                (None, vec![cond_val].into_iter().flatten().collect())
+                if let Some(cond_val) = cond {
+                    (None, vec![cond_val.as_str()])
+                } else {
+                    (None, vec![])
+                }
             }
         }
     }
