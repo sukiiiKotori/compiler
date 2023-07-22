@@ -7,10 +7,6 @@ use crate::structures::riscv_regs::*;
 
 pub const FLOAT_PREFIX: &str = "f";
 
-fn gen_temp_label(cnt: &usize) -> String {
-    format!("%temp.{}", cnt)
-}
-
 fn pop_temp_label(cnt: &mut usize, asm: &mut RiscV, ty: &SymbolWidth) -> String {
     let res = format!("%temp.{}", cnt);
     asm.insert_label_type(&res, ty);
@@ -477,16 +473,14 @@ impl Instruction {
                     "sle" => {
                         let op1_final: &str;
                         let op2_final: &str;
-                        let li_dst = gen_temp_label(select_cnt);
+                        let li_dst: String;
                         if exist_imm {
-                            *select_cnt += 1;
+                            li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                             if op1_is_imm {
-                                asm.insert_label_type(&li_dst, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
                                 op1_final = &li_dst;
                                 op2_final = op2;
                             } else {
-                                asm.insert_label_type(&li_dst, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                                 op1_final = op1;
                                 op2_final = &li_dst;
@@ -502,16 +496,14 @@ impl Instruction {
                     "sge" => {
                         let op1_final: &str;
                         let op2_final: &str;
-                        let li_dst = gen_temp_label(select_cnt);
+                        let li_dst: String;
                         if exist_imm {
-                            *select_cnt += 1;
+                            li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                             if op1_is_imm {
-                                asm.insert_label_type(&li_dst, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
                                 op1_final = &li_dst;
                                 op2_final = op2;
                             } else {
-                                asm.insert_label_type(&li_dst, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                                 op1_final = op1;
                                 op2_final = &li_dst;
