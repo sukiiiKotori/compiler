@@ -23,7 +23,7 @@ impl LLVMProgram {
             // 初始化标签映射
             let (mut labels, mut label_map) = initialize_label_maps();
             // 重写函数
-            func.rewrite(
+            func.rewrite (
                 // 更新标签
                 &mut |s| update_label(&mut labels, &mut label_map, s),
                 // 检查基本块是否活跃

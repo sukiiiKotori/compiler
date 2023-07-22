@@ -46,13 +46,11 @@ lalrpop_mod!(parser);
 fn main() {
     let mut args = args();
     //跳过第一个参数
-    // args.next();
+    args.next();
     //获取待编译的文件名
-    // let file_name = args.next().unwrap();
-    let file_name = "./tests/test.sy";
-    let content = &read_to_string(&file_name).unwrap();
+    let file_name = args.next().unwrap();
     //用lalrpop解析得到ast
-    let mut ast = parser::SysYParser::new().parse(content).unwrap();
+    let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
     //生成llvm
     let mut llvm = generate_llvm(&mut ast);
     if SETTINGS.optimise {

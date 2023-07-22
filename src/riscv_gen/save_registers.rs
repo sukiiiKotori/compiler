@@ -17,8 +17,8 @@ impl AsmFunc {
             if FLOAT_SAVED_SET.contains(saved_reg) {
                 (&mut self.blocks[0]).instrs.insert(
                     0, 
-                    AsmInstr::make_instr(
-                        AsmInstrType::Store, 
+                    AsmInstruction::make_instr(
+                        AsmInstructionType::Store, 
                         vec!(saved_reg, "sp", saved_reg, "f"), 
                         Some(8), 
                         vec!()
@@ -27,8 +27,8 @@ impl AsmFunc {
             } else {
                 (&mut self.blocks[0]).instrs.insert(
                     0, 
-                    AsmInstr::make_instr(
-                        AsmInstrType::Store, 
+                    AsmInstruction::make_instr(
+                        AsmInstructionType::Store, 
                         vec!(saved_reg, "sp", saved_reg), 
                         Some(8), 
                         vec!()
