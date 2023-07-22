@@ -105,12 +105,12 @@ fn collect_active_allocations(func: &mut FuncDef, active_labels: &HashSet<String
 }
 
 // 函数用于初始化标签和标签映射
-fn initialize_label_maps() -> (Labels, HashMap<String, usize>) {
+fn initialize_label_maps() -> (Labels, HashMap<String, String>) {
     (Labels::new(), HashMap::new())
 }
 
 // 函数用于更新标签
-pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, usize>, old_label: &str) -> String {
+pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, String>, old_label: &str) -> String {
     // 如果旧标签不包含 "%"，则直接返回旧标签
     if !old_label.contains("%") {
         return String::from(old_label);
@@ -118,7 +118,7 @@ pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, usize>,
     // 如果旧标签不是数字标签，则根据标签映射返回新标签
     if !is_num_label(old_label) {
         return label_map.get(old_label)
-            .map_or(String::from(old_label), |x| String::from(x.to_string()));
+            .map_or(String::from(old_label), |x| String::from(x));
     }
     // 如果旧标签是数字标签且存在于标签映射中，则返回对应的新标签
     if let Some(new_label) = label_map.get(old_label) {
@@ -126,6 +126,6 @@ pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, usize>,
     }
     // 生成一个新的数字标签，并将旧标签与新标签的映射关系添加到标签映射中
     let new_label = labels.pop_num_str();
-    label_map.insert(String::from(old_label), String::from(new_label.to_string()).parse().unwrap());
-    new_label
+    label_map.insert(String::from(old_label), String::from(new_label.clone()).parse().unwrap());
+    String::from(new_label.clone())
 }
