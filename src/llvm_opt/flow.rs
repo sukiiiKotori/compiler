@@ -36,8 +36,8 @@ impl FlowItem for Instruction {
             | Instruction::Fadd(bin_op)
             | Instruction::Fsub(bin_op)
             | Instruction::Fmul(bin_op)
-            | Instruction::Fdiv(bin_op) => bin_op.flow_info(),
-            Instruction::Cmp(_, bin_op)
+            | Instruction::Fdiv(bin_op)
+            |Instruction::Cmp(_, bin_op)
             | Instruction::Fcmp(_, bin_op) => bin_op.flow_info(),
             Instruction::ZeroExt(castop)
             | Instruction::I32ToFloat(castop)
