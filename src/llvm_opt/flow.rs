@@ -112,14 +112,6 @@ impl FlowItem for Instruction {
     }
 }
 
-/// 处理基本块，取出基本块标号，并根据TerInstr类型取出关联标识
-/// 1. 首先判断基本块的最后一条指令是否为跳转指令，通过匹配模式来判断。
-/// 2. 如果是跳转指令，则创建一个空的字符串向量src。
-/// 3. 将第一个目标标签（label1）加入到src中。
-/// 4. 如果跳转指令有第二个目标标签（label2），则将label2的值加入到src中。
-/// 5. 使用迭代器过滤掉src中与当前基本块标号相同的标签，并将结果保存到src中。
-/// 6. 返回当前基本块标号作为流出的标识，以及src作为流出的标签向量。
-/// 7. 如果最后一条指令不是跳转指令，则直接返回当前基本块标号作为流出的标识，以及一个空的标签向量。
 impl FlowItem for Block {
     fn flow_info(&self) -> (Option<&str>, Vec<&str>) {
         if let Some(Instruction::Br(_, label1, label2)) = &self.ter_ins {
