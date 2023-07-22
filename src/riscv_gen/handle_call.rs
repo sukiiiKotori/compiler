@@ -81,7 +81,7 @@ impl AsmBlock {
         position: usize
     ) {
         let (ret_val, params, types) = match self.instrs.get(position).unwrap() {
-            AsmInstr::Call(r, name, p, t) => {
+            AsmInstruction::Call(r, name, p, t) => {
                 if name == "memset" {
                     return;
                 }
@@ -110,8 +110,8 @@ impl AsmBlock {
             if FLOAT_TEMP_SET.contains(temp) {
                 prefix = FLOAT_PREFIX;
             }
-            self.instrs.insert(position+1, AsmInstr::make_instr(
-                AsmInstrType::Load,
+            self.instrs.insert(position+1, AsmInstruction::make_instr(
+                AsmInstructionType::Load,
                 vec!(temp, "sp", stored_pos.as_str(), prefix),
                 Some(PTR_WIDTH),
                 vec!()
@@ -121,15 +121,15 @@ impl AsmBlock {
         // 存储调用返回值
         if !ret_val.is_empty() {
             if types[0] == SymbolWidth::Float {
-                self.instrs.insert(position+1, AsmInstr::make_instr(
-                    AsmInstrType::Fmv,
+                self.instrs.insert(position+1, AsmInstruction::make_instr(
+                    AsmInstructionType::Fmv,
                     vec!(ret_val.as_str(), "fa0"),
                     None,
                     vec!(SymbolWidth::Float, SymbolWidth::Float)
                 ));
             } else {
-                self.instrs.insert(position+1, AsmInstr::make_instr(
-                    AsmInstrType::Mv,
+                self.instrs.insert(position+1, AsmInstruction::make_instr(
+                    AsmInstructionType::Mv,
                     vec!(ret_val.as_str(), "a0"),
                     None,
                     vec!()
@@ -180,8 +180,8 @@ impl AsmBlock {
         // 保存参数冲突的寄存器和穿越生命周期的寄存器
         for reg in context.stored_regs.iter() {
             let stored_reg = format!("stored.{}", reg);
-            self.instrs.insert(position, AsmInstr::make_instr(
-                AsmInstrType::Store,
+            self.instrs.insert(position, AsmInstruction::make_instr(
+                AsmInstructionType::Store,
                 vec![reg, "sp", stored_reg.as_str()],
                 Some(PTR_WIDTH),
                 vec![]
@@ -204,15 +204,15 @@ impl AsmBlock {
             if is_immediate(param.as_str()) {
                 let imm = double_to_float(param.as_str());
                 // 在指定位置插入存储立即数的指令
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Store,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Store,
                     vec!(PRESERVED[1], "sp",stack_pos.as_str(), ),
                     Some(NORMAL_WIDTH),
                     vec!()
                 ));
                 // 在指定位置插入加载立即数的指令
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Li,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Li,
                     vec!(PRESERVED[1], imm.as_str()),
                     None,
                     vec!()
@@ -222,8 +222,8 @@ impl AsmBlock {
                 panic!("riscv_gen/build.rs:load_float_param,invalid regs");
             } else {
                 // 正常参数，在指定位置插入存储参数的指令
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Store,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Store,
                     vec!(param.as_str(), "sp", stack_pos.as_str(), FLOAT_PREFIX),
                     Some(NORMAL_WIDTH),
                     vec!()
@@ -236,8 +236,8 @@ impl AsmBlock {
                 let imm = double_to_float(param.as_str());
                 self.instrs.insert(
                     position, 
-                    AsmInstr::make_instr(
-                        AsmInstrType::Fmv, 
+                    AsmInstruction::make_instr(
+                        AsmInstructionType::Fmv, 
                         vec!(FLOAT_FUNC_ARG[context.float_cnt], PRESERVED[1]), 
                         None, 
                         vec!(SymbolWidth::Float, SymbolWidth::I32)
@@ -245,8 +245,8 @@ impl AsmBlock {
                 );
                 self.instrs.insert(
                     position, 
-                    AsmInstr::make_instr(
-                        AsmInstrType::Li, 
+                    AsmInstruction::make_instr(
+                        AsmInstructionType::Li, 
                         vec!(PRESERVED[1], &imm), 
                         None, 
                         vec!()
@@ -256,15 +256,15 @@ impl AsmBlock {
                 let stored_pos = format!("stored.{}", param);
                 context.stored_regs.insert(param.as_str());
                 context.stack.push_normal(stored_pos.as_str(), 8);
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Load,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Load,
                     vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), FLOAT_PREFIX),
                     Some(NORMAL_WIDTH),
                     vec!()
                 ));
             } else {
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Fmv,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Fmv,
                     vec!(FLOAT_FUNC_ARG[context.float_cnt], param.as_str()),
                     Some(NORMAL_WIDTH),
                     vec!(SymbolWidth::Float, SymbolWidth::Float)
@@ -285,14 +285,14 @@ impl AsmBlock {
             context.stack_len += param_size;
             let stack_pos = format!("-{}", context.stack_len);
             if is_immediate(param.as_str()) {
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Store,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Store,
                     vec!(PRESERVED[1], "sp", stack_pos.as_str()),
                     Some(param_size),
                     vec!()
                 ));
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Li,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Li,
                     vec!(PRESERVED[1], param.as_str()),
                     None,
                     vec!()
@@ -300,8 +300,8 @@ impl AsmBlock {
             } else if context.invalid_regs.contains(param.as_str()) {
                 panic!("Should not appear");
             } else {
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Store,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Store,
                     vec!(param.as_str(), "sp", stack_pos.as_str()),
                     Some(param_size),
                     vec!()
@@ -310,8 +310,8 @@ impl AsmBlock {
         } else {
             context.invalid_regs.remove(FUNC_ARG[context.int_cnt]);
             if is_immediate(param.as_str()) {
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Li,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Li,
                     vec!(FUNC_ARG[context.int_cnt], param.as_str()),
                     Some(param_size),
                     vec!()
@@ -320,15 +320,15 @@ impl AsmBlock {
                 let stored_pos = format!("stored.{}", param);
                 context.stored_regs.insert(param.as_str());
                 context.stack.push_normal(stored_pos.as_str(), 8);
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Load,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Load,
                     vec!(FUNC_ARG[context.int_cnt], stored_pos.as_str()),
                     Some(PTR_WIDTH),
                     vec!()
                 ));
             } else {
-                self.instrs.insert(position, AsmInstr::make_instr(
-                    AsmInstrType::Mv,
+                self.instrs.insert(position, AsmInstruction::make_instr(
+                    AsmInstructionType::Mv,
                     vec!(FUNC_ARG[context.int_cnt], param.as_str()),
                     None,
                     vec!()

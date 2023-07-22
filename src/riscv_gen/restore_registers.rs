@@ -13,7 +13,7 @@ impl AsmFunc {
             //找到这个块的ret指令的下标
             match block.instrs.iter().position(|instr| {
                 match instr {
-                    AsmInstr::Ret() => true,
+                    AsmInstruction::Ret() => true,
                     _ => false,
                 }
             }) {
@@ -22,8 +22,8 @@ impl AsmFunc {
                         if FLOAT_SAVED_SET.contains(saved_reg) {
                             block.instrs.insert(
                                 position, 
-                                AsmInstr::make_instr(
-                                    AsmInstrType::Load, 
+                                AsmInstruction::make_instr(
+                                    AsmInstructionType::Load, 
                                     vec!(saved_reg, "sp", saved_reg, "f"), 
                                     Some(8), 
                                     vec!()
@@ -32,8 +32,8 @@ impl AsmFunc {
                         } else {
                             block.instrs.insert(
                                 position, 
-                                AsmInstr::make_instr(
-                                    AsmInstrType::Load, 
+                                AsmInstruction::make_instr(
+                                    AsmInstructionType::Load, 
                                     vec!(saved_reg, "sp", saved_reg), 
                                     Some(8), 
                                     vec!()

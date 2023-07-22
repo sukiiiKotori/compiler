@@ -102,7 +102,7 @@ impl AsmFunc {
 pub struct AsmBlock {
     pub label: String,
     // 标签
-    pub instrs: Vec<AsmInstr>,
+    pub instrs: Vec<AsmInstruction>,
     // 指令列表
     pub successor: Vec<String>,
     // 后继基本块标签列表
@@ -128,7 +128,7 @@ impl AsmBlock {
 
 /// 表示汇编指令的类型。
 #[derive(Debug, PartialEq, Clone)]
-pub enum AsmInstrType {
+pub enum AsmInstructionType {
     Li,
     // 载入立即数到寄存器
     La,
@@ -192,7 +192,7 @@ pub enum AsmInstrType {
 
 /// 表示具体的汇编指令。
 #[derive(Debug)]
-pub enum AsmInstr {
+pub enum AsmInstruction {
     Li(BinInstr),
     // 伪指令，载入立即数到寄存器
     La(BinInstr),
@@ -343,42 +343,42 @@ impl RiscV {
     }
 }
 
-impl AsmInstr {
-    pub fn fetch_type(&self) -> AsmInstrType {
+impl AsmInstruction {
+    pub fn fetch_type(&self) -> AsmInstructionType {
         match self {
-            AsmInstr::Li(_) => AsmInstrType::Li,
-            AsmInstr::La(_) => AsmInstrType::La,
-            AsmInstr::Mv(_) => AsmInstrType::Mv,
-            AsmInstr::Fmv(_, _, _) => AsmInstrType::Fmv,
-            AsmInstr::Add(_) => AsmInstrType::Add,
-            AsmInstr::Addi(_) => AsmInstrType::Addi,
-            AsmInstr::Sub(_) => AsmInstrType::Sub,
-            AsmInstr::Mul(_) => AsmInstrType::Mul,
-            AsmInstr::Div(_) => AsmInstrType::Div,
-            AsmInstr::Rem(_) => AsmInstrType::Rem,
-            AsmInstr::Xori(_) => AsmInstrType::Xori,
-            AsmInstr::Slli(_) => AsmInstrType::Slli,
-            AsmInstr::Srli(_) => AsmInstrType::Srli,
-            AsmInstr::Srai(_) => AsmInstrType::Srai,
-            AsmInstr::Fadd(_) => AsmInstrType::Fadd,
-            AsmInstr::Fsub(_) => AsmInstrType::Fsub,
-            AsmInstr::Fmul(_) => AsmInstrType::Fmul,
-            AsmInstr::Fdiv(_) => AsmInstrType::Fdiv,
-            AsmInstr::Fcvt(_, _, _) => AsmInstrType::Fcvt,
-            AsmInstr::Slt(_) => AsmInstrType::Slt,
-            AsmInstr::Slti(_) => AsmInstrType::Slti,
-            AsmInstr::Sgt(_) => AsmInstrType::Sgt,
-            AsmInstr::Seqz(_) => AsmInstrType::Seqz,
-            AsmInstr::Snez(_) => AsmInstrType::Snez,
-            AsmInstr::Flt(_) => AsmInstrType::Flt,
-            AsmInstr::Fle(_) => AsmInstrType::Fle,
-            AsmInstr::Feq(_) => AsmInstrType::Feq,
-            AsmInstr::Store(_, _) => AsmInstrType::Store,
-            AsmInstr::Load(_, _) => AsmInstrType::Load,
-            AsmInstr::Branch(_) => AsmInstrType::Branch,
-            AsmInstr::Jump(_) => AsmInstrType::Jump,
-            AsmInstr::Ret() => AsmInstrType::Ret,
-            AsmInstr::Call(_, _, _, _) => AsmInstrType::Call,
+            AsmInstruction::Li(_) => AsmInstructionType::Li,
+            AsmInstruction::La(_) => AsmInstructionType::La,
+            AsmInstruction::Mv(_) => AsmInstructionType::Mv,
+            AsmInstruction::Fmv(_, _, _) => AsmInstructionType::Fmv,
+            AsmInstruction::Add(_) => AsmInstructionType::Add,
+            AsmInstruction::Addi(_) => AsmInstructionType::Addi,
+            AsmInstruction::Sub(_) => AsmInstructionType::Sub,
+            AsmInstruction::Mul(_) => AsmInstructionType::Mul,
+            AsmInstruction::Div(_) => AsmInstructionType::Div,
+            AsmInstruction::Rem(_) => AsmInstructionType::Rem,
+            AsmInstruction::Xori(_) => AsmInstructionType::Xori,
+            AsmInstruction::Slli(_) => AsmInstructionType::Slli,
+            AsmInstruction::Srli(_) => AsmInstructionType::Srli,
+            AsmInstruction::Srai(_) => AsmInstructionType::Srai,
+            AsmInstruction::Fadd(_) => AsmInstructionType::Fadd,
+            AsmInstruction::Fsub(_) => AsmInstructionType::Fsub,
+            AsmInstruction::Fmul(_) => AsmInstructionType::Fmul,
+            AsmInstruction::Fdiv(_) => AsmInstructionType::Fdiv,
+            AsmInstruction::Fcvt(_, _, _) => AsmInstructionType::Fcvt,
+            AsmInstruction::Slt(_) => AsmInstructionType::Slt,
+            AsmInstruction::Slti(_) => AsmInstructionType::Slti,
+            AsmInstruction::Sgt(_) => AsmInstructionType::Sgt,
+            AsmInstruction::Seqz(_) => AsmInstructionType::Seqz,
+            AsmInstruction::Snez(_) => AsmInstructionType::Snez,
+            AsmInstruction::Flt(_) => AsmInstructionType::Flt,
+            AsmInstruction::Fle(_) => AsmInstructionType::Fle,
+            AsmInstruction::Feq(_) => AsmInstructionType::Feq,
+            AsmInstruction::Store(_, _) => AsmInstructionType::Store,
+            AsmInstruction::Load(_, _) => AsmInstructionType::Load,
+            AsmInstruction::Branch(_) => AsmInstructionType::Branch,
+            AsmInstruction::Jump(_) => AsmInstructionType::Jump,
+            AsmInstruction::Ret() => AsmInstructionType::Ret,
+            AsmInstruction::Call(_, _, _, _) => AsmInstructionType::Call,
         }
     }
 }

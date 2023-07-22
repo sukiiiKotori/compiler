@@ -13,15 +13,15 @@ impl RiscV {
         curr_func.push_block(block_label, depth);
     }
     /// 获取当前正在处理的函数和代码块，并向当前代码块的指令列表中添加一个新的指令
-    pub fn push_instr(&mut self, instr: AsmInstr) {
+    pub fn push_instr(&mut self, instr: AsmInstruction) {
         let curr_func = self.text.funcs.last_mut().unwrap();
         let curr_block = curr_func.blocks.last_mut().unwrap();
         curr_block.instrs.push(instr);
     }
     /// 根据给定的指令类型、字符串向量、宽度数值和类型向量生成一个新的指令<br>
     /// 并将其添加到当前代码块的指令列表中
-    pub fn gen_instr(&mut self, ty: AsmInstrType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) {
-        let instr = AsmInstr::make_instr(ty, str_vec, width_num, ty_vec);
+    pub fn gen_instr(&mut self, ty: AsmInstructionType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) {
+        let instr = AsmInstruction::make_instr(ty, str_vec, width_num, ty_vec);
         self.push_instr(instr);
     }
     /// 获取当前正在处理的函数和代码块，并向当前代码块的后继列表中添加一个新的后继标签
@@ -67,43 +67,43 @@ impl AsmFunc {
     }
 }
 
-impl AsmInstr {
-    pub fn make_instr(ty: AsmInstrType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) -> Self {
+impl AsmInstruction {
+    pub fn make_instr(ty: AsmInstructionType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) -> Self {
         match ty {
-            AsmInstrType::Li => AsmInstr::Li(BinInstr::new(str_vec[0], str_vec[1])),
-            AsmInstrType::La => AsmInstr::La(BinInstr::new(str_vec[0], str_vec[1])),
-            AsmInstrType::Mv => AsmInstr::Mv(BinInstr::new(str_vec[0], str_vec[1])),
-            AsmInstrType::Fmv => AsmInstr::Fmv(BinInstr::new(str_vec[0], str_vec[1]), ty_vec[0].clone(), ty_vec[1].clone()),
-            AsmInstrType::Addi => AsmInstr::Addi(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Add => AsmInstr::Add(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Sub => AsmInstr::Sub(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Mul => AsmInstr::Mul(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Div => AsmInstr::Div(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Rem => AsmInstr::Rem(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Xori => AsmInstr::Xori(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Slli => AsmInstr::Slli(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Srli => AsmInstr::Srli(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Srai => AsmInstr::Srai(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fadd => AsmInstr::Fadd(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fsub => AsmInstr::Fsub(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fmul => AsmInstr::Fmul(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fdiv => AsmInstr::Fdiv(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fcvt => AsmInstr::Fcvt(BinInstr::new(str_vec[0], str_vec[1]), ty_vec[0].clone(), ty_vec[1].clone()),
-            AsmInstrType::Slt => AsmInstr::Slt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Slti => AsmInstr::Slti(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Sgt => AsmInstr::Sgt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Seqz => AsmInstr::Seqz(BinInstr::new(str_vec[0], str_vec[1])),
-            AsmInstrType::Snez => AsmInstr::Snez(BinInstr::new(str_vec[0], str_vec[1])),
-            AsmInstrType::Flt => AsmInstr::Flt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Fle => AsmInstr::Fle(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Feq => AsmInstr::Feq(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
-            AsmInstrType::Store => AsmInstr::Store(MemInstr::new(width_num.unwrap(), str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
-            AsmInstrType::Load => AsmInstr::Load(MemInstr::new(width_num.unwrap(), str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
-            AsmInstrType::Branch => AsmInstr::Branch(CondTriInstr::new(str_vec[0], None, str_vec[1], str_vec[2], str_vec[3])),
-            AsmInstrType::Jump => AsmInstr::Jump(String::from(str_vec[0])),
-            AsmInstrType::Ret => AsmInstr::Ret(),
-            AsmInstrType::Call => {
-                AsmInstr::Call(
+            AsmInstructionType::Li => AsmInstruction::Li(BinInstr::new(str_vec[0], str_vec[1])),
+            AsmInstructionType::La => AsmInstruction::La(BinInstr::new(str_vec[0], str_vec[1])),
+            AsmInstructionType::Mv => AsmInstruction::Mv(BinInstr::new(str_vec[0], str_vec[1])),
+            AsmInstructionType::Fmv => AsmInstruction::Fmv(BinInstr::new(str_vec[0], str_vec[1]), ty_vec[0].clone(), ty_vec[1].clone()),
+            AsmInstructionType::Addi => AsmInstruction::Addi(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Add => AsmInstruction::Add(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Sub => AsmInstruction::Sub(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Mul => AsmInstruction::Mul(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Div => AsmInstruction::Div(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Rem => AsmInstruction::Rem(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Xori => AsmInstruction::Xori(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Slli => AsmInstruction::Slli(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Srli => AsmInstruction::Srli(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Srai => AsmInstruction::Srai(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Fadd => AsmInstruction::Fadd(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Fsub => AsmInstruction::Fsub(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Fmul => AsmInstruction::Fmul(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Fdiv => AsmInstruction::Fdiv(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Fcvt => AsmInstruction::Fcvt(BinInstr::new(str_vec[0], str_vec[1]), ty_vec[0].clone(), ty_vec[1].clone()),
+            AsmInstructionType::Slt => AsmInstruction::Slt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Slti => AsmInstruction::Slti(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Sgt => AsmInstruction::Sgt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Seqz => AsmInstruction::Seqz(BinInstr::new(str_vec[0], str_vec[1])),
+            AsmInstructionType::Snez => AsmInstruction::Snez(BinInstr::new(str_vec[0], str_vec[1])),
+            AsmInstructionType::Flt => AsmInstruction::Flt(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Fle => AsmInstruction::Fle(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Feq => AsmInstruction::Feq(TriInstr::new(width_num, str_vec[0], str_vec[1], str_vec[2])),
+            AsmInstructionType::Store => AsmInstruction::Store(MemInstr::new(width_num.unwrap(), str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
+            AsmInstructionType::Load => AsmInstruction::Load(MemInstr::new(width_num.unwrap(), str_vec[0], str_vec[1], str_vec[2]), str_vec.get(3).map_or(String::from(""), |p| String::from(*p))),
+            AsmInstructionType::Branch => AsmInstruction::Branch(CondTriInstr::new(str_vec[0], None, str_vec[1], str_vec[2], str_vec[3])),
+            AsmInstructionType::Jump => AsmInstruction::Jump(String::from(str_vec[0])),
+            AsmInstructionType::Ret => AsmInstruction::Ret(),
+            AsmInstructionType::Call => {
+                AsmInstruction::Call(
                     String::from(str_vec[0]),
                     String::from(str_vec[1]),
                     str_vec.iter().skip(2).map(|s| s.to_string()).collect(),

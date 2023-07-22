@@ -122,7 +122,7 @@ impl MemInstr {
     }
 }
 
-impl AsmInstr {
+impl AsmInstruction {
     // 根据筛选条件（是否需要寄存器的条件），将指令输入输出中需要寄存器的部分返回
     pub fn io_filter<'asm>(output: Option<&'asm str>, inputs: Vec<&'asm str>, filter_cond: impl Fn(&'asm str) -> bool) -> (Option<&'asm str>, Vec<&'asm str>) {
         let new_output: Option<&str>;
@@ -150,33 +150,33 @@ impl AsmInstr {
     // 获取指令对应的输入输出数据
     pub fn get_io(&self) -> (Option<&str>, Vec<&str>) {
         match self {
-            AsmInstr::Li(bin) | AsmInstr::La(bin) => {
+            AsmInstruction::Li(bin) | AsmInstruction::La(bin) => {
                 match bin {
                     BinInstr { dst, src: _ } => {
                         (Some(dst), vec!())
                     }
                 }
             }
-            AsmInstr::Mv(bin) | AsmInstr::Fmv(bin, _, _) | 
-            AsmInstr::Fcvt(bin, _, _) | AsmInstr::Seqz(bin) | AsmInstr::Snez(bin) => {
+            AsmInstruction::Mv(bin) | AsmInstruction::Fmv(bin, _, _) | 
+            AsmInstruction::Fcvt(bin, _, _) | AsmInstruction::Seqz(bin) | AsmInstruction::Snez(bin) => {
                 bin.get_io()
             }
-            AsmInstr::Addi(tri) | AsmInstr::Xori(tri) | AsmInstr::Slti(tri) |
-            AsmInstr::Slli(tri) | AsmInstr::Srli(tri) | AsmInstr::Srai(tri) => {
+            AsmInstruction::Addi(tri) | AsmInstruction::Xori(tri) | AsmInstruction::Slti(tri) |
+            AsmInstruction::Slli(tri) | AsmInstruction::Srli(tri) | AsmInstruction::Srai(tri) => {
                 match tri {
                     TriInstr { width: _, dst, op1, op2: _ } => {
                         (Some(dst), vec!(op1))
                     }
                 }
             }
-            AsmInstr::Add(tri) | AsmInstr::Sub(tri) | AsmInstr::Mul(tri) |
-            AsmInstr::Div(tri) | AsmInstr::Rem(tri) | AsmInstr::Slt(tri) |
-            AsmInstr::Sgt(tri) | AsmInstr::Flt(tri) | AsmInstr::Fle(tri) |
-            AsmInstr::Feq(tri) | AsmInstr::Fadd(tri) | AsmInstr::Fsub(tri) |
-            AsmInstr::Fmul(tri) | AsmInstr::Fdiv(tri) => {
+            AsmInstruction::Add(tri) | AsmInstruction::Sub(tri) | AsmInstruction::Mul(tri) |
+            AsmInstruction::Div(tri) | AsmInstruction::Rem(tri) | AsmInstruction::Slt(tri) |
+            AsmInstruction::Sgt(tri) | AsmInstruction::Flt(tri) | AsmInstruction::Fle(tri) |
+            AsmInstruction::Feq(tri) | AsmInstruction::Fadd(tri) | AsmInstruction::Fsub(tri) |
+            AsmInstruction::Fmul(tri) | AsmInstruction::Fdiv(tri) => {
                 tri.get_io()
             }
-            AsmInstr::Store(mem, _) => {
+            AsmInstruction::Store(mem, _) => {
                 let (output, mut inputs) = mem.get_io();
                 if output.is_some() {
                     let output = output.unwrap();
@@ -184,16 +184,16 @@ impl AsmInstr {
                 }
                 (None, inputs)
             }
-            AsmInstr::Load(mem, _) => {
+            AsmInstruction::Load(mem, _) => {
                 mem.get_io()
             }
-            AsmInstr::Branch(cond_tri) => {
+            AsmInstruction::Branch(cond_tri) => {
                 let (output, _) = cond_tri.get_io();
                 (None, vec!(output.unwrap()))
             }
-            AsmInstr::Jump(_) => (None, vec!()),
-            AsmInstr::Ret() => (None, vec!()),
-            AsmInstr::Call(ret, _, params, _) => (Some(ret.as_str()), params.iter().map(|s| s.as_str()).collect()),
+            AsmInstruction::Jump(_) => (None, vec!()),
+            AsmInstruction::Ret() => (None, vec!()),
+            AsmInstruction::Call(ret, _, params, _) => (Some(ret.as_str()), params.iter().map(|s| s.as_str()).collect()),
         }
     }
 
@@ -201,7 +201,7 @@ impl AsmInstr {
     pub fn get_regs(&self) -> (Option<&str>, Vec<&str>) {
         let (output, inputs) = self.get_io();
         // 获取实际需要寄存器的io
-        AsmInstr::io_filter(output, inputs, |reg| {
+        AsmInstruction::io_filter(output, inputs, |reg| {
             is_num_label(reg) || is_temp_opr(reg) || ALL_REGS.contains(reg)
         })
     }
