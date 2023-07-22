@@ -69,7 +69,7 @@ impl FuncDef {
         });
 
         self.blocks.iter().enumerate().for_each(|(idx, b)| {
-            if idx < self.blocks.len() {
+            if idx < self.blocks.len() - 1 {
                 b.select_asm(asm, Some(&self.blocks[idx+1].block_label), &self.func_name[1..], &mut select_cnt);
             } else {
                 b.select_asm(asm, None, &self.func_name[1..], &mut select_cnt);
