@@ -122,10 +122,10 @@ pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, String>
     }
     // 如果旧标签是数字标签且存在于标签映射中，则返回对应的新标签
     if let Some(new_label) = label_map.get(old_label) {
-        return String::from(new_label.to_string());
+        return new_label.to_string();
     }
     // 生成一个新的数字标签，并将旧标签与新标签的映射关系添加到标签映射中
     let new_label = labels.pop_num_str();
-    label_map.insert(String::from(old_label), String::from(new_label.clone()).parse().unwrap());
-    String::from(new_label.clone())
+    label_map.insert(String::from(old_label), new_label.clone());
+    new_label
 }
