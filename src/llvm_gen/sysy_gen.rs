@@ -2,7 +2,7 @@ use crate::ast::*;
 use crate::structures::llvm_struct::{LLVMProgram, Instruction, InstructionType};
 use crate::structures::symbol::*;
 use crate::structures::scopes::*;
-use crate::llvm_gen::symbol::*;
+use crate::llvm_gen::type_utils::*;
 
 pub trait Generate {
     type Out;

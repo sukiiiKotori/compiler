@@ -1,4 +1,4 @@
-pub mod symbol;
+pub mod type_utils;
 pub mod build;
 pub mod sysy_gen;
 pub mod decl;

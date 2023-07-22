@@ -9,7 +9,7 @@ use crate::structures::symbol::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::scopes::*;
 use crate::llvm_gen::sysy_gen::*;
-use crate::llvm_gen::symbol::*;
+use crate::llvm_gen::type_utils::*;
 
 // 获取某元素在多维数组中，实际偏移位置量
 fn get_pos(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {

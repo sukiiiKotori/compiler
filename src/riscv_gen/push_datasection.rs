@@ -23,7 +23,7 @@ impl GlobalVar {
 impl RiscV {
     /// 向data段的全局变量列表中添加一个新的全局变量，使用给定的标签、类型和初始值向量
     pub fn push_datasection(&mut self, label: &str, ty: &SymbolType, init_vals: Vec<&String>) {
-        self.data.labels.insert(label.to_string());
+        self.data.labels.insert(label.to_owned());
         self.data.datas.push(DataSectionItem {
             label: label.to_string(),
             ty: ty.clone(),

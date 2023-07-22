@@ -4,7 +4,7 @@ use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
 use crate::structures::scopes::*;
 use crate::llvm_gen::sysy_gen::*;
-use crate::llvm_gen::symbol::*;
+use crate::llvm_gen::type_utils::*;
 use crate::utils::check::*;
 use crate::utils::float::*;
 
