@@ -1,7 +1,7 @@
 pub mod stack_slot;
 pub mod register_resource;
 pub mod linearscan;
-pub mod build;
+pub mod select_utils;
 pub mod asm_select;
 pub mod rewrite;
 pub mod write_text;
