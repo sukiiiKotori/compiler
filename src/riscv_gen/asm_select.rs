@@ -696,19 +696,14 @@ impl Instruction {
                     asm.gen_instr(AsmInstrType::La, vec!(&load_addr, pure_ptr), None, vec!());
                     asm.gen_instr(AsmInstrType::Load, vec!(&load_res, &load_addr, "0", prefix), width_num, vec!());
                 }
-                //如果是整数需要来一个符号扩展
-                if width_num == Some(NORMAL_WIDTH) && prefix == "" {
-                    asm.gen_instr(AsmInstrType::Sextw, vec!(res, &load_res), None, vec!());
+                if prefix == FLOAT_PREFIX {
+                //是float，用fmv
+                    asm.gen_instr(AsmInstrType::Fmv, vec!(res, &load_res), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
                 } else {
-                    //
-                    if prefix == FLOAT_PREFIX {
-                    //是float，用fmv
-                        asm.gen_instr(AsmInstrType::Fmv, vec!(res, &load_res), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
-                    } else {
-                    //是64位指针，使用mov指令
-                        asm.gen_instr(AsmInstrType::Mv, vec!(res, &load_res), None, vec!());
-                    }
+                //是64位指针或者32位整数，使用mov指令
+                    asm.gen_instr(AsmInstrType::Mv, vec!(res, &load_res), None, vec!());
                 }
+                
             },
             Instruction::Ret(ret_type, ret_val) => {
                  if let Some(ret_val) = ret_val {
