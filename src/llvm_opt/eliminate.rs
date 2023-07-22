@@ -126,6 +126,6 @@ pub fn update_label(labels: &mut Labels, label_map: &mut HashMap<String, usize>,
     }
     // 生成一个新的数字标签，并将旧标签与新标签的映射关系添加到标签映射中
     let new_label = labels.pop_num_str();
-    label_map.insert(String::from(old_label), String::from(&new_label).parse().unwrap());
+    label_map.insert(String::from(old_label), String::from(new_label.to_string()).parse().unwrap());
     new_label
 }

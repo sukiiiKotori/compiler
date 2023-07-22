@@ -27,86 +27,53 @@ impl FlowItem for CastOp {
 /// 反映的是自身对关联标识的使用情况
 impl FlowItem for Instruction {
     fn flow_info(&self) -> (Option<&str>, Vec<&str>) {
-        match &self {
-            // res使用candidates的值
-            Instruction::Add(bin_op) => bin_op.flow_info(),
-            Instruction::Sub(bin_op) => bin_op.flow_info(),
-            Instruction::Mul(bin_op) => bin_op.flow_info(),
-            Instruction::Sdiv(bin_op) => bin_op.flow_info(),
-            Instruction::Srem(bin_op) => bin_op.flow_info(),
-            Instruction::Fadd(bin_op) => bin_op.flow_info(),
-            Instruction::Fsub(bin_op) => bin_op.flow_info(),
-            Instruction::Fmul(bin_op) => bin_op.flow_info(),
-            Instruction::Fdiv(bin_op) => bin_op.flow_info(),
-            Instruction::Cmp(_, bin_op) => bin_op.flow_info(),
-            Instruction::Fcmp(_, bin_op) => bin_op.flow_info(),
-            Instruction::ZeroExt(conver_op) => conver_op.flow_info(),
-            Instruction::I32ToFloat(conver_op) => conver_op.flow_info(),
-            Instruction::FloatToI32(conver_op) => conver_op.flow_info(),
+        match self {
+            Instruction::Add(bin_op)
+            | Instruction::Sub(bin_op)
+            | Instruction::Mul(bin_op)
+            | Instruction::Sdiv(bin_op)
+            | Instruction::Srem(bin_op)
+            | Instruction::Fadd(bin_op)
+            | Instruction::Fsub(bin_op)
+            | Instruction::Fmul(bin_op)
+            | Instruction::Fdiv(bin_op)
+            | Instruction::Cmp(_, bin_op)
+            | Instruction::Fcmp(_, bin_op)
+            | Instruction::ZeroExt(conver_op)
+            | Instruction::I32ToFloat(conver_op)
+            | Instruction::FloatToI32(conver_op) => bin_op.flow_info(),
             Instruction::Phi(res, _, candidates) => {
                 let src: Vec<&str> = candidates.iter().map(|x| x.0.as_str()).collect();
                 (Some(res.as_str()), src)
             }
-            // Alloca不使用其他值，只有被其他值使用
-            Instruction::Alloca {
-                res,
-                ty: _,
-                len: _
-            } => (Some(res.as_str()), vec![]),
-            // 将ptr分为全局和局部处理
-            // 全局ptr始终保持活跃，因此Store不应当剔除
-            // 对于局部ptr，value存到ptr中，也就是ptr使用了value
-            Instruction::Store {
-                ty: _,
-                value,
-                ptr,
-                len: _,
-            } => {
+            Instruction::Alloca { res, .. } => (Some(res.as_str()), vec![]),
+            Instruction::Store { value, ptr, .. } => {
                 if ptr.contains("@") {
                     (None, vec![value.as_str(), ptr.as_str()])
                 } else {
                     (Some(ptr.as_str()), vec![value.as_str()])
                 }
             }
-            // result使用了ptr的值
-            Instruction::Load {
-                res,
-                ty: _,
-                ptr,
-                len: _,
-            } => (Some(res.as_str()), vec![ptr.as_str()]),
-            // Call必被执行，因此自身为None，使用params中的值
+            Instruction::Load { res, ptr, .. } => (Some(res.as_str()), vec![ptr.as_str()]),
             Instruction::Call(_, _, _, params) => {
                 let src: Vec<&str> = params.iter().map(|x| x.0.as_str()).collect();
                 (None, src)
             }
-            // 由于指针所指的值可能被其他标号指向
-            // 因此必须保证GetElemPtr及其下游标号活跃
-            // 因此自身为None，使用dst,ptr和idx的值
             Instruction::GetElemPtr(dst, _, ptr, idx) => {
-                let mut src = vec![dst.as_str()];
-                src.push(ptr.as_str());
-                let mut idx_src: Vec<&str> = idx.iter().map(|x| x.as_str()).collect();
-                src.append(&mut idx_src);
+                let mut src = vec![dst.as_str(), ptr.as_str()];
+                let idx_src: Vec<&str> = idx.iter().map(|x| x.as_str()).collect();
+                src.extend(idx_src);
                 (None, src)
             }
-            // res使用val的值
             Instruction::BitCast(res, _, val, _) => (Some(res.as_str()), vec![val.as_str()]),
             Instruction::Comment(_) => (None, vec![]),
-            // 终结符必被执行，使用所有值
             Instruction::Ret(_, val) => {
-                let mut src: Vec<&str> = vec![];
-                if let Some(v) = val {
-                    src.push(v.as_str());
-                }
+                let src: Vec<&str> = val.iter().map(|v| v.as_str()).collect();
                 (None, src)
             }
             Instruction::Br(cond, _, _) => {
-                if let Some(cond_val) = cond {
-                    (None, vec![cond_val.as_str()])
-                } else {
-                    (None, vec![])
-                }
+                let cond_val = cond.map(|v| v.as_str());
+                (None, vec![cond_val].into_iter().flatten().collect())
             }
         }
     }
