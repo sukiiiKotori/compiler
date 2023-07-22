@@ -46,17 +46,19 @@ lalrpop_mod!(parser);
 fn main() {
     let mut args = args();
     //跳过第一个参数
-    args.next();
+    // args.next();
     //获取待编译的文件名
-    let file_name = args.next().unwrap();
+    // let file_name = args.next().unwrap();
+    let file_name = "./tests/test.sy";
+    let content = &read_to_string(&file_name).unwrap();
     //用lalrpop解析得到ast
-    let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
+    let mut ast = parser::SysYParser::new().parse(content).unwrap();
     //生成llvm
     let mut llvm = generate_llvm(&mut ast);
     if SETTINGS.optimise {
         llvm.optimise_llvm();
     }
-    let filename_without_suffix= file_name.split(".").collect::<Vec<_>>()[0].to_string();
+    let filename_without_suffix = file_name.split(".").collect::<Vec<_>>()[0].to_string();
     //编译选项，可选-llvm和-S
     match args.next().unwrap().as_str() {
         "-llvm" => {
@@ -66,7 +68,7 @@ fn main() {
         "-S" => {
             let mut asm = generate_asm(&llvm);
             asm.optimise_riscv();
-            
+
             let mut asm_file = fs::File::create(filename_without_suffix + ".s").unwrap();
             asm.writetext(&mut asm_file);
         }

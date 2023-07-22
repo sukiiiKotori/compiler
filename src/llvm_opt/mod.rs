@@ -1,15 +1,13 @@
 pub mod eliminate;
 pub mod flow;
-pub mod deadcode;
 pub mod flow_graph;
 pub mod unreachable_eliminate;
 pub mod dead_code_eliminate;
-pub mod reload;
 
 use crate::structures::llvm_struct::*;
 
 impl LLVMProgram {
     pub fn optimise_llvm(&mut self) {
-        self.eliminate_all();
+        self.eliminate_unused_code();
     }
 }
