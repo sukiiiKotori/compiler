@@ -157,7 +157,7 @@ impl AsmInstr {
                     }
                 }
             }
-            AsmInstr::Mv(bin) | AsmInstr::Fmv(bin, _, _) | AsmInstr::Sextw(bin) |
+            AsmInstr::Mv(bin) | AsmInstr::Fmv(bin, _, _) | 
             AsmInstr::Fcvt(bin, _, _) | AsmInstr::Seqz(bin) | AsmInstr::Snez(bin) => {
                 bin.get_io()
             }

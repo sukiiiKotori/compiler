@@ -137,8 +137,6 @@ pub enum AsmInstrType {
     // 移动寄存器的值
     Fmv,
     // 移动浮点数寄存器
-    Sextw,
-    // 将数据从32位符号扩展到64位
     Add,
     // 加法指令
     Addi,
@@ -204,8 +202,6 @@ pub enum AsmInstr {
     Fmv(BinInstr, SymbolWidth, SymbolWidth),
     // 伪指令，移动浮点数寄存器，前一个类型代表目的寄存器的类型，后一个代表源寄存器的类型
     // 该指令有三种形式，分别是浮点->浮点，整数->浮点，浮点->整数
-    Sextw(BinInstr),
-    // 伪指令，将数据从32位符号扩展到64位(主要用于Load，和立即数乘除)
 // Arith
     Add(TriInstr),
     Addi(TriInstr),
@@ -354,7 +350,6 @@ impl AsmInstr {
             AsmInstr::La(_) => AsmInstrType::La,
             AsmInstr::Mv(_) => AsmInstrType::Mv,
             AsmInstr::Fmv(_, _, _) => AsmInstrType::Fmv,
-            AsmInstr::Sextw(_) => AsmInstrType::Sextw,
             AsmInstr::Add(_) => AsmInstrType::Add,
             AsmInstr::Addi(_) => AsmInstrType::Addi,
             AsmInstr::Sub(_) => AsmInstrType::Sub,

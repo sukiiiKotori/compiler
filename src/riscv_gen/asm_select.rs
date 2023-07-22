@@ -7,25 +7,10 @@ use crate::structures::riscv_regs::*;
 
 pub const FLOAT_PREFIX: &str = "f";
 
-fn imm_width(imm: &str) -> SymbolWidth {
-    match is_hex(imm) {
-        true => SymbolWidth::Float,
-        false => SymbolWidth::I32,
-    }
-}
-
-fn incre_cnt(cnt: &mut usize) {
-    *cnt += 1;
-}
-
-fn gen_temp_label(cnt: &usize) -> String {
-    format!("%temp.{}", cnt)
-}
-
 fn pop_temp_label(cnt: &mut usize, asm: &mut RiscV, ty: &SymbolWidth) -> String {
-    let res = gen_temp_label(cnt);
+    let res = format!("%temp.{}", cnt);
     asm.insert_label_type(&res, ty);
-    incre_cnt(cnt);
+    *cnt += 1;
     res
 }
 
@@ -38,7 +23,7 @@ impl LLVMProgram {
 impl FuncDef {
     pub fn asm_select(&self, asm: &mut RiscV) {
         asm.push_func(&self.func_name[1..], self.func_type.width.clone());
-        let curr_func = asm.text.curr_func();
+        let curr_func = asm.text.funcs.last_mut().unwrap();
         let stack = &mut curr_func.stack;
         let label_type = &mut curr_func.label_type;
         let mut select_cnt = 0;
@@ -196,32 +181,22 @@ impl Instruction {
             Instruction::Sub(BinaryOp{res, op_type, op1, op2}) => {
                 asm.insert_label_type(res, &op_type.width);
                 if is_immediate(op2) {
-                    let imm: String;
-                    if &op2[0..1] == "-" {
-                        imm = format!("{}", &op2[1..]);
+                    //求出op2的相反数
+                    let imm_neg = op2.parse::<i32>().map(|num| -num).unwrap().to_string();
+                    if inside_imm_range(&imm_neg) {
+                        //如果能在2^11之内，则用Addi指令。
+                        asm.gen_instr(AsmInstrType::Addi, vec!(res, op1, &imm_neg), None, vec!())
                     } else {
-                        imm = format!("-{}", op2);
+                        let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
+                        asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, &imm_neg), None, vec!());
+                        asm.gen_instr(AsmInstrType::Add, vec!(res, op1, &li_dst), None, vec!());
                     }
-
-                    if inside_imm_range(&imm) {
-                        asm.gen_instr(AsmInstrType::Addi, vec!(res, op1, &imm), None, vec!())
-                    } else {
-                        let li_res = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
-                        asm.gen_instr(AsmInstrType::Li, vec!(&li_res, &imm), None, vec!());
-                        asm.gen_instr(AsmInstrType::Add, vec!(res, op1, &li_res), None, vec!());
-                    }
+                } else if is_immediate(op1){
+                    let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
+                    asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
+                    asm.gen_instr(AsmInstrType::Sub, vec!(res, &li_dst, op2), None, vec!());
                 } else {
-                    let op: &str;
-                    let li_dst = gen_temp_label(select_cnt);
-                    if is_immediate(op1) {
-                        incre_cnt(select_cnt);
-                        asm.insert_label_type(&li_dst, &imm_width(op1));
-                        asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
-                        op = &li_dst;
-                    } else {
-                        op = op1;
-                    }
-                    asm.gen_instr(AsmInstrType::Sub, vec!(res, op, op2), None, vec!())
+                    asm.gen_instr(AsmInstrType::Sub, vec!(res, op1, op2), None, vec!())
                 }
             },
             
@@ -231,16 +206,16 @@ impl Instruction {
                 asm.insert_label_type(res, &op_type.width);
 
                 if is_immediate(op1) { //如果op1是立即数
-                    if &op1[0..1] == "-" {//如果是负数
-                        let op1_positive = &op1[1..];//转成正数
-                        match is_poweroftwo(op1_positive) {//如果是2的幂次
+                    if op1.contains("-") {//如果是负数
+                        let op1_positive = op1.replace("-", "");//转成正数
+                        match is_poweroftwo(&op1_positive) {//如果是2的幂次
                             Some(pow) => {
                                 asm.gen_instr(AsmInstrType::Slli, vec![res, op2, &pow.to_string()], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Sub, vec![res, "zero", res], None, vec![]);
 
                             },
                             None => {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op1));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op1], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Mul, vec![res, &li_dst, op2], Some(NORMAL_WIDTH), vec![]);
                             }
@@ -249,10 +224,9 @@ impl Instruction {
                         match is_poweroftwo(op1) {
                             Some(pow) => {
                                 asm.gen_instr(AsmInstrType::Slli, vec![res, op2, &pow.to_string()], None, vec![]);
-
                             },
                             None => {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op1));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op1], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Mul, vec![res, &li_dst, op2], Some(NORMAL_WIDTH), vec![]);
                             }
@@ -268,7 +242,7 @@ impl Instruction {
 
                             },
                             None => {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Mul, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
                             }
@@ -280,7 +254,7 @@ impl Instruction {
 
                             },
                             None => {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Mul, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
                             }
@@ -293,7 +267,7 @@ impl Instruction {
             Instruction::Sdiv(BinaryOp{res, op_type, op1, op2}) => {
                 asm.insert_label_type(res, &op_type.width);
                 if is_immediate(op1) {//第一个op是立即数，只能用除法
-                    let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op1));
+                    let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                     asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op1], None, vec![]);
                     asm.gen_instr(AsmInstrType::Div, vec![res, &li_dst, op2], Some(NORMAL_WIDTH), vec![]);
                     
@@ -302,7 +276,7 @@ impl Instruction {
                         let op2_positive = &op2[1..];//转成正数
                         match is_poweroftwo(op2_positive) {//如果是2的幂次
                             Some(pow) => {
-                                let temp_reg = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let temp_reg = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Srai, vec![&temp_reg, op1, "63"], None, vec![]);//算术右移，得到64个1或0
                                 asm.gen_instr(AsmInstrType::Srli, vec![&temp_reg, &temp_reg, &(64-pow).to_string()], None, vec![]);//逻辑右移，负数会得到pow个1，正数不变
                                 asm.gen_instr(AsmInstrType::Add, vec![op1, &temp_reg, op1], None, vec![]);
@@ -311,7 +285,7 @@ impl Instruction {
 
                             },
                             None => {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Div, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
                             }
@@ -319,7 +293,7 @@ impl Instruction {
                     } else { //就是正数
                         match is_poweroftwo(op2) {
                             Some(pow) => {
-                                let temp_reg = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let temp_reg = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Srai, vec![&temp_reg, op1, "63"], None, vec![]);//算术右移，得到64个1或0
                                 asm.gen_instr(AsmInstrType::Srli, vec![&temp_reg, &temp_reg, &(64-pow).to_string()], None, vec![]);//逻辑右移，负数会得到pow个1，正数不变
                                 asm.gen_instr(AsmInstrType::Add, vec![op1, &temp_reg, op1], None, vec![]);
@@ -327,7 +301,7 @@ impl Instruction {
 
                             },
                             None => {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec![&li_dst, op2], None, vec![]);
                                 asm.gen_instr(AsmInstrType::Div, vec![res, op1, &li_dst], Some(NORMAL_WIDTH), vec![]);
                             }
@@ -342,11 +316,11 @@ impl Instruction {
                 if is_immediate(op1) || is_immediate(op2) {
                     let li_dst: String;
                     if is_immediate(op1) {
-                        li_dst = pop_temp_label(select_cnt, asm, &imm_width(op1));
+                        li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
                         asm.gen_instr(AsmInstrType::Rem, vec!(res, &li_dst, op2), Some(NORMAL_WIDTH), vec!());
                     } else {
-                        li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                        li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                         asm.gen_instr(AsmInstrType::Rem, vec!(res, op1, &li_dst), Some(NORMAL_WIDTH), vec!());
                     }
@@ -363,7 +337,7 @@ impl Instruction {
                     "eq" => {
                         if op1 == "0" {
                             if op2_is_imm {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                                 asm.gen_instr(AsmInstrType::Seqz, vec!(res, &li_dst), None, vec!());
                             } else {
@@ -412,7 +386,7 @@ impl Instruction {
                     "ne" => {
                         if op1 == "0" {
                             if op2_is_imm {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                                 asm.gen_instr(AsmInstrType::Snez, vec!(res, &li_dst), None, vec!());
                             } else {
@@ -461,7 +435,7 @@ impl Instruction {
                     "slt" => {
                         if exist_imm {
                             if op1_is_imm {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op1));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
                                 asm.gen_instr(AsmInstrType::Slt, vec!(res, &li_dst, op1), None, vec!());
                             } else {
@@ -488,7 +462,7 @@ impl Instruction {
                                     asm.gen_instr(AsmInstrType::Slt, vec!(res, op2, &li_res), None, vec!());
                                 }
                             } else {
-                                let li_dst = pop_temp_label(select_cnt, asm, &imm_width(op2));
+                                let li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                                 asm.gen_instr(AsmInstrType::Sgt, vec!(res, op1, &li_dst), None, vec!());
                             }
@@ -499,16 +473,14 @@ impl Instruction {
                     "sle" => {
                         let op1_final: &str;
                         let op2_final: &str;
-                        let li_dst = gen_temp_label(select_cnt);
+                        let li_dst: String;
                         if exist_imm {
-                            incre_cnt(select_cnt);
+                            li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                             if op1_is_imm {
-                                asm.insert_label_type(&li_dst, &imm_width(op1));
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
                                 op1_final = &li_dst;
                                 op2_final = op2;
                             } else {
-                                asm.insert_label_type(&li_dst, &imm_width(op2));
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                                 op1_final = op1;
                                 op2_final = &li_dst;
@@ -524,16 +496,14 @@ impl Instruction {
                     "sge" => {
                         let op1_final: &str;
                         let op2_final: &str;
-                        let li_dst = gen_temp_label(select_cnt);
+                        let li_dst: String;
                         if exist_imm {
-                            incre_cnt(select_cnt);
+                            li_dst = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                             if op1_is_imm {
-                                asm.insert_label_type(&li_dst, &imm_width(op1));
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op1), None, vec!());
                                 op1_final = &li_dst;
                                 op2_final = op2;
                             } else {
-                                asm.insert_label_type(&li_dst, &imm_width(op2));
                                 asm.gen_instr(AsmInstrType::Li, vec!(&li_dst, op2), None, vec!());
                                 op1_final = op1;
                                 op2_final = &li_dst;
@@ -604,7 +574,7 @@ impl Instruction {
             },
             Instruction::Store{ty, value, ptr, len: _} => {
                 asm.insert_label_type(ptr, &SymbolWidth::I64);
-                let curr_func = asm.text.curr_func();
+                let curr_func = asm.text.funcs.last_mut().unwrap();
                 // 如果value为函数参数
                 if let Some(idx) = curr_func.params.get(value) { 
                     let idx = *idx;
@@ -649,7 +619,7 @@ impl Instruction {
                     if ty.width == SymbolWidth::Float {
                         final_value = Self::load_float_imm(asm, select_cnt, value);
                     } else {
-                        final_value = pop_temp_label(select_cnt, asm, &imm_width(value));
+                        final_value = pop_temp_label(select_cnt, asm, &SymbolWidth::I32);
                         asm.gen_instr(AsmInstrType::Li, vec!(&final_value, value), None, vec!());
                     }
                 } else {
@@ -661,7 +631,7 @@ impl Instruction {
                     _ => ""
                 };
 
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 let pure_ptr = &ptr[1..];
                 //如果是llvm的临时标号，其实就是store分配出来的那些临时标号，比如%c_0，直接store即可。
                 if is_num_label(&ptr) {
@@ -702,7 +672,7 @@ impl Instruction {
 
                 
                 let load_res = pop_temp_label(select_cnt, asm, &ty.width);
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 let pure_ptr = &ptr[1..];
                 //和store指令的步骤一样
                 if is_num_label(ptr) {
@@ -718,19 +688,14 @@ impl Instruction {
                     asm.gen_instr(AsmInstrType::La, vec!(&load_addr, pure_ptr), None, vec!());
                     asm.gen_instr(AsmInstrType::Load, vec!(&load_res, &load_addr, "0", prefix), width_num, vec!());
                 }
-                //如果是整数需要来一个符号扩展
-                if width_num == Some(NORMAL_WIDTH) && prefix == "" {
-                    asm.gen_instr(AsmInstrType::Sextw, vec!(res, &load_res), None, vec!());
+                if prefix == FLOAT_PREFIX {
+                //是float，用fmv
+                    asm.gen_instr(AsmInstrType::Fmv, vec!(res, &load_res), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
                 } else {
-                    //
-                    if prefix == FLOAT_PREFIX {
-                    //是float，用fmv
-                        asm.gen_instr(AsmInstrType::Fmv, vec!(res, &load_res), None, vec!(SymbolWidth::Float, SymbolWidth::Float));
-                    } else {
-                    //是64位指针，使用mov指令
-                        asm.gen_instr(AsmInstrType::Mv, vec!(res, &load_res), None, vec!());
-                    }
+                //是64位指针或者32位整数，使用mov指令
+                    asm.gen_instr(AsmInstrType::Mv, vec!(res, &load_res), None, vec!());
                 }
+                
             },
             Instruction::Ret(ret_type, ret_val) => {
                  if let Some(ret_val) = ret_val {
@@ -768,7 +733,7 @@ impl Instruction {
             },
             Instruction::BitCast(res, _, ptr, _) => {
                 asm.insert_label_type(res, &SymbolWidth::I64);
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 if inside_stack { // 在栈内
                     let ptr_pos = format!("#{}", ptr);
                     asm.gen_instr(AsmInstrType::Addi, vec!(res, "sp", &ptr_pos), None, vec!());
@@ -784,7 +749,7 @@ impl Instruction {
                 //把dst和I64类型做map映射
                 asm.insert_label_type(dst, &SymbolWidth::I64);
 
-                let inside_stack = asm.text.curr_func().stack.pushed.contains(ptr);
+                let inside_stack = asm.text.funcs.last_mut().unwrap().stack.pushed.contains(ptr);
                 let start_addr: String;
 
                 //接下来的一个大if，目的是设置开始的地址
