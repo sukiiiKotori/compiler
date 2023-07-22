@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::structures::riscv_regs::*;
 
 // 寄存器类型
@@ -9,11 +8,6 @@ pub enum RegType {
     SavedInt,
     TempFloat,
     SavedFloat,
-}
-
-// 是否为float寄存器
-pub fn type_is_float(phy: &str) -> bool {
-    &phy[0..1] == FLOAT_PREFIX
 }
 
 // 获取被保护寄存器

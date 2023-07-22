@@ -1,6 +1,5 @@
 use std::collections::{HashSet, HashMap};
-use crate::riscv_gen::asm_select::FLOAT_PREFIX;
-use crate::riscv_gen::register_type::{RegType, get_preserved_regs, type_is_float};
+use crate::riscv_gen::register_type::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::SymbolWidth;
 use crate::structures::riscv_struct::PTR_WIDTH;
@@ -42,20 +41,22 @@ impl AsmFunc {
                 });
                 //若是输入，则溢出到栈里后调用store指令，
                 if let Some((virt, phy)) = output_map {
-                    let mut prefix = "";
-                    if type_is_float(phy) {
-                        prefix = FLOAT_PREFIX;
-                    }
+                    let prefix = if phy.contains("f") {
+                        "f"
+                    } else {
+                        ""
+                    };
                     let spilled_mark = format!("spilled.{}", virt);
                     self.stack.push_normal(spilled_mark.as_str(), 8);
                     block.instrs.insert(cnt+1, AsmInstr::make_instr(AsmInstrType::Store, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
                 }
                 //若是输出，则溢出到栈里调用load
                 for (virt, phy) in inputs_map.into_iter() {
-                    let mut prefix = "";
-                    if type_is_float(phy) {
-                        prefix = FLOAT_PREFIX;
-                    }
+                    let prefix = if phy.contains("f") {
+                        "f"
+                    } else {
+                        ""
+                    };
                     let spilled_mark = format!("spilled.{}", virt);
                     self.stack.push_normal(spilled_mark.as_str(), 8);
                     block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Load, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
