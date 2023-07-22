@@ -107,7 +107,7 @@ impl AsmInstr {
                 AsmInstr::Call(
                     String::from(str_vec[0]),
                     String::from(str_vec[1]),
-                    str_vec.iter().skip(2).map(|s| s.to_string()).collect(),
+                    str_vec.into_iter().skip(2).map(|s| s.to_string()).collect(),
                     ty_vec
                 )
             },
