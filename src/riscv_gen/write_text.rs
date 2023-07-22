@@ -115,10 +115,6 @@ impl AsmInstr {
                 }
                 bin.writetext(output);
             },
-            AsmInstr::Sextw(bin) => {
-                write!(output, "\tsext.w\t").unwrap();
-                bin.writetext(output);
-            },
             AsmInstr::Addi(tri) => {
                 write!(output, "\taddi\t").unwrap();
                 tri.writetext(output);

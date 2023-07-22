@@ -89,7 +89,7 @@ impl AsmInstr {
     pub fn rewrite(&mut self, filter_type: impl Fn(AsmInstrType) -> bool, mut map_labels: impl FnMut(Option<&mut String>, Vec<&mut String>)) {
         let ty = self.fetch_type();
         match self {
-            AsmInstr::Fmv(bin, _, _) | AsmInstr::Fcvt(bin, _, _) | AsmInstr::Sextw(bin) |
+            AsmInstr::Fmv(bin, _, _) | AsmInstr::Fcvt(bin, _, _) | 
             AsmInstr::Li(bin) | AsmInstr::La(bin) | AsmInstr::Mv(bin) | AsmInstr::Seqz(bin) | AsmInstr::Snez(bin) => {
                 match bin {
                     BinInstr{dst, src} => {
