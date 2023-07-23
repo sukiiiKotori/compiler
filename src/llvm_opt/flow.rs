@@ -103,31 +103,14 @@ impl FuncDef {
     pub fn make_blocks(&self) -> Vec<&Block> {
         self.blocks.iter().collect()
     }
-
-    #[allow(unused)]
-    pub fn make_func_instrs(&self) -> Vec<&Instruction> {
-        self.blocks
-            .iter()
-            .map(|b| b.make_block_instrs())
-            .flatten()
-            .collect()
-    }
 }
 
 impl Block {
     pub fn make_block_instrs(&self) -> Vec<&Instruction> {
         let mut res = vec![];
-        for p in self.phi_ins.iter() {
-            res.push(p);
-        }
-
-        for i in self.nor_ins.iter() {
-            res.push(i);
-        }
-
-        if let Some(t) = &self.ter_ins {
-            res.push(t);
-        }
+        self.phi_ins.iter().for_each(|phi| res.push(phi));
+        self.nor_ins.iter().for_each(|normal| res.push(normal));
+        res.extend(&self.ter_ins);
         res
     }
 }

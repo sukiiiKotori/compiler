@@ -23,11 +23,13 @@ pub fn build_map(items: Vec<&impl FlowItem>) -> (HashMap<String, HashSet<String>
 
 /// 根据映射关系计算活跃的标识
 pub fn calc_active(succs: &HashMap<String, HashSet<String>>,mut preds: HashMap<String, HashSet<String>>) -> HashSet<String> {
-    let mut deque: VecDeque<String> = preds
-        .iter()
-        .filter(|(_, v)| v.is_empty())
-        .map(|(k, _)| k.clone())
-        .collect();
+    let mut deque: VecDeque<String> = preds.iter().filter_map(|(k, v)| {
+        if v.is_empty() {
+            Some(k.to_string())
+        } else {
+            None
+        }
+    }).collect();
     let mut traversed: HashSet<String> = deque.iter().cloned().collect();
     while let Some(this_label) = deque.pop_front() {
         if let Some(succ_set) = succs.get(&this_label) {
@@ -42,8 +44,11 @@ pub fn calc_active(succs: &HashMap<String, HashSet<String>>,mut preds: HashMap<S
             });
         }
     }
-    preds.into_iter()
-        .filter(|(_, v)| !v.is_empty())
-        .map(|(k, _)| k)
-        .collect()
+    preds.iter().filter_map(|(k, v)| {
+        if v.is_empty() {
+            None
+        } else {
+            Some(k.to_string())
+        }
+    }).collect()
 }
