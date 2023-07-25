@@ -22,57 +22,12 @@ impl LLVMProgram {
 
 impl FuncDef {
     pub fn asm_select(&self, asm: &mut RiscV) {
-        asm.push_func(&self.func_name[1..], self.func_type.width.clone());
-        let curr_func = asm.text.funcs.last_mut().unwrap();
-        let stack = &mut curr_func.stack;
-        let label_type = &mut curr_func.label_type;
         let mut select_cnt = 0;
-        //局部变量全都存入栈中
-        self.local_vars.iter().for_each(|local_var|{
-           match &local_var.ins {
-               Instruction::Alloca{res, ty, len: _} => {
-                   label_type.insert(res.to_string(), ty.width.clone());
-                   if let SymbolWidth::Arr{tar, dims} = &ty.width {
-                       //如果是指针，把长度设为8
-                       if dims[0] == -1 {
-                           stack.push_normal(res, 8);
-                       } else {
-                           let len = tar.get_width() * (dims.iter().fold(1, |acc, x| acc * x) as usize);
-                           stack.push_normal(res, len as isize);
-                       }
-                   } else {
-                       stack.push_normal(res, ty.get_width() as isize);
-                   }
-               },
-               _ => {},
-           }
-        });
-
-        let mut int_cnt = 0;
-        let mut float_cnt = 0;
-        self.params.iter().for_each(|param| {
-            //浮点
-            if param.param_type.width == SymbolWidth::Float {
-                if float_cnt >= 8 {
-                    stack.push_param(&param.param_name, 4);
-                }
-                curr_func.params.insert(String::from(&param.param_name), float_cnt);
-                float_cnt += 1;
-            } else {
-                //i32或者指针
-                if int_cnt >= 8 {
-                    stack.push_param(&param.param_name, param.param_type.get_width() as isize);
-                }
-                curr_func.params.insert(String::from(&param.param_name), int_cnt);
-                int_cnt += 1;
-            }
-        });
-
-        self.blocks.iter().enumerate().for_each(|(idx, b)| {
+        self.blocks.iter().enumerate().for_each(|(idx, block)| {
             if idx < self.blocks.len() - 1 {
-                b.select_asm(asm, Some(&self.blocks[idx+1].block_label), &self.func_name[1..], &mut select_cnt);
+                block.select_asm(asm, Some(&self.blocks[idx+1].block_label), &self.func_name.replace("@", ""), &mut select_cnt);
             } else {
-                b.select_asm(asm, None, &self.func_name[1..], &mut select_cnt);
+                block.select_asm(asm, None, &self.func_name.replace("@", ""), &mut select_cnt);
             }
         });
     }
