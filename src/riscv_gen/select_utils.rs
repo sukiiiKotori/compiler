@@ -3,10 +3,6 @@ use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
 
 impl RiscV {
-    /// 向text段的函数列表中添加一个新的函数,使用给定的函数标签和函数类型
-    pub fn push_func(&mut self, func_label: &str, func_type: SymbolWidth) {
-        self.text.funcs.push(AsmFunc::new(func_label, func_type));
-    }
     /// 向代码块列表中添加一个新的代码块，使用给定的代码块标签和深度
     pub fn push_block(&mut self, block_label: &str, depth: usize) {
         let curr_func = self.text.funcs.last_mut().unwrap();

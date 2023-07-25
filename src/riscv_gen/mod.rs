@@ -8,6 +8,7 @@ pub mod write_text;
 pub mod asmfunc_stack;
 pub mod push_arguments;
 pub mod push_datasection;
+pub mod push_asmfunc;
 pub mod push_localvars;
 pub mod save_registers;
 pub mod restore_registers;
@@ -22,8 +23,7 @@ use crate::structures::riscv_struct::*;
 pub fn generate_asm(program: &LLVMProgram) -> RiscV {
     let mut asm = RiscV::new();
     program.push_datasection(&mut asm);
-    program.push_localvars(&mut asm);
-    program.push_arguments(&mut asm);
+    program.push_textsection(&mut asm);
     program.asm_select(&mut asm);
     asm.alloc_regs::<LinearScan>();
     asm.save_registers();
@@ -32,4 +32,12 @@ pub fn generate_asm(program: &LLVMProgram) -> RiscV {
     asm.stack_alloc_free();
     asm.map_stack_address();
     asm
+}
+
+impl LLVMProgram {
+    fn push_textsection(&self, asm: &mut RiscV) {
+        self.push_asmfunc(asm);
+        self.push_localvars(asm);
+        self.push_arguments(asm);
+    }
 }

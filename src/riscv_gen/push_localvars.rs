@@ -10,7 +10,6 @@ impl LLVMProgram {
 
 impl FuncDef {
     pub fn push_localvars(&self, asm: &mut RiscV) {
-        asm.push_func(&self.func_name[1..], self.func_type.width.clone());
         let curr_func = asm.text.funcs.last_mut().unwrap();
         let stack = &mut curr_func.stack;
         let label_type = &mut curr_func.label_type;
