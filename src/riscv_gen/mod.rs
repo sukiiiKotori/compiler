@@ -27,7 +27,7 @@ pub fn generate_asm(program: &LLVMProgram) -> RiscV {
     program.push_textsection(&mut asm);
     program.asm_select(&mut asm);
     //进行寄存器分配
-    asm.alloc_regs::<LinearScan>();
+    asm.alloc_regs();
     //在函数的入口保存使用过的s0-s11寄存器
     asm.save_registers();
     //在函数出口恢复使用过的s0-s11寄存器

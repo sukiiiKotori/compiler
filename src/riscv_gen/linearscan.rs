@@ -4,7 +4,6 @@ use crate::structures::riscv_struct::*;
 use crate::structures::riscv_regs::*;
 use crate::structures::symbol::SymbolWidth;
 use crate::riscv_gen::register_resource::*;
-use crate::riscv_gen::register_alloc::*;
 use crate::riscv_gen::register_type::*;
 
 // 块活跃性信息
@@ -452,8 +451,8 @@ impl LinearScan {
     }
 }
 
-impl RegisterAllocator for LinearScan {
-    fn new() -> Self {
+impl LinearScan {
+    pub fn new() -> Self {
         LinearScan {
             var_interval: vec!(), 
             reg_res: RegisterResource::new(), 
@@ -464,7 +463,7 @@ impl RegisterAllocator for LinearScan {
     }
     
     // 分配寄存器
-    fn alloc_regs(&mut self, func: &mut AsmFunc) {
+    pub fn alloc_regs(&mut self, func: &mut AsmFunc) {
         // 创建活跃区间
         let mut liveinterval = LiveInterval::new(func);
 
@@ -525,11 +524,11 @@ impl RegisterAllocator for LinearScan {
         }
     }
 
-    fn get_alloc_res(&self) -> &HashMap<String, &'static str> {
+    pub fn get_alloc_res(&self) -> &HashMap<String, &'static str> {
         &self.inactivemap
     }
 
-    fn get_spilled(&self) -> &HashSet<String> {
+    pub fn get_spilled(&self) -> &HashSet<String> {
         &self.spilled
     }
 }
