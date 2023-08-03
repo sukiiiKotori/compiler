@@ -6,7 +6,7 @@ use crate::structures::symbol::SymbolWidth;
 use crate::riscv_gen::register_resource::*;
 use crate::riscv_gen::register_type::*;
 
-// 块活跃性信息
+// 块的活跃变量信息
 #[derive(Eq, PartialEq, Clone, Debug)]
 struct BlockLiveInfo<'asm>{
     pub live_gen: BTreeSet<&'asm str>,      // 生成的活跃变量
@@ -28,7 +28,7 @@ pub struct Interval {
     pub intervals: Vec<IntervalRange>,
 }
 
-// 
+// 块的活跃性信息
 pub struct LiveInterval<'asm> {
     target: &'asm AsmFunc,                  // 目标
     block_idx: BTreeMap<&'asm str, usize>,  // 根据基本块标号查询其在blocks的序号   id -> number
