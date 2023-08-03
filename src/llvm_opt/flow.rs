@@ -27,78 +27,48 @@ impl FlowItem for CastOp {
 /// 反映的是自身对关联标识的使用情况
 impl FlowItem for Instruction {
     fn flow_info(&self) -> (Option<&str>, Vec<&str>) {
-        match &self {
-            // res使用candidates的值
-            Instruction::Add(bin_op) => bin_op.flow_info(),
-            Instruction::Sub(bin_op) => bin_op.flow_info(),
-            Instruction::Mul(bin_op) => bin_op.flow_info(),
-            Instruction::Sdiv(bin_op) => bin_op.flow_info(),
-            Instruction::Srem(bin_op) => bin_op.flow_info(),
-            Instruction::Fadd(bin_op) => bin_op.flow_info(),
-            Instruction::Fsub(bin_op) => bin_op.flow_info(),
-            Instruction::Fmul(bin_op) => bin_op.flow_info(),
-            Instruction::Fdiv(bin_op) => bin_op.flow_info(),
-            Instruction::Cmp(_, bin_op) => bin_op.flow_info(),
-            Instruction::Fcmp(_, bin_op) => bin_op.flow_info(),
-            Instruction::ZeroExt(conver_op) => conver_op.flow_info(),
-            Instruction::I32ToFloat(conver_op) => conver_op.flow_info(),
-            Instruction::FloatToI32(conver_op) => conver_op.flow_info(),
+        match self {
+            Instruction::Add(bin_op)
+            | Instruction::Sub(bin_op)
+            | Instruction::Mul(bin_op)
+            | Instruction::Sdiv(bin_op)
+            | Instruction::Srem(bin_op)
+            | Instruction::Fadd(bin_op)
+            | Instruction::Fsub(bin_op)
+            | Instruction::Fmul(bin_op)
+            | Instruction::Fdiv(bin_op)
+            |Instruction::Cmp(_, bin_op)
+            | Instruction::Fcmp(_, bin_op) => bin_op.flow_info(),
+            Instruction::ZeroExt(castop)
+            | Instruction::I32ToFloat(castop)
+            | Instruction::FloatToI32(castop) => castop.flow_info(),
             Instruction::Phi(res, _, candidates) => {
                 let src: Vec<&str> = candidates.iter().map(|x| x.0.as_str()).collect();
                 (Some(res.as_str()), src)
             }
-            // Alloca不使用其他值，只有被其他值使用
-            Instruction::Alloca {
-                res,
-                ty: _,
-                len: _
-            } => (Some(res.as_str()), vec![]),
-            // 将ptr分为全局和局部处理
-            // 全局ptr始终保持活跃，因此Store不应当剔除
-            // 对于局部ptr，value存到ptr中，也就是ptr使用了value
-            Instruction::Store {
-                ty: _,
-                value,
-                ptr,
-                len: _,
-            } => {
+            Instruction::Alloca { res, .. } => (Some(res.as_str()), vec![]),
+            Instruction::Store { value, ptr, .. } => {
                 if ptr.contains("@") {
                     (None, vec![value.as_str(), ptr.as_str()])
                 } else {
                     (Some(ptr.as_str()), vec![value.as_str()])
                 }
             }
-            // result使用了ptr的值
-            Instruction::Load {
-                res,
-                ty: _,
-                ptr,
-                len: _,
-            } => (Some(res.as_str()), vec![ptr.as_str()]),
-            // Call必被执行，因此自身为None，使用params中的值
+            Instruction::Load { res, ptr, .. } => (Some(res.as_str()), vec![ptr.as_str()]),
             Instruction::Call(_, _, _, params) => {
                 let src: Vec<&str> = params.iter().map(|x| x.0.as_str()).collect();
                 (None, src)
             }
-            // 由于指针所指的值可能被其他标号指向
-            // 因此必须保证GetElemPtr及其下游标号活跃
-            // 因此自身为None，使用dst,ptr和idx的值
             Instruction::GetElemPtr(dst, _, ptr, idx) => {
-                let mut src = vec![dst.as_str()];
-                src.push(ptr.as_str());
-                let mut idx_src: Vec<&str> = idx.iter().map(|x| x.as_str()).collect();
-                src.append(&mut idx_src);
+                let mut src = vec![dst.as_str(), ptr.as_str()];
+                let idx_src: Vec<&str> = idx.iter().map(|x| x.as_str()).collect();
+                src.extend(idx_src);
                 (None, src)
             }
-            // res使用val的值
             Instruction::BitCast(res, _, val, _) => (Some(res.as_str()), vec![val.as_str()]),
             Instruction::Comment(_) => (None, vec![]),
-            // 终结符必被执行，使用所有值
             Instruction::Ret(_, val) => {
-                let mut src: Vec<&str> = vec![];
-                if let Some(v) = val {
-                    src.push(v.as_str());
-                }
+                let src: Vec<&str> = val.iter().map(|v| v.as_str()).collect();
                 (None, src)
             }
             Instruction::Br(cond, _, _) => {
@@ -112,14 +82,6 @@ impl FlowItem for Instruction {
     }
 }
 
-/// 处理基本块，取出基本块标号，并根据TerInstr类型取出关联标识
-/// 1. 首先判断基本块的最后一条指令是否为跳转指令，通过匹配模式来判断。
-/// 2. 如果是跳转指令，则创建一个空的字符串向量src。
-/// 3. 将第一个目标标签（label1）加入到src中。
-/// 4. 如果跳转指令有第二个目标标签（label2），则将label2的值加入到src中。
-/// 5. 使用迭代器过滤掉src中与当前基本块标号相同的标签，并将结果保存到src中。
-/// 6. 返回当前基本块标号作为流出的标识，以及src作为流出的标签向量。
-/// 7. 如果最后一条指令不是跳转指令，则直接返回当前基本块标号作为流出的标识，以及一个空的标签向量。
 impl FlowItem for Block {
     fn flow_info(&self) -> (Option<&str>, Vec<&str>) {
         if let Some(Instruction::Br(_, label1, label2)) = &self.ter_ins {
@@ -141,31 +103,14 @@ impl FuncDef {
     pub fn make_blocks(&self) -> Vec<&Block> {
         self.blocks.iter().collect()
     }
-
-    #[allow(unused)]
-    pub fn make_func_instrs(&self) -> Vec<&Instruction> {
-        self.blocks
-            .iter()
-            .map(|b| b.make_block_instrs())
-            .flatten()
-            .collect()
-    }
 }
 
 impl Block {
     pub fn make_block_instrs(&self) -> Vec<&Instruction> {
         let mut res = vec![];
-        for p in self.phi_ins.iter() {
-            res.push(p);
-        }
-
-        for i in self.nor_ins.iter() {
-            res.push(i);
-        }
-
-        if let Some(t) = &self.ter_ins {
-            res.push(t);
-        }
+        self.phi_ins.iter().for_each(|phi| res.push(phi));
+        self.nor_ins.iter().for_each(|normal| res.push(normal));
+        res.extend(&self.ter_ins);
         res
     }
 }

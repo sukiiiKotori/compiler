@@ -38,7 +38,7 @@ impl GlobalVar {
             if vals.is_empty() || GlobalVar::all_is_zero(vals, start, end) {
                 write!(output, " zeroinitializer").unwrap();
             } else {
-                write!(output, "[").unwrap();
+                write!(output, " [").unwrap();
                 for cnt in 0..dims[pos.len()] {
                     if cnt != 0 {
                         write!(output, ", ").unwrap();

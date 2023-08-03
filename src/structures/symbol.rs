@@ -40,7 +40,7 @@ pub enum SymbolVal {
 
 // 符号类型方法
 impl SymbolType {
-    pub fn new(width: SymbolWidth, is_const: bool) -> Self{
+    pub fn new(width: SymbolWidth, is_const: bool) -> Self {
         SymbolType {
             width,
             is_const,
@@ -117,7 +117,7 @@ impl SymbolWidth {
 }
 
 // 生成类型值
-pub fn make_symbol_val(s_type: &SymbolType, val: &String) -> SymbolVal {
+pub fn make_symbol_val(s_type: &SymbolType, val: &str) -> SymbolVal {
     match s_type.width {
         SymbolWidth::I32 => SymbolVal::I32(val.to_string()),
         SymbolWidth::Float => SymbolVal::Float(val.to_string()),
@@ -135,7 +135,7 @@ pub fn get_symbol_val(s_val: &SymbolVal) -> String {
 }
 
 /// 根据符号的类型，检查值val是否为零
-pub fn num_is_zero(ty: &SymbolType, val: &String) -> bool {
+pub fn num_is_zero(ty: &SymbolType, val: &str) -> bool {
     match ty.width {
         SymbolWidth::Bool => {
             let num: i32 = val.parse().unwrap();

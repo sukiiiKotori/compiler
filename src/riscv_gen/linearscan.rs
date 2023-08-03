@@ -2,7 +2,10 @@ use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use crate::structures::riscv_struct::*;
 use crate::structures::riscv_regs::*;
-use crate::riscv_gen::reg::*;
+use crate::structures::symbol::SymbolWidth;
+use crate::riscv_gen::register_resource::*;
+use crate::riscv_gen::register_alloc::*;
+use crate::riscv_gen::register_type::*;
 
 // 块的活跃变量信息
 #[derive(Eq, PartialEq, Clone, Debug)]
@@ -87,6 +90,29 @@ impl AsmFunc {
         for (idx, depth_first_order, _) in self.call_info.iter_mut() {
             *depth_first_order = Some(*old2new.get(idx).unwrap())
         }
+    }
+
+    // 在给定的寄存器活跃期内，是否调用了其他函数(表明该寄存器是需要保存的)
+    pub fn is_reg_saved(&mut self, interval: &Interval, vir: &str) -> bool {
+        let mut res = false;
+        for (_, depth_first_pos, cross_virs) in self.call_info.iter_mut() {
+            let cross = interval.intervals.iter().any(|range| range.left < *depth_first_pos.as_ref().unwrap() && range.right > *depth_first_pos.as_ref().unwrap());
+            if cross {
+                res = true;
+                cross_virs.insert(String::from(vir));
+            }
+        }
+        res
+    }
+
+    // 判断变量是否为float
+    pub fn is_reg_float(&self, label: &str) -> bool {
+        *self.label_type.get(label).expect(&format!("Type of {} havent added", label)) == SymbolWidth::Float
+    }
+
+    // 表明使用了被保存寄存器
+    pub fn used_saved(&mut self, phy: &'static str) {
+        self.used_saved.insert(phy);
     }
 }
 
@@ -363,7 +389,7 @@ impl LinearScan {
     // 加载空闲寄存器，调用寄存器模块方法，并排除不可用的寄存器
     fn load_free_regs(&mut self) {
         self.reg_res.load_free_regs();
-        self.reg_res.evict_regs(|reg| PRESERVED_SET.contains(reg) || FLOAT_PRESERVED_SET.contains(reg));
+        self.reg_res.remove_regs(|reg| PRESERVED_SET.contains(reg) || FLOAT_PRESERVED_SET.contains(reg));
     }
 
     // 将当前活跃节点中已经处于非活跃状态的节点更改为非活跃节点
@@ -388,19 +414,14 @@ impl LinearScan {
                 func.used_saved(phy);
             }
             // 释放物理寄存器资源
-            self.reg_res.push_register(phy);
+            self.reg_res.free_register(phy);
             // 添加到非活跃节点映射表
             self.inactivemap.insert(vir, phy);
         }
     }
 
-    fn reg_filter(reg: &str, ty: &RegType) -> bool {
-        match ty {
-            RegType::TempInt => &reg[0..1] != "f",
-            RegType::TempFloat => &reg[0..1] == "f",
-            RegType::SavedInt => SAVED_SET.contains(reg),
-            RegType::SavedFloat => FLOAT_SAVED_SET.contains(reg),
-        }
+    fn regtype_filter(reg: &str, ty: &RegType) -> bool {
+        ty.regtype_filter(reg)
     }
 
     // 溢出某个虚拟寄存器(vir)到内存，腾出寄存器空间
@@ -409,7 +430,7 @@ impl LinearScan {
     fn spill_var_reg(&mut self, spilled_vir: String, interval: Interval, regty: RegType) {
         // 找到满足条件的节点中，活跃区间最大的节点
         if let Some((max_idx, max_interval)) = self.activenodes.iter().enumerate().filter(
-            |(_, node)| Self::reg_filter(node.phy.as_ref().unwrap(), &regty)
+            |(_, node)| Self::regtype_filter(node.phy.as_ref().unwrap(), &regty)
         ).max_by(
             |(_, node0), (_, node1)| node0.cmp(node1)
         ).map(
@@ -479,10 +500,14 @@ impl RegisterAllocator for LinearScan {
 
             // 尝试分配一个新的物理寄存器，如果成功分配到新的物理寄存器，将虚拟寄存器、活跃区间和物理寄存器组成一个新的活跃节点
             // 如果无法分配到新的物理寄存器，则进行溢出
-            let regty = RegType::classify_label(
-                func.is_float(vir.as_str()), func.interval_cross_call(&interval, vir.as_str())
+
+            // 获取寄存器类型(TempInt,SavedInt,TempFloat,SavedFloat)
+            let regty = RegType::get_regtype(
+                func.is_reg_float(vir.as_str()),
+                // 根据活跃间隔判断该寄存器是否是需要保存的
+                func.is_reg_saved(&interval, vir.as_str())
             );
-            let reg = self.reg_res.pop_register(&regty, |reg| Self::reg_filter(reg, &regty));
+            let reg = self.reg_res.get_register(&regty, |reg| Self::regtype_filter(reg, &regty));
             if let Some(phy) = reg {
                 self.activenodes.push(ActiveNode::new(vir, interval, phy));
             } else {

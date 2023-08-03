@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use crate::utils::check::*;
 
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 /// 在栈上为变量分配的内存空间<br>
 /// 栈是一种特定的数据结构，用于存储函数参数和局部变量
 pub struct StackSlot {

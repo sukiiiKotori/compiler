@@ -102,7 +102,7 @@ impl Scopes {
         });
     }
 
-    pub fn enter_while_scope(&mut self, entry: &String, end: &String) {
+    pub fn enter_while_scope(&mut self, entry: &str, end: &str) {
         // 进入While循环作用域
         // 在作用域堆栈中推入一个新的While循环作用域，并指定循环入口和循环结束标签
         self.scope_vec.push(Scope {

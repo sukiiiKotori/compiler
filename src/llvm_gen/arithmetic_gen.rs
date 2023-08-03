@@ -1,16 +1,15 @@
-use std::error::Error;
 use std::convert::From;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
 use crate::structures::scopes::*;
 use crate::llvm_gen::sysy_gen::*;
-use crate::llvm_gen::symbol::*;
+use crate::llvm_gen::type_utils::*;
 use crate::utils::check::*;
 use crate::utils::float::*;
 
 /// 完成优化：常量折叠
-fn arithetic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
+fn arithetic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> (SymbolType, String) {
     if all_is_int(ty1, ty2) {
         //操作数均为i32，无需进行类型提升。
         let num1 = op1.parse::<i32>().unwrap();
@@ -24,7 +23,7 @@ fn arithetic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, o
             _ => panic!("Don't support!"),
         };
         //均为i32，无需隐式类型转换，任选一个的类型传入即可
-        Ok((SymbolType::new(ty1.width.clone(), true), res.to_string()))  
+        (SymbolType::new(ty1.width.clone(), true), res.to_string())  
     } else {
         //parse_float函数可以同时解析i32和f32，并且把类型全都提升为f32。
         //若想获取原始数据类型，直接判断`width`即可。
@@ -40,9 +39,9 @@ fn arithetic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, o
         };
         //实现：隐式类型转换——类型提升。提升顺序：int->float
         if ty1.width > ty2.width {
-            Ok((SymbolType::new(ty1.width.clone(), true), format_double(res as f32)))
+            (SymbolType::new(ty1.width.clone(), true), format_double(res as f32))
         } else {
-            Ok((SymbolType::new(ty2.width.clone(), true), format_double(res as f32)))
+            (SymbolType::new(ty2.width.clone(), true), format_double(res as f32))
         }
     }
 }
@@ -52,16 +51,10 @@ fn arithetic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, o
 impl Generate for Number {
     type Out = (SymbolType, String);
 
-    fn generate(&self, _program: &mut LLVMProgram, _scopes: &mut Scopes, _labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, _program: &mut LLVMProgram, _scopes: &mut Scopes, _labels: &mut Labels) -> Self::Out {
         match self {
-            Number::Int(num) => Ok(
-                (SymbolType::new(SymbolWidth::I32, true), 
-                num.to_string())
-            ),
-            Number::Float(num) => Ok(
-                (SymbolType::new(SymbolWidth::Float, true), 
-                format_double(parse_float(num)))
-            ),
+            Number::Int(num) => (SymbolType::new(SymbolWidth::I32, true), num.to_string()),
+            Number::Float(num) => (SymbolType::new(SymbolWidth::Float, true), format_double(parse_float(num))),
         }
     }
 }
@@ -110,15 +103,14 @@ impl LVal {
 impl Generate for LVal {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         let val = scopes.get(self.id.as_str()).expect(&format!("Undefined {}", self.id)).clone();
         if val.sym_type.is_const {
-            let fetch_val = get_symbol_val(&val.sym_val);
-            Ok((val.sym_type.clone(), fetch_val))
+            (val.sym_type.clone(), get_symbol_val(&val.sym_val))
         } else {
             match &val.sym_type.width {
-                SymbolWidth::I32 => Ok((val.sym_type.clone(), val.label.clone())),
-                SymbolWidth::Float => Ok((val.sym_type.clone(), val.label.clone())),
+                SymbolWidth::I32 => (val.sym_type.clone(), val.label.clone()),
+                SymbolWidth::Float => (val.sym_type.clone(), val.label.clone()),
                 SymbolWidth::Arr{tar, dims} => {
                     let zero = String::from("0");
                     let mut last_ptr = val.label.clone();
@@ -145,7 +137,7 @@ impl Generate for LVal {
                         }
                         let left_dims = LVal::get_left_dims(&dims, 1);
                         let left_arr = SymbolType::new(SymbolWidth::Arr{tar: tar.clone(), dims: left_dims.clone()}, true);
-                        return Ok((left_arr, last_ptr))
+                        return (left_arr, last_ptr)
                     }
 
                     for cnt in 0..self.idx.len() {
@@ -172,7 +164,7 @@ impl Generate for LVal {
                             idx.push(zero.clone());
                         }
                         if !self.idx.is_empty() {
-                            let (exp_ty, exp_val) = self.idx[cnt].generate(program, scopes, labels)?;
+                            let (exp_ty, exp_val) = self.idx[cnt].generate(program, scopes, labels);
                             let dst_ty = SymbolType::new(SymbolWidth::I32, false);
                             let this_idx = type_conver(program, labels, exp_val, &exp_ty, &dst_ty);
                             idx.push(this_idx);
@@ -186,11 +178,11 @@ impl Generate for LVal {
                         let idx = vec!(zero.clone(), zero.clone());
                         last_ptr = LVal::gen_getelemptr(program, labels, idx, self.idx.len(), &tar, &dims, last_ptr);
                         let left_arr = SymbolType::new(SymbolWidth::Arr{tar: tar.clone(), dims: left_dims},false);
-                        Ok((left_arr, last_ptr))
+                        (left_arr, last_ptr)
                     } else {
                         let mut new_ty = *tar.clone();
                         new_ty.is_const = false;
-                        Ok((new_ty, last_ptr))
+                        (new_ty, last_ptr)
                     }
                 },
                 _ => panic!("Should not appear"),
@@ -204,12 +196,12 @@ impl Generate for LVal {
 impl Generate for PrimaryExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         match self {
             PrimaryExp::Exp(exp) => exp.generate(program, scopes, labels),
             PrimaryExp::Number(num) => num.generate(program, scopes, labels),
             PrimaryExp::LVal(val) => {
-                let (sym_type, val) = val.generate(program, scopes, labels)?;
+                let (sym_type, val) = val.generate(program, scopes, labels);
                 let flag: bool;
                 if let SymbolWidth::Arr{tar: _, dims: _} = sym_type.width {
                     flag = false;
@@ -225,9 +217,9 @@ impl Generate for PrimaryExp {
                     let type_vec = vec!(&sym_type);
                     let str_vec = vec!(res.as_str(), val.as_str(), len.as_str());
                     program.push_instr(InstructionType::Load, str_vec, type_vec);
-                    Ok((sym_type, res))
+                    (sym_type, res)
                 } else {
-                    Ok((sym_type, val))
+                    (sym_type, val)
                 }
             }
         }
@@ -243,12 +235,12 @@ impl Generate for PrimaryExp {
 impl Generate for UnaryExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         match self {
             UnaryExp::PrimExp(prim_exp) => prim_exp.generate(program, scopes, labels),
             UnaryExp::Pos(unary_exp) => unary_exp.generate(program, scopes, labels),
             UnaryExp::Neg(unary_exp) => {
-                let (ty, op2) = unary_exp.generate(program, scopes, labels)?;
+                let (ty, op2) = unary_exp.generate(program, scopes, labels);
                 if ty.is_const {
                     let res: String;
                     match ty.width {
@@ -268,7 +260,7 @@ impl Generate for UnaryExp {
                         },
                         _ => panic!("TODO"),
                     }
-                    return Ok((ty, res));
+                    return (ty, res)
                 }
                 let result = labels.pop_num_str();
                 let is_float = ty.width == SymbolWidth::Float;
@@ -277,7 +269,7 @@ impl Generate for UnaryExp {
                         InstructionType::Fsub, 
                         vec!(
                             &result, 
-                            &String::from("0.0"), 
+                            "0.0", 
                             &op2
                         ),
                         vec!(&ty), 
@@ -293,10 +285,10 @@ impl Generate for UnaryExp {
                         vec!(&ty), 
                     );
                 }
-                Ok((ty, result))
+                (ty, result)
             },
             UnaryExp::Not(unary_exp) => {
-                let (ty, op2) = unary_exp.generate(program, scopes, labels)?;
+                let (ty, op2) = unary_exp.generate(program, scopes, labels);
                 if ty.is_const {
                     let res: String;
                     match ty.width {
@@ -317,7 +309,7 @@ impl Generate for UnaryExp {
                         },
                         _ => panic!("Don't support!"),
                     }
-                    return Ok((ty, res));
+                    return (ty, res)
                 }
                 let result = labels.pop_num_str();
                 let is_float = ty.width == SymbolWidth::Float;
@@ -326,7 +318,7 @@ impl Generate for UnaryExp {
                 } else {
                     program.push_instr(InstructionType::Cmp, vec!(&String::from("eq"), &result, &String::from("0"), &op2), vec!(&ty));
                 }
-                Ok((SymbolType::new(SymbolWidth::Bool, false), result))
+                (SymbolType::new(SymbolWidth::Bool, false), result)
             },
             UnaryExp::Call{id, params} => {
                 let func = scopes.get_function(id.as_str()).expect(format!("Undefined function {}", id).as_str());
@@ -345,7 +337,7 @@ impl Generate for UnaryExp {
                         str_vec,
                         type_vec,
                     );
-                    return Ok((ret_type, res));
+                    return (ret_type, res)
                 }
                 let params = params.as_ref().unwrap();
 
@@ -357,7 +349,7 @@ impl Generate for UnaryExp {
                     // 计算参数
                     let mut param_info: Vec<(String, SymbolType)> = vec!();
                     for cnt in 0..params.len() {
-                        let (ty, res) = params[cnt].generate(program, scopes, labels)?;
+                        let (ty, res) = params[cnt].generate(program, scopes, labels);
                         param_info.push((res, ty));
                     }
                     
@@ -384,7 +376,7 @@ impl Generate for UnaryExp {
                         str_vec,
                         type_vec,
                     );
-                    Ok((ret_type, res))
+                    (ret_type, res)
                 } else {
                     panic!("Should not appear!")
                 } // if SymVal::Func
@@ -397,9 +389,9 @@ impl MulExpBody {
 
     /// 乘除运算的运算主体，是乘除表达式MulExp的抽象结果<br>
     /// 从MulExp接受算子，对运算数进行常量检查、类型比较，最终计算出结果或者生成对应指令
-    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
-        let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
-        let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
+    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: &str) -> (SymbolType, String) {
+        let (ty1, op1) = self.exp1.generate(program, scopes, labels);
+        let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
         if all_is_const(&ty1, &ty2) {
             return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
@@ -448,7 +440,7 @@ impl MulExpBody {
             }
         }
         ty1.is_const = false;
-        Ok((ty1, result))
+        (ty1, result)
     }
 }
 
@@ -456,7 +448,7 @@ impl MulExpBody {
 impl Generate for MulExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         match self {
             MulExp::UnaryExp(exp) => exp.generate(program, scopes, labels),
             MulExp::Mul(body) => body.gen(program, scopes, labels, "*"),
@@ -470,9 +462,9 @@ impl AddExpBody {
 
     /// 加减运算的运算主体，是加减表达式AddExp的抽象结果<br>
     /// 从AddExp接受算子，对运算数进行常量检查、类型比较，最终计算出结果或者生成对应指令
-    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: &str) -> Result<(SymbolType, String), Box<dyn Error>> {
-        let (ty1, op1) = self.exp1.generate(program, scopes, labels)?;
-        let (ty2, op2) = self.exp2.generate(program, scopes, labels)?;
+    fn gen(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels, op_ty: &str) -> (SymbolType, String) {
+        let (ty1, op1) = self.exp1.generate(program, scopes, labels);
+        let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
         if all_is_const(&ty1, &ty2) {
             return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
@@ -517,7 +509,7 @@ impl AddExpBody {
             }
         }
         ty1.is_const = false;
-        Ok((ty1, result))
+        (ty1, result)
     }
 }
 
@@ -525,7 +517,7 @@ impl AddExpBody {
 impl Generate for AddExp {
     type Out = (SymbolType, String);
 
-    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Result<Self::Out, Box<dyn Error>> {
+    fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         match self {
             AddExp::MulExp(exp) => exp.generate(program, scopes, labels),
             AddExp::Add(body) => body.gen(program, scopes, labels, "+"),

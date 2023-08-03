@@ -1,9 +1,8 @@
 use std::collections::{HashSet, HashMap};
-use crate::riscv_gen::select::FLOAT_PREFIX;
-use crate::riscv_gen::build::PTR_WIDTH;
-use crate::riscv_gen::reg::{RegType, get_preserved_regs, phy_is_float};
+use crate::riscv_gen::register_type::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::SymbolWidth;
+use crate::structures::riscv_struct::PTR_WIDTH;
 
 impl AsmFunc {
     //将被临时分配到内存中的寄存器替换为对应的内存位置，并插入相关的指令以加载和存储这些寄存器的值。
@@ -20,12 +19,12 @@ impl AsmFunc {
                 block.instrs.get_mut(cnt).unwrap().rewrite(
                     |ty| {
                         // 重写操作应该发生在寄存器保存之后，此时函数调用的参数已经进行了赋值
-                        ty != AsmInstrType::Jump && ty != AsmInstrType::Call
+                        ty != AsmInstructionType::Jump && ty != AsmInstructionType::Call
                     },
                     |output, inputs| {
                     if let Some(output) = output {
                         if spilled.contains(output.as_str()) {
-                            let reg_ty = RegType::classify_label(self.label_type.get(output.as_str()).unwrap() == &SymbolWidth::Float, false);
+                            let reg_ty = RegType::get_regtype(self.label_type.get(output.as_str()).unwrap() == &SymbolWidth::Float, false);
                             let phy_reg = new_preserved_regs.get_mut(&reg_ty).unwrap().last().unwrap();
                             output_map = Some((String::from(output.as_str()), *phy_reg));
                             *output = String::from(*phy_reg);
@@ -33,7 +32,7 @@ impl AsmFunc {
                     }
                     for input in inputs.into_iter() {
                         if spilled.contains(input.as_str()) {
-                            let reg_ty = RegType::classify_label(self.label_type.get(input.as_str()).unwrap() == &SymbolWidth::Float, false);
+                            let reg_ty = RegType::get_regtype(self.label_type.get(input.as_str()).unwrap() == &SymbolWidth::Float, false);
                             let phy_reg = new_preserved_regs.get_mut(&reg_ty).unwrap().pop().unwrap();
                             inputs_map.push((String::from(input.as_str()), phy_reg));
                             *input = String::from(phy_reg);
@@ -42,23 +41,25 @@ impl AsmFunc {
                 });
                 //若是输入，则溢出到栈里后调用store指令，
                 if let Some((virt, phy)) = output_map {
-                    let mut prefix = "";
-                    if phy_is_float(phy) {
-                        prefix = FLOAT_PREFIX;
-                    }
+                    let prefix = if phy.contains("f") {
+                        "f"
+                    } else {
+                        ""
+                    };
                     let spilled_mark = format!("spilled.{}", virt);
                     self.stack.push_normal(spilled_mark.as_str(), 8);
-                    block.instrs.insert(cnt+1, AsmInstr::make_instr(AsmInstrType::Store, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
+                    block.instrs.insert(cnt+1, AsmInstruction::make_instr(AsmInstructionType::Store, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
                 }
                 //若是输出，则溢出到栈里调用load
                 for (virt, phy) in inputs_map.into_iter() {
-                    let mut prefix = "";
-                    if phy_is_float(phy) {
-                        prefix = FLOAT_PREFIX;
-                    }
+                    let prefix = if phy.contains("f") {
+                        "f"
+                    } else {
+                        ""
+                    };
                     let spilled_mark = format!("spilled.{}", virt);
                     self.stack.push_normal(spilled_mark.as_str(), 8);
-                    block.instrs.insert(cnt, AsmInstr::make_instr(AsmInstrType::Load, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
+                    block.instrs.insert(cnt, AsmInstruction::make_instr(AsmInstructionType::Load, vec!(phy, "sp", spilled_mark.as_str(), prefix), Some(PTR_WIDTH), vec!()));
                 }
             }
         }
@@ -84,12 +85,12 @@ impl AsmFunc {
     } // fn
 }
 
-impl AsmInstr {
-    pub fn rewrite(&mut self, filter_type: impl Fn(AsmInstrType) -> bool, mut map_labels: impl FnMut(Option<&mut String>, Vec<&mut String>)) {
+impl AsmInstruction {
+    pub fn rewrite(&mut self, filter_type: impl Fn(AsmInstructionType) -> bool, mut map_labels: impl FnMut(Option<&mut String>, Vec<&mut String>)) {
         let ty = self.fetch_type();
         match self {
-            AsmInstr::Fmv(bin, _, _) | AsmInstr::Fcvt(bin, _, _) | AsmInstr::Sextw(bin) |
-            AsmInstr::Li(bin) | AsmInstr::La(bin) | AsmInstr::Mv(bin) | AsmInstr::Seqz(bin) | AsmInstr::Snez(bin) => {
+            AsmInstruction::Fmv(bin, _, _) | AsmInstruction::Fcvt(bin, _, _) | 
+            AsmInstruction::Li(bin) | AsmInstruction::La(bin) | AsmInstruction::Mv(bin) | AsmInstruction::Seqz(bin) | AsmInstruction::Snez(bin) => {
                 match bin {
                     BinInstr{dst, src} => {
                         if filter_type(ty) {
@@ -98,13 +99,13 @@ impl AsmInstr {
                     }
                 }
             },
-            AsmInstr::Addi(tri) | AsmInstr::Add(tri) | AsmInstr::Sub(tri) | 
-            AsmInstr::Mul(tri) | AsmInstr::Div(tri) | AsmInstr::Rem(tri) |
-            AsmInstr::Slli(tri) | AsmInstr::Srli(tri) | AsmInstr::Srai(tri) |
-            AsmInstr::Xori(tri) | AsmInstr::Slt(tri) | AsmInstr::Slti(tri) |
-            AsmInstr::Flt(tri) | AsmInstr::Fle(tri) | AsmInstr::Feq(tri) |
-            AsmInstr::Fadd(tri) | AsmInstr::Fsub(tri) | AsmInstr::Fmul(tri) | AsmInstr::Fdiv(tri) |
-            AsmInstr::Sgt(tri) | AsmInstr::Branch(CondTriInstr{cond: _, tri}) => {
+            AsmInstruction::Addi(tri) | AsmInstruction::Add(tri) | AsmInstruction::Sub(tri) | 
+            AsmInstruction::Mul(tri) | AsmInstruction::Div(tri) | AsmInstruction::Rem(tri) |
+            AsmInstruction::Slli(tri) | AsmInstruction::Srli(tri) | AsmInstruction::Srai(tri) |
+            AsmInstruction::Xori(tri) | AsmInstruction::Slt(tri) | AsmInstruction::Slti(tri) |
+            AsmInstruction::Flt(tri) | AsmInstruction::Fle(tri) | AsmInstruction::Feq(tri) |
+            AsmInstruction::Fadd(tri) | AsmInstruction::Fsub(tri) | AsmInstruction::Fmul(tri) | AsmInstruction::Fdiv(tri) |
+            AsmInstruction::Sgt(tri) | AsmInstruction::Branch(CondTriInstr{cond: _, tri}) => {
                 match tri {
                     TriInstr{width: _, dst, op1, op2} => {
                         if filter_type(ty) {
@@ -113,39 +114,35 @@ impl AsmInstr {
                     }
                 }
             },
-            AsmInstr::Store(mem, _) => {
+            AsmInstruction::Store(mem, _) => {
                 match mem {
                     MemInstr{width: _, val, base, offset} => {
-                        if filter_type(AsmInstrType::Store) {
+                        if filter_type(AsmInstructionType::Store) {
                             map_labels(None, vec!(val, base, offset));
                         }
                     }
                 }
             },
-            AsmInstr::Load(mem, _) => {
+            AsmInstruction::Load(mem, _) => {
                 match mem {
                     MemInstr{width: _, val, base, offset} => {
-                        if filter_type(AsmInstrType::Load) {
+                        if filter_type(AsmInstructionType::Load) {
                             map_labels(Some(val), vec!(base, offset));
                         }
                     }
                 }
             },
-            AsmInstr::Ret(ret_val) => {
-                if filter_type(AsmInstrType::Ret) {
-                    map_labels(None, vec!(ret_val));
-                }
-            },
-            AsmInstr::Jump(dst) => {
-                if filter_type(AsmInstrType::Jump) {
+            AsmInstruction::Jump(dst) => {
+                if filter_type(AsmInstructionType::Jump) {
                     map_labels(None, vec!(dst));
                 }
             },
-            AsmInstr::Call(ret_val, _, params, _) => {
-                if filter_type(AsmInstrType::Call) {
+            AsmInstruction::Call(ret_val, _, params, _) => {
+                if filter_type(AsmInstructionType::Call) {
                     map_labels(Some(ret_val), params.iter_mut().collect());
                 }
             },
+            _ => {}
         }
     }
 }

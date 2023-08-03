@@ -1,15 +1,13 @@
 /target
 *.log
-.vscode
-.idea
 Cargo.lock
 /*.c
 /*.C
 /*.ll
 /*.s
 /*.S
-.idea
 /tests/functional_elf/*
 /tests/functional_s/*
 /tests/test_2.sh
 /tests/test3.sh
+/.VSCodeCounter

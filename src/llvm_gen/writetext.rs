@@ -28,26 +28,26 @@ impl WriteText for GlobalVar {
             SymbolWidth::I32 => {
                 write!(output, " {}", self.var_type.get_typename()).unwrap();
                 //如果没有赋值，则全局变量默认赋0
-                if self.init_num.is_empty() {
+                if self.init_values.is_empty() {
                     write!(output, " 0").unwrap();
                 } else {
-                    write!(output, " {}", self.init_num.first().unwrap().init_val).unwrap();
+                    write!(output, " {}", self.init_values.first().unwrap()).unwrap();
                 }
                 write!(output, ", align 4").unwrap();
             },
             SymbolWidth::Float => {
                 write!(output, " {}", self.var_type.get_typename()).unwrap();
-                if self.init_num.is_empty() {
+                if self.init_values.is_empty() {
                     write!(output, " 0.0").unwrap();
                 } else {
-                    write!(output, " {}", self.init_num.first().unwrap().init_val).unwrap();
+                    write!(output, " {}", self.init_values.first().unwrap()).unwrap();
                 }
                 write!(output, ", align 4").unwrap();
             },
             // 特别的，对于数组初始化，需要调用
             SymbolWidth::Arr{tar: _, dims} => {
                 let mut pos: Vec<i32> = vec!();
-                GlobalVar::dump_arr_init(output, dims, &self.var_type, &self.init_num.iter().map(|x| x.init_val.clone()).collect(), &mut pos);
+                GlobalVar::dump_arr_init(output, dims, &self.var_type, &self.init_values.iter().map(|x| x.to_string()).collect(), &mut pos);
             },
             _ => panic!("Don't support"),
         }
@@ -169,47 +169,24 @@ impl Block {
 }
 
 impl WriteText for Instruction {
-    //对于各个指令的dump，具体需要调用每种指令的dump
-    //1、对于二元指令，首先输出每种具体的指令头，例如 result = 'op' {}, 然后调用公共的dump函数
-    //2、对于
+    //对于各个指令的writetext，具体需要调用每种指令的writetext
     fn writetext(&self, output: &mut impl Write) {
+        //1、对于二元指令，首先输出每种具体的指令头，例如 result = 'op', 然后调用公共的writetext函数
+        fn bin_op_write(output: &mut impl Write, bin_op: &BinaryOp, name: &str) {
+            write!(output, "  {} = {} ", bin_op.res, name).unwrap();
+            bin_op.writetext(output);
+        }
         match self {
-            Instruction::Add(bin_op) => {
-                write!(output, "  {} = add ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Sub(bin_op) => {
-                write!(output, "  {} = sub ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Mul(bin_op) => {
-                write!(output, "  {} = mul ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Sdiv(bin_op) => {
-                write!(output, "  {} = sdiv ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Srem(bin_op) => {
-                write!(output, "  {} = srem ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fadd(bin_op) => {
-                write!(output, "  {} = fadd ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fsub(bin_op) => {
-                write!(output, "  {} = fsub ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fmul(bin_op) => {
-                write!(output, "  {} = fmul ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
-            Instruction::Fdiv(bin_op) => {
-                write!(output, "  {} = fdiv ", bin_op.res).unwrap();
-                bin_op.writetext(output);
-            },
+            // 1、二元指令
+            Instruction::Add(bin_op) => bin_op_write(output, bin_op, "add"),
+            Instruction::Sub(bin_op) => bin_op_write(output, bin_op, "sub"),
+            Instruction::Mul(bin_op) => bin_op_write(output, bin_op, "mul"),
+            Instruction::Sdiv(bin_op) => bin_op_write(output, bin_op, "sdiv"),
+            Instruction::Srem(bin_op) => bin_op_write(output, bin_op, "srem"),
+            Instruction::Fadd(bin_op) => bin_op_write(output, bin_op, "fadd"),
+            Instruction::Fsub(bin_op) => bin_op_write(output, bin_op, "fsub"),
+            Instruction::Fmul(bin_op) => bin_op_write(output, bin_op, "fmul"),
+            Instruction::Fdiv(bin_op) => bin_op_write(output, bin_op, "fdiv"),
             Instruction::Cmp(cond, bin_op) => {
                 write!(output, "  {} = icmp {} ", bin_op.res, cond).unwrap();
                 bin_op.writetext(output);

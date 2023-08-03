@@ -7,32 +7,12 @@ impl LLVMProgram {
         self.func_def.last_mut()
     }
 
-    pub fn push_global_var(&mut self, id: &String, ty: &SymbolType, init_types: Vec<&SymbolType>, init_vals: Vec<&String>) {
-        let mut types: Vec<SymbolType> = vec!();
-        let mut vals: Vec<String> = vec!();
-        let mut init_numbers: Vec<InitNumber> = Vec::new();
-
-        for init_type in init_types.iter() {
-            types.push((*init_type).clone());
-        }
-        for init_val in init_vals.iter() {
-            vals.push(String::from(*init_val));
-        }
-        
-        for i in 0..types.len() {
-            let init_number = InitNumber {
-                init_type: types[i].clone(),
-                init_val: vals[i].clone(),
-            };
-            init_numbers.push(init_number);
-        }
-        let global_var = GlobalVar {
-            var_name: String::from(id),
+    pub fn push_global_var(&mut self, id: &str, ty: &SymbolType, init_vals: Vec<&String>) {
+        self.global_var.push(GlobalVar {
+            var_name: id.to_string(),
             var_type: ty.clone(),
-            init_num: init_numbers,
-        };
-        self.global_var.push(global_var);
-        
+            init_values: init_vals.iter().map(|value| value.to_string()).collect(),
+        });
     }
 
     pub fn push_func_decl(&mut self, func_type: &SymbolType, func_name: &str, types: Vec<&SymbolType>) {
@@ -327,5 +307,141 @@ impl Instruction {
             }
         } // match
     } // fn
+    pub fn update_instr(&mut self, str_vec: Vec<&str>, ty_vec: Vec<&SymbolType>) {
+        let bin_op: BinaryOp;
+        let cast_op: CastOp;
+
+        if str_vec.len() >= 3 && ty_vec.len() >= 1{
+            bin_op = BinaryOp {
+                res: String::from(str_vec[0]),
+                op_type: ty_vec[0].clone(),
+                op1: String::from(str_vec[1]),
+                op2: String::from(str_vec[2]),
+            };
+        } else {
+            bin_op = BinaryOp::new();
+        }
+
+        if str_vec.len() >= 2 && ty_vec.len() >= 2{
+            cast_op = CastOp {
+                res: String::from(str_vec[0]),
+                type_1: ty_vec[0].clone(),
+                type_2: ty_vec[1].clone(),
+                val: String::from(str_vec[1]),
+            };
+        } else {
+            cast_op = CastOp::new();
+        }
+
+        match self {
+            Instruction::Add(bin) => *bin = bin_op,
+            Instruction::Sub(bin) => *bin = bin_op,
+            Instruction::Mul(bin) => *bin = bin_op,
+            Instruction::Sdiv(bin) => *bin = bin_op,
+            Instruction::Srem(bin) => *bin = bin_op,
+            Instruction::Fadd(bin) => *bin = bin_op,
+            Instruction::Fsub(bin) => *bin = bin_op,
+            Instruction::Fmul(bin) => *bin = bin_op,
+            Instruction::Fdiv(bin) => *bin = bin_op,
+            Instruction::ZeroExt(cast) => *cast = cast_op,
+            Instruction::I32ToFloat(cast) => *cast = cast_op,
+            Instruction::FloatToI32(cast) => *cast = cast_op,
+            Instruction::Cmp(cond, bin) => {
+                *cond = str_vec[0].to_string();
+                *bin = BinaryOp {
+                    res: str_vec[1].to_string(),
+                    op_type: ty_vec[0].clone(),
+                    op1: str_vec[2].to_string(),
+                    op2: str_vec[3].to_string(),
+                };
+            },
+            Instruction::Fcmp(cond, bin) => {
+                *cond = str_vec[0].to_string();
+                *bin = BinaryOp {
+                    res: str_vec[1].to_string(),
+                    op_type: ty_vec[0].clone(),
+                    op1: str_vec[2].to_string(),
+                    op2: str_vec[3].to_string(),
+                };
+            },
+            Instruction::Phi(res_old, ty, branches) => {
+                assert!(str_vec.len() % 2 != 0, "Phi candidates number error.");
+                let mut new_vec = str_vec;
+                new_vec.reverse();
+                let res = String::from(new_vec.pop().unwrap());
+                let mut candidates: Vec<(String, String)> = vec!();
+                while !new_vec.is_empty() {
+                    candidates.push(
+                        (String::from(new_vec.pop().unwrap()), 
+                         String::from(new_vec.pop().unwrap())),
+                    );
+                }
+                *res_old = res;
+                *ty = ty_vec[0].clone();
+                *branches = candidates;
+            },
+            Instruction::Alloca{res, ty, len} => {
+                *res = String::from(str_vec[0]);
+                *ty = ty_vec[0].clone();
+                *len = String::from(str_vec[1]);
+            },
+            Instruction::Store{ty, value, ptr, len} => {
+                *ty = ty_vec[0].clone();
+                *value = String::from(str_vec[0]);
+                *ptr = String::from(str_vec[1]);
+                *len = String::from(str_vec[2]);
+            },
+            Instruction::Load{res, ty, ptr, len} => {
+                *res = String::from(str_vec[0]);
+                *ty = ty_vec[0].clone();
+                *ptr = String::from(str_vec[1]);
+                *len = String::from(str_vec[2]);
+            },
+            Instruction::Call(res, label, ty, params_old) => {
+                let mut params: Vec<(String, SymbolType)> = vec!();
+                for cnt in 2..str_vec.len() {
+                    params.push((String::from(str_vec[cnt]), ty_vec[cnt-1].clone()));
+                }
+                *res = str_vec[0].to_string();
+                *label = str_vec[1].to_string();
+                *ty = ty_vec[0].clone();
+                *params_old = params;
+            },
+            Instruction::GetElemPtr(dst, ty, ptr, idx_old) => {
+                let mut idx: Vec<String> = vec!();
+                for cnt in 2..str_vec.len() {
+                    idx.push(String::from(str_vec[cnt]));
+                }
+                *dst = str_vec[0].to_string();
+                *ty = ty_vec[0].clone();
+                *ptr = str_vec[1].to_string();
+                *idx_old = idx;
+            },
+            Instruction::BitCast(res, ty_src, val, ty_dst) => {
+                *res = str_vec[0].to_string();
+                *ty_src = ty_vec[0].clone();
+                *val = str_vec[1].to_string();
+                *ty_dst = ty_vec[1].clone();
+            },
+            Instruction::Comment(message) => *message = str_vec[0].to_string(),
+            Instruction::Ret(ty, value) => {
+                //如果没有返回值
+                *ty = ty_vec[0].clone();
+                if str_vec.is_empty() {
+                    *value = None;
+                } else {
+                    *value = Some(str_vec[0].to_string());
+                }
+            },
+            Instruction::Br(cond, and_true, and_false) => {
+                //如果没有条件
+                *and_true = str_vec[1].to_string();
+                if !str_vec[0].is_empty() {
+                    *cond = Some(str_vec[0].to_string());
+                    *and_false = Some(str_vec[2].to_string());
+                }
+            }
+        } // match
+    }
 }
 

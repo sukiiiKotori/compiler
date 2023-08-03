@@ -11,16 +11,14 @@ pub fn format_double(float: f32) -> String {
 
 /// 将IEEE754 double 转为 IEEE754 float
 pub fn double_to_float(double: &str) -> String {
-    let float: f32;
-    if double == "0.0" {
-        float = 0.0;
+    if double == "0.0" || double == "0" {
+        "0".to_string()
     } else {
-        float = parse_ieee(double);
+        let num32 = unsafe {
+            std::mem::transmute::<f32,u32>(parse_ieee(double))
+        };
+        format!("0X{:08X}",num32)
     }
-    let num32 = unsafe {
-        std::mem::transmute::<f32,u32>(float)
-    };
-    format!("0X{:08X}",num32)
 }
 
 /// 把IEEE754标准表示的单精度或双精度浮点转换为f32

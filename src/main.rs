@@ -10,7 +10,7 @@ use std::fs;
 use std::env::args;
 use std::fs::read_to_string;
 use llvm_gen::generate_llvm;
-use riscv_gen::emit_asm;
+use riscv_gen::generate_asm;
 use crate::structures::writetext_trait::*;
 
 /*
@@ -41,7 +41,6 @@ pub fn get_settings() -> &'static Settings {
 }
 
 use lalrpop_util::lalrpop_mod;
-use crate::llvm_opt::optimise_llvm;
 lalrpop_mod!(parser);
 
 fn main() {
@@ -53,11 +52,11 @@ fn main() {
     //用lalrpop解析得到ast
     let mut ast = parser::SysYParser::new().parse(&read_to_string(&file_name).unwrap()).unwrap();
     //生成llvm
-    let mut llvm = generate_llvm(&mut ast).unwrap();
+    let mut llvm = generate_llvm(&mut ast);
     if SETTINGS.optimise {
-        llvm = optimise_llvm(llvm);
+        llvm.optimise_llvm();
     }
-    let filename_without_suffix= file_name.split(".").collect::<Vec<_>>()[0].to_string();
+    let filename_without_suffix = file_name.split(".").collect::<Vec<_>>()[0].to_string();
     //编译选项，可选-llvm和-S
     match args.next().unwrap().as_str() {
         "-llvm" => {
@@ -65,9 +64,9 @@ fn main() {
             llvm.writetext(&mut llvm_file);
         }
         "-S" => {
-            let mut asm = emit_asm(&llvm);
+            let mut asm = generate_asm(&llvm);
             asm.optimise_riscv();
-            
+
             let mut asm_file = fs::File::create(filename_without_suffix + ".s").unwrap();
             asm.writetext(&mut asm_file);
         }

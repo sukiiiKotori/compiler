@@ -156,16 +156,7 @@ pub struct GlobalVar {
     /// 变量类型
     pub var_type: SymbolType,
     /// 初始化值列表
-    pub init_num: Vec<InitNumber>,
-}
-
-/// 初始化值
-#[derive(Debug)]
-pub struct InitNumber {
-    /// 初始化值类型
-    pub init_type: SymbolType,
-    /// 初始化值
-    pub init_val: String,
+    pub init_values: Vec<String>,
 }
 
 /// 函数声明
@@ -230,7 +221,7 @@ pub struct LocalVar {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Instruction {
     // 算术运算
     // int
@@ -290,6 +281,9 @@ pub enum Instruction {
     /// 返回指令
     Ret(SymbolType, Option<String>),
     /// 分支指令
+    /// .0表示条件 可以没有条件
+    /// .1表示如果为真，跳转到的分支
+    /// .2表示如果为假，跳转到的分支，可以没有该分支
     Br(Option<String>, String, Option<String>),
 }
 
@@ -323,7 +317,7 @@ pub enum InstructionType {
 
 
 /// 二元操作
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct BinaryOp {
     /// 结果
     pub res: String,
@@ -336,7 +330,7 @@ pub struct BinaryOp {
 }
 
 /// 转换操作
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct CastOp {
     /// 结果
     pub res: String,

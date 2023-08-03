@@ -8,39 +8,32 @@ use crate::llvm_opt::flow::FlowItem;
 pub fn build_map(items: Vec<&impl FlowItem>) -> (HashMap<String, HashSet<String>>, HashMap<String, HashSet<String>>) {
     let mut succs = HashMap::new();
     let mut preds = HashMap::new();
-
-    for item in items {
+    items.iter().for_each(|item| {
         let (self_label, associate_labels) = item.flow_info();
         let self_id = self_label.unwrap_or("");
-
-        succs.entry(String::from(self_id)).or_insert_with(HashSet::new);
-        preds.entry(String::from(self_id)).or_insert_with(HashSet::new);
-
-        for associate in associate_labels {
-            let self_set = succs.entry(String::from(self_id)).or_insert_with(HashSet::new);
-            self_set.insert(String::from(associate));
-
-            let assoc_set = preds.entry(String::from(associate)).or_insert_with(HashSet::new);
-            assoc_set.insert(String::from(self_id));
-        }
-    }
-
+        succs.entry(self_id.to_string()).or_insert_with(HashSet::new);
+        preds.entry(self_id.to_string()).or_insert_with(HashSet::new);
+        associate_labels.iter().for_each(|associate| {
+            succs.entry(self_id.to_string()).or_insert_with(HashSet::new).insert(associate.to_string());
+            preds.entry(associate.to_string()).or_insert_with(HashSet::new).insert(self_id.to_string());
+        });
+    });
     (succs, preds)
 }
 
 /// 根据映射关系计算活跃的标识
-pub fn calc_active(succs: &HashMap<String, HashSet<String>>, mut preds: HashMap<String, HashSet<String>>) -> HashSet<String> {
-    let mut deque = preds
-        .iter()
-        .filter(|(_, v)| v.is_empty())
-        .map(|(k, _)| k.clone())
-        .collect::<VecDeque<String>>();
-
-    let mut traversed = deque.iter().cloned().collect::<HashSet<String>>();
-
+pub fn calc_active(succs: &HashMap<String, HashSet<String>>,mut preds: HashMap<String, HashSet<String>>) -> HashSet<String> {
+    let mut deque: VecDeque<String> = preds.iter().filter_map(|(k, v)| {
+        if v.is_empty() {
+            Some(k.to_string())
+        } else {
+            None
+        }
+    }).collect();
+    let mut traversed: HashSet<String> = deque.iter().cloned().collect();
     while let Some(this_label) = deque.pop_front() {
         if let Some(succ_set) = succs.get(&this_label) {
-            for i in succ_set.iter().cloned() {
+            succ_set.iter().cloned().for_each(|i| {
                 if let Some(pred_set) = preds.get_mut(&i) {
                     pred_set.remove(&this_label);
                     if pred_set.is_empty() && !traversed.contains(&i) {
@@ -48,12 +41,14 @@ pub fn calc_active(succs: &HashMap<String, HashSet<String>>, mut preds: HashMap<
                         deque.push_back(i);
                     }
                 }
-            }
+            });
         }
     }
-
-    preds.into_iter()
-        .filter(|(_, v)| !v.is_empty())
-        .map(|(k, _)| k)
-        .collect()
+    preds.iter().filter_map(|(k, v)| {
+        if v.is_empty() {
+            None
+        } else {
+            Some(k.to_string())
+        }
+    }).collect()
 }
