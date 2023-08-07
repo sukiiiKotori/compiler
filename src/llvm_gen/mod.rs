@@ -1,10 +1,11 @@
 pub mod type_utils;
-pub mod build;
+pub mod program_gen;
 pub mod sysy_gen;
-pub mod decl;
+pub mod declaration;
 pub mod arithmetic_gen;
 pub mod logic_gen;
-pub mod writetext;
+pub mod write_text;
+pub mod instruction_gen;
 
 use crate::llvm_gen::sysy_gen::*;
 use crate::structures::llvm_struct::*;

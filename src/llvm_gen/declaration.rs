@@ -276,7 +276,7 @@ impl Generate for ConstDef {
 }
 
 impl InitVal {
-    // 
+    // 初始化值
     fn init_align(dims: &Vec<i32>, mut fill: i32, now_depth: usize) -> usize {
         if fill < 1 {
             return now_depth + 1;

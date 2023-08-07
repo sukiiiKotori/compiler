@@ -84,6 +84,6 @@ impl Instruction {
         let (_, str_vec, ty_vec) = another.fetch_info();
         let str_vec = Self::update_labels(str_vec, update_label);
         let str_vec_ref = str_vec.iter().map(|s| s.as_str()).collect();
-        self.update_instr(str_vec_ref, ty_vec);
+        self.update_instruction(str_vec_ref, ty_vec);
     }
 }
