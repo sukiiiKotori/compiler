@@ -2,28 +2,13 @@ use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
 
 impl RiscV {
-    pub fn eliminate_move(&mut self) {
-        self.text.funcs.iter_mut().for_each(|func| func.eliminate_move());
-    }
-
-    pub fn elininate_load(&mut self) {
-        self.text.funcs.iter_mut().for_each(|func| func.eliminate_load());
+    pub fn remove_ld(&mut self) {
+        self.text.funcs.iter_mut().for_each(|func| func.remove_ld());
     }
 }
 
 impl AsmFunc {
-    pub fn eliminate_move(&mut self) {
-        self.blocks.iter_mut().for_each(|block| {//遍历每个函数内部的基本块
-            block.instrs.retain(|instr| {//传入一个闭包，当mv或fmv的源和目的寄存器相同时消除
-                match instr {
-                    AsmInstruction::Fmv(bin, _ , _) | AsmInstruction::Mv(bin) => bin.dst != bin.src,
-                    _ => true
-                }
-            });
-        });
-    }
-
-    pub fn eliminate_load(&mut self) {
+    pub fn remove_ld(&mut self) {
         self.blocks.iter_mut().for_each(|block| {
             let mut replace_idx = Vec::new();
             block.instrs.iter().enumerate().for_each(|(idx, instr)| {
@@ -52,4 +37,3 @@ impl AsmFunc {
         });
     }
 }
-
