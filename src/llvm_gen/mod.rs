@@ -6,6 +6,9 @@ pub mod arithmetic_gen;
 pub mod logic_gen;
 pub mod write_text;
 pub mod instruction_gen;
+pub mod define;
+pub mod array_declaration;
+pub mod initval;
 
 use crate::llvm_gen::sysy_gen::*;
 use crate::structures::llvm_struct::*;
