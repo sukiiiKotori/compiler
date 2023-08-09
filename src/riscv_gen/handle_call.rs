@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet, BTreeSet};
 use crate::structures::riscv_struct::*;
 use crate::structures::riscv_regs::*;
 use crate::riscv_gen::stack_slot::StackSlot;
-use crate::riscv_gen::asm_select::FLOAT_PREFIX;
 use crate::structures::symbol::*;
 use crate::utils::check::*;
 use crate::utils::float::*;
@@ -108,7 +107,7 @@ impl AsmBlock {
             stack.push_normal(stored_pos.as_str(), 8);
             let mut prefix = "";
             if FLOAT_TEMP_SET.contains(temp) {
-                prefix = FLOAT_PREFIX;
+                prefix = "f";
             }
             self.instrs.insert(position+1, AsmInstruction::make_instr(
                 AsmInstructionType::Load,
@@ -224,7 +223,7 @@ impl AsmBlock {
                 // 正常参数，在指定位置插入存储参数的指令
                 self.instrs.insert(position, AsmInstruction::make_instr(
                     AsmInstructionType::Store,
-                    vec!(param.as_str(), "sp", stack_pos.as_str(), FLOAT_PREFIX),
+                    vec!(param.as_str(), "sp", stack_pos.as_str(), "f"),
                     Some(NORMAL_WIDTH),
                     vec!()
                 ));
@@ -258,7 +257,7 @@ impl AsmBlock {
                 context.stack.push_normal(stored_pos.as_str(), 8);
                 self.instrs.insert(position, AsmInstruction::make_instr(
                     AsmInstructionType::Load,
-                    vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), FLOAT_PREFIX),
+                    vec!(FLOAT_FUNC_ARG[context.float_cnt], "sp", stored_pos.as_str(), "f"),
                     Some(NORMAL_WIDTH),
                     vec!()
                 ));

@@ -10,13 +10,12 @@ impl LLVMProgram {
 
 impl FuncDef {
     pub fn push_localvars(&self, asm: &mut RiscV) {
-        let curr_func = asm.text.funcs.last_mut().unwrap();
-        let stack = &mut curr_func.stack;
-        let label_type = &mut curr_func.label_type;
-        //局部变量全都存入栈中
-        self.local_vars.iter().for_each(|local_var|{
-            match &local_var.ins {
-                Instruction::Alloca{res, ty, len: _} => {
+        if let Some(func) = asm.text.funcs.iter_mut().find(|func| func.label == self.func_name.replace("@", "")) {
+            let stack = &mut func.stack;
+            let label_type = &mut func.label_type;
+            //局部变量全都存入栈中
+            self.local_vars.iter().for_each(|local_var|{
+                if let Instruction::Alloca{res, ty, len: _} = &local_var.ins {
                     label_type.insert(res.to_string(), ty.width.clone());
                     if let SymbolWidth::Arr{tar:_, dims} = &ty.width {
                         //如果是指针，把长度设为8
@@ -29,10 +28,8 @@ impl FuncDef {
                     } else {
                         stack.push_normal(res,  4);
                     }
-                },
-                _ => {},
-            }
-         });
-
+                }
+            });
+        }
     }
 }

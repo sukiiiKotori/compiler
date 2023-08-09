@@ -2,39 +2,30 @@ use std::collections::HashSet;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
 
-impl RiscV {
-    /// 向代码块列表中添加一个新的代码块，使用给定的代码块标签和深度
-    pub fn push_block(&mut self, block_label: &str, depth: usize) {
-        let curr_func = self.text.funcs.last_mut().unwrap();
-        curr_func.push_block(block_label, depth);
-    }
-    /// 获取当前正在处理的函数和代码块，并向当前代码块的指令列表中添加一个新的指令
-    pub fn push_instr(&mut self, instr: AsmInstruction) {
-        let curr_func = self.text.funcs.last_mut().unwrap();
-        let curr_block = curr_func.blocks.last_mut().unwrap();
-        curr_block.instrs.push(instr);
-    }
-    /// 根据给定的指令类型、字符串向量、宽度数值和类型向量生成一个新的指令<br>
-    /// 并将其添加到当前代码块的指令列表中
-    pub fn gen_instr(&mut self, ty: AsmInstructionType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>) {
-        let instr = AsmInstruction::make_instr(ty, str_vec, width_num, ty_vec);
-        self.push_instr(instr);
-    }
-    /// 获取当前正在处理的函数和代码块，并向当前代码块的后继列表中添加一个新的后继标签
-    pub fn push_successor(&mut self, succ: &str) {
-        let curr_func = self.text.funcs.last_mut().unwrap();
-        let curr_block = curr_func.blocks.last_mut().unwrap();
-        curr_block.successor.push(succ.to_string());
-    }
-    /// 标记当前正在处理的函数为调用函数
-    pub fn mark_call(&mut self) {
-        self.text.funcs.last_mut().unwrap().mark_call();
-    }
-    /// 向当前正在处理的函数的标签类型映射中插入一个新的标签和类型的对应关系
-    pub fn insert_label_type(&mut self, label: &str, width: &SymbolWidth) {
-        self.text.funcs.last_mut().unwrap().label_type.insert(label.to_string(), width.clone());
-    }
-} // imp
+/// 向代码块列表中添加一个新的代码块，使用给定的代码块标签和深度
+pub fn push_block(block_label: &str, depth: usize, func: &mut AsmFunc) {
+    func.push_block(block_label, depth);
+}
+/// 根据给定的指令类型、字符串向量、宽度数值和类型向量生成一个新的指令<br>
+/// 并将其添加到当前代码块的指令列表中
+pub fn gen_instr(ty: AsmInstructionType, str_vec: Vec<&str>, width_num: Option<isize>, ty_vec: Vec<SymbolWidth>, func: &mut AsmFunc) {
+    let instr = AsmInstruction::make_instr(ty, str_vec, width_num, ty_vec);
+    let curr_block = func.blocks.last_mut().unwrap();
+    curr_block.instrs.push(instr);
+}
+/// 获取当前正在处理的函数和代码块，并向当前代码块的后继列表中添加一个新的后继标签
+pub fn push_successor(succ: &str, func: &mut AsmFunc) {
+    let curr_block = func.blocks.last_mut().unwrap();
+    curr_block.successor.push(succ.to_string());
+}
+/// 标记当前正在处理的函数为调用函数
+pub fn mark_call(func: &mut AsmFunc) {
+    func.mark_call();
+}
+/// 向当前正在处理的函数的标签类型映射中插入一个新的标签和类型的对应关系
+pub fn insert_label_type(label: &str, width: &SymbolWidth, func: &mut AsmFunc) {
+    func.label_type.insert(label.to_string(), width.clone());
+}
 
 impl AsmFunc {
     /// 添加代码块
