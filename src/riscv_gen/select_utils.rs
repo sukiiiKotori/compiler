@@ -1,4 +1,6 @@
 use std::collections::HashSet;
+use crate::utils::float::*;
+use crate::utils::check::*;
 use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
 
@@ -25,6 +27,33 @@ pub fn mark_call(func: &mut AsmFunc) {
 /// 向当前正在处理的函数的标签类型映射中插入一个新的标签和类型的对应关系
 pub fn insert_label_type(label: &str, width: &SymbolWidth, func: &mut AsmFunc) {
     func.label_type.insert(label.to_string(), width.clone());
+}
+//将一个浮点立即数load至寄存器中。
+//select_cnt：虚拟寄存器编号
+//op：浮点立即数(以IEEE754 Double的64bit形式保存)
+//返回虚拟寄存器编号，如%2
+pub fn load_float_imm(select_cnt: &mut usize, op: &str, func: &mut AsmFunc) -> String {
+    let imm = double_to_float(&op);
+    let imm_reg = pop_temp_label(select_cnt, &SymbolWidth::I32, func);
+    let dst_reg = pop_temp_label(select_cnt, &SymbolWidth::Float, func);
+    gen_instr(AsmInstructionType::Li, vec!(&imm_reg, &imm), None, vec![], func);
+    gen_instr(AsmInstructionType::Fmv, vec!(&dst_reg, &imm_reg), None, vec!(SymbolWidth::Float, SymbolWidth::I32), func);
+    dst_reg
+}
+//检查操作数是否为浮点立即数
+pub fn check_float_op(select_cnt: &mut usize, op: &str, func: &mut AsmFunc) -> String {
+    if is_immediate(op) {
+        load_float_imm(select_cnt, op, func)
+    } else {
+        op.to_string()
+    }
+}
+
+pub fn pop_temp_label(cnt: &mut usize, ty: &SymbolWidth, func: &mut AsmFunc) -> String {
+    let res = format!("%temp.{}", cnt);
+    insert_label_type(&res, ty, func);
+    *cnt += 1;
+    res
 }
 
 impl AsmFunc {

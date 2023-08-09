@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-
 use crate::utils::check::*;
 use crate::utils::float::*;
 use crate::structures::llvm_struct::*;
@@ -7,13 +6,6 @@ use crate::structures::riscv_struct::*;
 use crate::structures::symbol::*;
 use crate::structures::riscv_regs::*;
 use crate::riscv_gen::select_utils::*;
-
-fn pop_temp_label(cnt: &mut usize, ty: &SymbolWidth, func: &mut AsmFunc) -> String {
-    let res = format!("%temp.{}", cnt);
-    insert_label_type(&res, ty, func);
-    *cnt += 1;
-    res
-}
 
 impl LLVMProgram {
     pub fn asm_select(&self, asm: &mut RiscV) {
@@ -51,9 +43,9 @@ impl Block {
         self.nor_ins.iter().for_each(|instr| instr.select_asm(select_cnt, func, global_vars));
         if let Some(ter) = &self.ter_ins {
             if let Instruction::Br(cond, label1, label2) = ter {
-                if let (Some(cond), Some(label2)) = (cond, label2) { // 有条件跳转
-                    if let Some(next_block) = next_block { // 取出下一个block的标签
-                        if next_block == label1 || next_block == label2 { // 存在目的地是下一个标号
+                if let (Some(cond), Some(label2)) = (cond, label2) {
+                    if let Some(next_block) = next_block {
+                        if next_block == label1 || next_block == label2 {
                             let final_label1 = String::from(func_label)+"."+label1;
                             let final_label2 = String::from(func_label)+"."+label2;
                             let cond_val: String;
@@ -65,63 +57,40 @@ impl Block {
                             }
                             if next_block == label1 {
                                 gen_instr(AsmInstructionType::Branch, vec!("eq", &cond_val, "zero", &final_label2), None, vec![], func);
-                                // 始终将下一个block设为第一个后续block
                                 push_successor(&final_label1, func);
                                 push_successor(&final_label2, func);
                             } else {
                                 gen_instr(AsmInstructionType::Branch, vec!("ne", &cond_val, "zero", &final_label1), None, vec![], func);
-                                // 始终将下一个block设为第一个后续block
                                 push_successor(&final_label2, func);
                                 push_successor(&final_label1, func);
-                            } // 两个目的地必然不同，若相同，则不会设置为有条件跳转
-                        } else { // 有条件跳转一般会有一个目的地为下一个block
+                            }
+                        } else {
                             todo!();
                         }
-                    } else { // 最后一个基本块不返回，不符合情况
-                        panic!("Should not appear");
+                    } else {
+                        panic!();
                     }
-                } else { // 无条件跳转
-                    if let Some(next_block) = next_block { // 取出下一个block的标签
+                } else {
+                    if let Some(next_block) = next_block {
                         let final_label1 = String::from(func_label)+"."+&label1;
-                        if next_block != label1 { // 下一块的标号不是当前跳转目标，进行跳转
+                        if next_block != label1 {
                             gen_instr(AsmInstructionType::Jump, vec!(&final_label1), None, vec![], func)
                         }
                         push_successor(&final_label1, func);
-                    } else { // 最后一个基本块不返回，不符合情况
-                        panic!("Should not appear");
+                    } else {
+                        panic!();
                     }
                 }
             } else {
                 ter.select_asm(select_cnt, func, global_vars);
             }
-        } else if next_block.is_none() { // 最后一个基本块无终结指令，手动添加
+        } else if next_block.is_none() {
             gen_instr(AsmInstructionType::Ret, vec![], None, vec![], func);
         }
     }
 }
 
 impl Instruction {
-    //将一个浮点立即数load至寄存器中。
-    //select_cnt：虚拟寄存器编号
-    //op：浮点立即数(以IEEE754 Double的64bit形式保存)
-    //返回虚拟寄存器编号，如%2
-    fn load_float_imm(select_cnt: &mut usize, op: &str, func: &mut AsmFunc) -> String {
-        let imm = double_to_float(&op);
-        let imm_reg = pop_temp_label(select_cnt, &SymbolWidth::I32, func);
-        let dst_reg = pop_temp_label(select_cnt, &SymbolWidth::Float, func);
-        gen_instr(AsmInstructionType::Li, vec!(&imm_reg, &imm), None, vec![], func);
-        gen_instr(AsmInstructionType::Fmv, vec!(&dst_reg, &imm_reg), None, vec!(SymbolWidth::Float, SymbolWidth::I32), func);
-        dst_reg
-    }
-    //检查操作数是否为浮点立即数
-    fn check_float_op(select_cnt: &mut usize, op: &str, func: &mut AsmFunc) -> String {
-        if is_immediate(op) {
-            Self::load_float_imm(select_cnt, op, func)
-        } else {
-            op.to_string()
-        }
-    }
-
     pub fn select_asm(&self, select_cnt: &mut usize, func: &mut AsmFunc, global_vars: &HashSet<String>) {
         match self {
             //LLVM IR: Add指令
@@ -487,32 +456,32 @@ impl Instruction {
             },
             Instruction::Fadd(BinaryOp{res, op_type: _, op1, op2}) => {
                 insert_label_type(res, &SymbolWidth::Float, func);
-                let op1_final = Self::check_float_op(select_cnt, op1, func);
-                let op2_final = Self::check_float_op(select_cnt, op2, func);
+                let op1_final = check_float_op(select_cnt, op1, func);
+                let op2_final = check_float_op(select_cnt, op2, func);
                 gen_instr(AsmInstructionType::Fadd, vec!(res, &op1_final, &op2_final), None, vec![], func);
             },
             Instruction::Fsub(BinaryOp{res, op_type: _, op1, op2}) => {
                 insert_label_type(res, &SymbolWidth::Float, func);
-                let op1_final = Self::check_float_op(select_cnt, op1, func);
-                let op2_final = Self::check_float_op(select_cnt, op2, func);
+                let op1_final = check_float_op(select_cnt, op1, func);
+                let op2_final = check_float_op(select_cnt, op2, func);
                 gen_instr(AsmInstructionType::Fsub, vec!(res, &op1_final, &op2_final), None, vec![], func);
             },
             Instruction::Fmul(BinaryOp{res, op_type: _, op1, op2}) => {
                 insert_label_type(res, &SymbolWidth::Float, func);
-                let op1_final = Self::check_float_op(select_cnt, op1, func);
-                let op2_final = Self::check_float_op(select_cnt, op2, func);
+                let op1_final = check_float_op(select_cnt, op1, func);
+                let op2_final = check_float_op(select_cnt, op2, func);
                 gen_instr(AsmInstructionType::Fmul, vec!(res, &op1_final, &op2_final), None, vec![], func);
             },
             Instruction::Fdiv(BinaryOp{res, op_type: _, op1, op2}) => {
                 insert_label_type(res, &SymbolWidth::Float, func);
-                let op1_final = Self::check_float_op(select_cnt, op1, func);
-                let op2_final = Self::check_float_op( select_cnt, op2, func);
+                let op1_final = check_float_op(select_cnt, op1, func);
+                let op2_final = check_float_op( select_cnt, op2, func);
                 gen_instr(AsmInstructionType::Fdiv, vec!(res, &op1_final, &op2_final), None, vec![], func);
             },
             Instruction::Fcmp(cond, BinaryOp{res, op_type: _, op1, op2}) => {
                 insert_label_type(res, &SymbolWidth::I32, func);
-                let op1_final = Self::check_float_op( select_cnt, op1, func);
-                let op2_final = Self::check_float_op(select_cnt, op2, func);
+                let op1_final = check_float_op( select_cnt, op1, func);
+                let op2_final = check_float_op(select_cnt, op2, func);
 
                 match cond.as_str() {
                     "oeq" => {
@@ -582,7 +551,7 @@ impl Instruction {
                 //如果是立即数，对浮点数需要先在data段声明再移动，整数则直接移动
                 if is_immediate(&value) {
                     if ty.width == SymbolWidth::Float {
-                        final_value = Self::load_float_imm(select_cnt, value, func);
+                        final_value = load_float_imm(select_cnt, value, func);
                     } else {
                         final_value = pop_temp_label(select_cnt, &SymbolWidth::I32, func);
                         gen_instr(AsmInstructionType::Li, vec!(&final_value, value), None, vec![], func);
