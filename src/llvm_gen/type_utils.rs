@@ -152,7 +152,7 @@ pub fn type_conver(program: &mut LLVMProgram,
 }
 
 /// 比较两个数值类型，若类型不同，调用type_conver将类型低的转换为高的，最后返回比较结果
-pub fn type_cmpare(program: &mut LLVMProgram, labels: &mut Labels, 
+pub fn type_compare(program: &mut LLVMProgram, labels: &mut Labels, 
     ty1: SymbolType, op1: String, ty2: SymbolType, op2: String) -> (SymbolType, String, String) {
 
     // 类型相同的情况

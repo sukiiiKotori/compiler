@@ -77,7 +77,7 @@ impl RelExpBody {
         }
 
         // 进行类型比较，并获取比较结果的标签
-        let (ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2.clone(), op2);
+        let (ty1, op1, op2) = type_compare(program, labels, ty1, op1, ty2.clone(), op2);
         let result = labels.pop_num_str();
 
         // 构建指令所需的字符串向量和类型向量
@@ -149,7 +149,7 @@ impl EqExpBody {
         }
 
         // 进行类型比较，并获取比较结果的标签
-        let (ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2.clone(), op2);
+        let (ty1, op1, op2) = type_compare(program, labels, ty1, op1, ty2.clone(), op2);
         let result = labels.pop_num_str();
 
         // 构建指令所需的字符串向量和类型向量

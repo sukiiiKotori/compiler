@@ -397,7 +397,7 @@ impl MulExpBody {
             return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
         }
 
-        let (mut ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2, op2);
+        let (mut ty1, op1, op2) = type_compare(program, labels, ty1, op1, ty2, op2);
         let result = labels.pop_num_str();
         let str_vec = vec!(
             result.as_str(),
@@ -470,7 +470,7 @@ impl AddExpBody {
             return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
         }
 
-        let (mut ty1, op1, op2) = type_cmpare(program, labels, ty1, op1, ty2, op2);
+        let (mut ty1, op1, op2) = type_compare(program, labels, ty1, op1, ty2, op2);
         let result = labels.pop_num_str();
         let str_vec = vec!(
             result.as_str(),
