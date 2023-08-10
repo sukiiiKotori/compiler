@@ -4,7 +4,7 @@ use crate::structures::scopes::*;
 use crate::llvm_gen::type_utils::*;
 
 // 获取某元素在多维数组中，实际偏移位置量
-fn get_pos(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {
+fn get_position(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {
     let mut sub_size = dims.iter().skip(1).fold(1, | res, a | res * a);
 
     let mut res = pos.first().unwrap().clone();
@@ -47,7 +47,7 @@ fn traverse_array(
             let mut flag = true;
             // 长度相等，表示遍历到底层
             if pos.len() == dims.len() {
-                let elem_pos = get_pos(dims, pos);          // 元素偏移位置
+                let elem_pos = get_position(dims, pos);          // 元素偏移位置
                 let elem_ty = get_type(types, elem_pos);    // 元素类型
 
                 if elem_ty.width != SymbolWidth::Void {     // 不是空

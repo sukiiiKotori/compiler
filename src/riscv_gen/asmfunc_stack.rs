@@ -90,7 +90,7 @@ impl AsmFunc {
                         let preserved_reg = PRESERVED.iter().map(|r| *r).find(|r| *r != val.as_str()).unwrap();
                         if base == "sp" {
                             // 获取栈偏移并转换为字符串
-                            let stack_pos =  self.stack.get_pos(offset.as_str()).to_string();
+                            let stack_pos =  self.stack.get_position(offset.as_str()).to_string();
                             // 如果栈偏移在立即数范围内，直接赋值给 offset
                             if inside_imm_range(stack_pos.as_str()) {
                                 *offset = String::from(&stack_pos);
@@ -122,7 +122,7 @@ impl AsmFunc {
                         // op1为sp,op2为#开头表示立即数
                         if op1 == "sp" && &op2[0..1] == "#" {
                             // 获取栈偏移并转换为字符串
-                            let stack_pos = self.stack.get_pos(&op2[1..]).to_string();
+                            let stack_pos = self.stack.get_position(&op2[1..]).to_string();
                             if inside_imm_range(stack_pos.as_str()) {
                                 // 如果栈偏移在立即数范围内，直接赋值给 op2
                                 *op2 = String::from(&stack_pos);

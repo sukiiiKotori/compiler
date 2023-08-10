@@ -74,7 +74,7 @@ impl StackSlot {
         this_pos
     }
     /// 获取变量在栈槽中的位置
-    pub fn get_pos(&self, label: &str) -> isize {
+    pub fn get_position(&self, label: &str) -> isize {
         // 判断变量名是否为十进制数值
         if is_decimal(label) {
             // 如果是十进制数值，则将其解析为isize类型的值并返回
