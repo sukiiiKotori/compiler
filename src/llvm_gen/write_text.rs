@@ -2,6 +2,7 @@ use std::io::*;
 use crate::structures::symbol::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::writetext_trait::*;
+use crate::utils::globalvar::*;
 
 impl WriteText for LLVMProgram {
     //递归遍历解析LLVM结构体
@@ -47,7 +48,7 @@ impl WriteText for GlobalVar {
             // 特别的，对于数组初始化，需要调用
             SymbolWidth::Arr{tar: _, dims} => {
                 let mut pos: Vec<i32> = vec!();
-                GlobalVar::write_arr(output, dims, &self.var_type, &self.init_values.iter().map(|x| x.to_string()).collect(), &mut pos);
+                write_arr(output, dims, &self.var_type, &self.init_values.iter().map(|x| x.to_string()).collect(), &mut pos);
             },
             _ => panic!("Don't support"),
         }
