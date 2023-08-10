@@ -4,12 +4,12 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub struct Symbol {
     pub label: String,
-    pub sym_type: SymbolType,
-    pub sym_val: SymbolVal,
+    pub ty: SymbolType,
+    pub value: SymbolVal,
 }
 
 pub enum ScopeType {
-    BasicBlock,
+    Basic,
     If,
     While(String, String),
     Func(SymbolType),
@@ -18,14 +18,14 @@ pub enum ScopeType {
 
 pub struct Scope {
     pub ty: ScopeType,
-    pub tab: HashMap<String, Symbol>,
+    pub map_tab: HashMap<String, Symbol>,
 }
 
 impl Scope {
     fn new() -> Self {
         Self {
             ty: ScopeType::Global,
-            tab: HashMap::new(),
+            map_tab: HashMap::new(),
         }
     }
 }
@@ -49,8 +49,8 @@ impl Scopes {
         &mut self,
         labels: &mut Labels,
         ident: &str,
-        sym_type: &SymbolType,
-        sym_val: &SymbolVal,
+        ty: &SymbolType,
+        value: &SymbolVal,
         flag: Option<bool>,
     ) -> Option<String> {
         let flag = flag.unwrap_or(self.is_global_scope());
@@ -62,12 +62,12 @@ impl Scopes {
         } else {
             label = labels.pop_local(ident);
         }
-        match curr_scope.tab.insert(
+        match curr_scope.map_tab.insert(
             String::from(ident),
             Symbol {
                 label: String::from(&label),
-                sym_type: sym_type.clone(),
-                sym_val: sym_val.clone(),
+                ty: ty.clone(),
+                value: value.clone(),
             },
         ) {
             Some(_) => None, // 已经存在
@@ -80,7 +80,7 @@ impl Scopes {
         // 在作用域堆栈中推入一个新的函数作用域
         self.scope_vec.push(Scope {
             ty: ScopeType::Func(func_type.clone()),
-            tab: HashMap::new(),
+            map_tab: HashMap::new(),
         });
     }
 
@@ -88,8 +88,8 @@ impl Scopes {
         // 进入基本块作用域
         // 在作用域堆栈中推入一个新的基本块作用域
         self.scope_vec.push(Scope {
-            ty: ScopeType::BasicBlock,
-            tab: HashMap::new(),
+            ty: ScopeType::Basic,
+            map_tab: HashMap::new(),
         });
     }
 
@@ -98,7 +98,7 @@ impl Scopes {
         // 在作用域堆栈中推入一个新的If语句作用域
         self.scope_vec.push(Scope {
             ty: ScopeType::If,
-            tab: HashMap::new(),
+            map_tab: HashMap::new(),
         });
     }
 
@@ -107,7 +107,7 @@ impl Scopes {
         // 在作用域堆栈中推入一个新的While循环作用域，并指定循环入口和循环结束标签
         self.scope_vec.push(Scope {
             ty: ScopeType::While(String::from(entry), String::from(end)),
-            tab: HashMap::new(),
+            map_tab: HashMap::new(),
         });
     }
 
@@ -159,14 +159,14 @@ impl Scopes {
         self.scope_vec
             .iter()
             .rev()
-            .find_map(|scope| scope.tab.get(id).filter(|item| matches!(item.sym_val, SymbolVal::Func(_, _))))
+            .find_map(|scope| scope.map_tab.get(id).filter(|item| matches!(item.value, SymbolVal::Func(_, _))))
     }
 
     pub fn get(&mut self, id: &str) -> Option<&mut Symbol> {
         self.scope_vec
             .iter_mut()
             .rev()
-            .find_map(|scope| scope.tab.get_mut(id))
+            .find_map(|scope| scope.map_tab.get_mut(id))
     }
 
     pub fn get_depth(&self) -> usize {
