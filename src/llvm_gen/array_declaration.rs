@@ -16,16 +16,6 @@ fn get_position(dims: &Vec<i32>, pos: &Vec<i32>) -> i32 {
     res
 }
 
-// 获取数值
-fn get_val(vals: &Vec<String>, pos: i32) -> String {
-    vals[pos as usize].to_string()
-}
-
-// 获取数据类型
-fn get_type(types: &Vec<SymbolType>, pos: i32) -> &SymbolType {
-    &types[pos as usize]
-}
-
 // 遍历多维数组，使用GetElemPtr或者Store指令初始化，成功返回true
 fn traverse_array(
     program: &mut LLVMProgram,  // 程序
@@ -48,12 +38,12 @@ fn traverse_array(
             // 长度相等，表示遍历到底层
             if pos.len() == dims.len() {
                 let elem_pos = get_position(dims, pos);          // 元素偏移位置
-                let elem_ty = get_type(types, elem_pos);    // 元素类型
+                let elem_ty = &types[elem_pos as usize]; // 元素类型
 
                 if elem_ty.width != SymbolWidth::Void {     // 不是空
                     let tar_ty = tar.as_ref().clone();
                     let ty_vec = vec![&tar_ty];
-                    let arr_val = get_val(vals, elem_pos);
+                    let arr_val = vals[elem_pos as usize].to_string();
                     let str_vec = vec![arr_val.as_str(), label.as_str(), "4"];
                     // 生成store指令
                     ins.push(Instruction::make_instruction(InstructionType::Store, str_vec, ty_vec));

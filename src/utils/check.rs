@@ -48,11 +48,6 @@ pub fn inside_imm_range(s: &str) -> bool {
     num >= -2048 && num < 2048
 }
 
-/// 检查ty1和ty2是否都是常量
-pub fn both_is_const(ty1: &SymbolType, ty2: &SymbolType) -> bool {
-    return ty1.is_const && ty2.is_const;
-}
-
 /// 检查ty1和ty2是否都是整型数
 pub fn both_is_int(ty1: &SymbolType, ty2: &SymbolType) -> bool {
     return ty1.width != SymbolWidth::Float && ty2.width != SymbolWidth::Float;
