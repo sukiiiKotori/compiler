@@ -23,17 +23,18 @@ impl GlobalVar {
         vals[start..end].iter().all(|x| x == "0")
     }
 
-    pub fn dump_arr_init(output: &mut impl Write, dims: &Vec<i32>, ty: &SymbolType, vals: &Vec<String>, pos: &mut Vec<i32>) {
+    pub fn write_arr(output: &mut impl Write, dims: &Vec<i32>, ty: &SymbolType, vals: &Vec<String>, pos: &mut Vec<i32>) {
         let (start, end) = GlobalVar::get_range(dims, pos);
+        //pos代表递归次数
         if pos.len() == dims.len() {
             match &ty.width {
                 SymbolWidth::Arr{tar, dims: _} => write!(output, "{} {}", tar.get_typename(), vals[start as usize]).unwrap(),
-                _ => panic!("Should not appear"),
+                _ => panic!(),
             }
         } else {
             match &ty.width {
                 SymbolWidth::Arr{tar, dims} => write!(output, "{} ", tar.get_name(&dims[pos.len()..])).unwrap(),
-                _ => panic!("Should not appear"),
+                _ => panic!(),
             }
             if vals.is_empty() || GlobalVar::all_is_zero(vals, start, end) {
                 write!(output, " zeroinitializer").unwrap();
@@ -44,7 +45,7 @@ impl GlobalVar {
                         write!(output, ", ").unwrap();
                     }
                     pos.push(cnt);
-                    GlobalVar::dump_arr_init(output, dims, ty, vals, pos);
+                    GlobalVar::write_arr(output, dims, ty, vals, pos);
                     pos.pop();
                 }
                 write!(output, "]").unwrap();

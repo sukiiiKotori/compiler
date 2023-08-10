@@ -47,7 +47,7 @@ impl WriteText for GlobalVar {
             // 特别的，对于数组初始化，需要调用
             SymbolWidth::Arr{tar: _, dims} => {
                 let mut pos: Vec<i32> = vec!();
-                GlobalVar::dump_arr_init(output, dims, &self.var_type, &self.init_values.iter().map(|x| x.to_string()).collect(), &mut pos);
+                GlobalVar::write_arr(output, dims, &self.var_type, &self.init_values.iter().map(|x| x.to_string()).collect(), &mut pos);
             },
             _ => panic!("Don't support"),
         }
