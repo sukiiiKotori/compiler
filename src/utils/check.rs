@@ -54,6 +54,6 @@ pub fn all_is_const(ty1: &SymbolType, ty2: &SymbolType) -> bool {
 }
 
 /// 检查ty1和ty2是否都是整型数
-pub fn all_is_int(ty1: &SymbolType, ty2: &SymbolType) -> bool {
+pub fn both_is_int(ty1: &SymbolType, ty2: &SymbolType) -> bool {
     return ty1.width != SymbolWidth::Float && ty2.width != SymbolWidth::Float;
 }

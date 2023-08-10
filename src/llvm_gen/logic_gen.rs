@@ -9,7 +9,7 @@ use crate::utils::check::*;
 use crate::utils::float::*;
 
 fn logic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> (SymbolType, String) {
-    if all_is_int(ty1, ty2) {
+    if both_is_int(ty1, ty2) {
         let num1 = op1.parse::<i32>().unwrap();
         let num2 = op2.parse::<i32>().unwrap();
         let res = i32::from(

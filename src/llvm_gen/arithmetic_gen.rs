@@ -10,7 +10,7 @@ use crate::utils::float::*;
 
 /// 完成优化：常量折叠
 fn arithetic_operate(ty1: &SymbolType, op1: &str, ty2: &SymbolType, op2: &str, op: &str) -> (SymbolType, String) {
-    if all_is_int(ty1, ty2) {
+    if both_is_int(ty1, ty2) {
         //操作数均为i32，无需进行类型提升。
         let num1 = op1.parse::<i32>().unwrap();
         let num2 = op2.parse::<i32>().unwrap();
@@ -70,7 +70,7 @@ impl LVal {
 
     /// 根据depth从dims中获取剩余维度，与tar组合为剩余数组
     /// 根据idx为剩余数组生成GetElemPtr指令
-    fn gen_getelemptr(
+    fn gen_get_elem_ptr(
         program: &mut LLVMProgram, 
         labels: &mut Labels, 
         idx: Vec<String>, 
@@ -133,7 +133,7 @@ impl Generate for LVal {
                             last_ptr = new_ptr;
                         } else {
                             let idx = vec!(zero.clone(), zero);
-                            last_ptr = LVal::gen_getelemptr(program, labels, idx, 0, &tar, &dims, last_ptr);
+                            last_ptr = LVal::gen_get_elem_ptr(program, labels, idx, 0, &tar, &dims, last_ptr);
                         }
                         let left_dims = LVal::get_left_dims(&dims, 1);
                         let left_arr = SymbolType::new(SymbolWidth::Arr{tar: tar.clone(), dims: left_dims.clone()}, true);
@@ -168,7 +168,7 @@ impl Generate for LVal {
                             let dst_ty = SymbolType::new(SymbolWidth::I32, false);
                             let this_idx = type_conver(program, labels, exp_val, &exp_ty, &dst_ty);
                             idx.push(this_idx);
-                            last_ptr = LVal::gen_getelemptr(program, labels, idx, depth, &tar, &dims, last_ptr);
+                            last_ptr = LVal::gen_get_elem_ptr(program, labels, idx, depth, &tar, &dims, last_ptr);
                         }
                     }
                     
@@ -176,7 +176,7 @@ impl Generate for LVal {
                         let mut left_dims = LVal::get_left_dims(&dims, self.idx.len()); 
                         left_dims[0] = -1;
                         let idx = vec!(zero.clone(), zero.clone());
-                        last_ptr = LVal::gen_getelemptr(program, labels, idx, self.idx.len(), &tar, &dims, last_ptr);
+                        last_ptr = LVal::gen_get_elem_ptr(program, labels, idx, self.idx.len(), &tar, &dims, last_ptr);
                         let left_arr = SymbolType::new(SymbolWidth::Arr{tar: tar.clone(), dims: left_dims},false);
                         (left_arr, last_ptr)
                     } else {
