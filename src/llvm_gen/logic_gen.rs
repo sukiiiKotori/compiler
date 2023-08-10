@@ -64,7 +64,7 @@ impl RelExpBody {
         let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
         // 进行常量折叠
-        if both_is_const(&ty1, &ty2) {
+        if ty1.is_const && ty2.is_const {
             if op_ty == "slt" {
                 return logic_operate(&ty1, &op1, &ty2, &op2, "<");
             } else if op_ty == "sgt" {
@@ -140,7 +140,7 @@ impl EqExpBody {
         let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
         // 如果两个表达式都是常量，则直接计算结果
-        if both_is_const(&ty1, &ty2) {
+        if ty1.is_const && ty2.is_const {
             if op_ty == "ne" {
                 return logic_operate(&ty1, &op1, &ty2, &op2, "!=");
             } else {
