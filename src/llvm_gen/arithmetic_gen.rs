@@ -105,12 +105,12 @@ impl Generate for LVal {
 
     fn generate(&self, program: &mut LLVMProgram, scopes: &mut Scopes, labels: &mut Labels) -> Self::Out {
         let val = scopes.get(self.id.as_str()).expect(&format!("Undefined {}", self.id)).clone();
-        if val.sym_type.is_const {
-            (val.sym_type.clone(), get_symbol_val(&val.sym_val))
+        if val.ty.is_const {
+            (val.ty.clone(), get_symbol_val(&val.value))
         } else {
-            match &val.sym_type.width {
-                SymbolWidth::I32 => (val.sym_type.clone(), val.label.clone()),
-                SymbolWidth::Float => (val.sym_type.clone(), val.label.clone()),
+            match &val.ty.width {
+                SymbolWidth::I32 => (val.ty.clone(), val.label.clone()),
+                SymbolWidth::Float => (val.ty.clone(), val.label.clone()),
                 SymbolWidth::Arr{tar, dims} => {
                     let zero = String::from("0");
                     let mut last_ptr = val.label.clone();
@@ -322,7 +322,7 @@ impl Generate for UnaryExp {
             },
             UnaryExp::Call{id, params} => {
                 let func = scopes.get_function(id.as_str()).expect(format!("Undefined function {}", id).as_str());
-                let ret_type = func.sym_type.clone();
+                let ret_type = func.ty.clone();
                 if params.is_none() {
                     let res: String;
                     if ret_type.width == SymbolWidth::Void {
@@ -341,7 +341,7 @@ impl Generate for UnaryExp {
                 }
                 let params = params.as_ref().unwrap();
 
-                if let SymbolVal::Func(_, param_list) = &func.sym_val {
+                if let SymbolVal::Func(_, param_list) = &func.value {
                     let func_param = param_list.clone();
                     let func_label = func.label.clone();
                     assert!(func_param.len() == params.len(), "Params length of function call is not correct, found {}, expected {}", params.len(), func_param.len());
