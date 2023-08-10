@@ -1,7 +1,6 @@
 use crate::ast::Decl;
 use crate::ast::ConstDecl;
 use crate::ast::VarDecl;
-use crate::get_settings;
 use crate::structures::symbol::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::scopes::*;
@@ -113,17 +112,12 @@ impl Generate for VarDecl {
                 } else {
                     let str_vec = vec!(label.as_str(), "4");
                     let ty_vec = vec!(&ty);
-                    let settings = get_settings();
 
-                    if scopes.is_in_while() || settings.all_allocs_in_entry {
-                        let block_label = program.get_block_label();
-                        program.insert_alloc(
-                            Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec.clone()),
-                            block_label.as_str()
-                        );
-                    } else {
-                        program.push_instr(InstructionType::Alloca, str_vec, ty_vec.clone());
-                    }
+                    let block_label = program.get_block_label();
+                    program.insert_alloc(
+                        Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec.clone()),
+                        block_label.as_str()
+                    );
 
                     // 如果初始化
                     if !init_val.is_empty() {

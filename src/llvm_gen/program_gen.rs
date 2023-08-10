@@ -91,13 +91,6 @@ impl LLVMProgram {
         String::from(&curr_bb_mut.block_label)
     }
 
-    pub fn push_phi(&mut self, str_vec: Vec<&str>, ty_vec: Vec<&SymbolType>) {
-        let curr_func = self.curr_func().unwrap();
-        let curr_bb_mut = curr_func.curr_bb_mut().unwrap();
-        let phi_instr = Instruction::make_instruction(InstructionType::Phi, str_vec, ty_vec);
-        curr_bb_mut.phi_ins.push(phi_instr);
-    }
-
     pub fn push_comment(&mut self, cotent: &str) {
         let str_vec = vec!(cotent);
         self.push_instr(InstructionType::Comment, str_vec, vec!());

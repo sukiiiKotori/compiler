@@ -75,13 +75,6 @@ impl Scopes {
         }
     }
 
-    pub fn is_in_while(&self) -> bool {
-        self.scope_vec
-            .iter()
-            .rev()
-            .any(|scope| matches!(scope.ty, ScopeType::While(_, _)))
-    }
-
     pub fn get_while_entry(&mut self) -> Option<String> {
         self.scope_vec.iter().rev().find_map(|scope| {
             if let ScopeType::While(entry, _) = &scope.ty {

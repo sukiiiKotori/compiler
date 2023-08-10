@@ -1,4 +1,3 @@
-use crate::get_settings;
 use crate::ast::*;
 use crate::structures::llvm_struct::*;
 use crate::structures::symbol::*;
@@ -247,7 +246,6 @@ impl Generate for LAndExp {
                 } else {
                     let and_true = labels.pop_block("and_true");
                     let and_end = labels.pop_block("and_end");
-                    let this_bb = program.get_block_label();
 
                     // this_bb     
                     if ty1.width != boolean {
@@ -258,14 +256,11 @@ impl Generate for LAndExp {
                         op1 = new_op1;
                     }
 
-                    let config = get_settings();
-                    let use_phi = config.use_phi;
                     let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
-                    if !use_phi {
-                        let type_vec = vec!(&i1_ty);
-                        let str_vec = vec!(op1.as_str(), "%replace_phi_0", "1");
-                        program.push_instr(InstructionType::Store, str_vec, type_vec);
-                    }
+                    
+                    let type_vec = vec!(&i1_ty);
+                    let str_vec = vec!(op1.as_str(), "%replace_phi_0", "1");
+                    program.push_instr(InstructionType::Store, str_vec, type_vec);
 
                     let ty_vec = vec!();
                     let str_vec = vec!(op1.as_str(), and_true.as_str(), and_end.as_str());
@@ -295,7 +290,6 @@ impl Generate for LAndExp {
                     let str_vec = vec!(op2.as_str(), "%replace_phi_0", "1");
                     program.push_instr(InstructionType::Store, str_vec, type_vec);
 
-                    let second_bb = program.get_block_label();
                     let ty_vec = vec!();
                     let str_vec = vec!("", and_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
@@ -305,15 +299,9 @@ impl Generate for LAndExp {
 
                     let result = labels.pop_num_str();
                     let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
-                    if use_phi {
-                        let ty_vec = vec!(&i1_ty);
-                        let str_vec = vec!(result.as_str(), "0", this_bb.as_str(), op2.as_str(), second_bb.as_str());
-                        program.push_phi(str_vec, ty_vec);
-                    } else {
-                        let ty_vec = vec!(&i1_ty);
-                        let str_vec = vec!(result.as_str(), "%replace_phi_0", "1");
-                        program.push_instr(InstructionType::Load, str_vec, ty_vec); 
-                    }
+                    let ty_vec = vec!(&i1_ty);
+                    let str_vec = vec!(result.as_str(), "%replace_phi_0", "1");
+                    program.push_instr(InstructionType::Load, str_vec, ty_vec); 
                     (i1_ty, result)
                 } // if const else
             }, // LOrExp::Or
@@ -368,7 +356,6 @@ impl Generate for LOrExp {
                 } else {
                     let or_false = labels.pop_block("or_false");
                     let or_end = labels.pop_block("or_end");
-                    let this_bb = program.get_block_label();
 
                     // this_bb     
                     if ty1.width != boolean {
@@ -379,14 +366,11 @@ impl Generate for LOrExp {
                         op1 = new_op1;
                     }
 
-                    let config = get_settings();
-                    let use_phi = config.use_phi;
                     let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
-                    if !use_phi {
-                        let type_vec = vec!(&i1_ty);
-                        let str_vec = vec!(op1.as_str(), "%replace_phi_0", "1");
-                        program.push_instr(InstructionType::Store, str_vec, type_vec);
-                    }
+                    
+                    let type_vec = vec!(&i1_ty);
+                    let str_vec = vec!(op1.as_str(), "%replace_phi_0", "1");
+                    program.push_instr(InstructionType::Store, str_vec, type_vec);
 
                     let ty_vec = vec!();
                     let str_vec = vec!(op1.as_str(), or_end.as_str(), or_false.as_str());
@@ -413,13 +397,10 @@ impl Generate for LOrExp {
                         op2 = new_op2;
                     }
                     
-                    if !use_phi {
-                        let type_vec = vec!(&i1_ty);
-                        let str_vec = vec!(op2.as_str(), "%replace_phi_0", "1");
-                        program.push_instr(InstructionType::Store, str_vec, type_vec);
-                    }
-
-                    let second_bb = program.get_block_label();
+                    let type_vec = vec!(&i1_ty);
+                    let str_vec = vec!(op2.as_str(), "%replace_phi_0", "1");
+                    program.push_instr(InstructionType::Store, str_vec, type_vec);
+                    
                     let ty_vec = vec!();
                     let str_vec = vec!("", &or_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
@@ -428,15 +409,10 @@ impl Generate for LOrExp {
 
                     let result = labels.pop_num_str();
                     let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
-                    if use_phi { 
-                        let ty_vec = vec!(&i1_ty);
-                        let str_vec = vec!(result.as_str(), "1", this_bb.as_str(), op2.as_str(), second_bb.as_str());
-                        program.push_phi(str_vec, ty_vec);
-                    } else {
-                        let ty_vec = vec!(&i1_ty);
-                        let str_vec = vec!(result.as_str(), "%replace_phi_0", "1");
-                        program.push_instr(InstructionType::Load, str_vec, ty_vec);
-                    }
+
+                    let ty_vec = vec!(&i1_ty);
+                    let str_vec = vec!(result.as_str(), "%replace_phi_0", "1");
+                    program.push_instr(InstructionType::Load, str_vec, ty_vec);
                     (i1_ty, result)
                 } // if const else
             }, // LOrExp::Or

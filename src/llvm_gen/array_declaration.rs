@@ -132,16 +132,11 @@ pub fn decl_arr(
         // 然后更新作用域
         let str_vec = vec!(label.as_str(), "16");
         let ty_vec = vec!(&ty_arr);
-        let settings = crate::get_settings();
-        if scopes.is_in_while() || settings.all_allocs_in_entry {
-            let x=program.get_block_label();
-            program.insert_alloc(
-                Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec), 
-                &x
-            )
-        } else {
-            program.push_instr(InstructionType::Alloca, str_vec, ty_vec);
-        }
+        let x=program.get_block_label();
+        program.insert_alloc(
+            Instruction::make_instruction(InstructionType::Alloca, str_vec, ty_vec), 
+            &x
+        );
         
         // 做类型转换，使用BitCase将label转换为一个数组指针类型
         let res = labels.pop_num_str();
