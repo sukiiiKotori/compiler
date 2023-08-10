@@ -75,49 +75,6 @@ impl Scopes {
         }
     }
 
-    pub fn enter_function(&mut self, func_type: &SymbolType) {
-        // 进入函数作用域
-        // 在作用域堆栈中推入一个新的函数作用域
-        self.scope_vec.push(Scope {
-            ty: ScopeType::Func(func_type.clone()),
-            map_tab: HashMap::new(),
-        });
-    }
-
-    pub fn enter_basis_block(&mut self) {
-        // 进入基本块作用域
-        // 在作用域堆栈中推入一个新的基本块作用域
-        self.scope_vec.push(Scope {
-            ty: ScopeType::Basic,
-            map_tab: HashMap::new(),
-        });
-    }
-
-    pub fn enter_if_scope(&mut self) {
-        // 进入If语句作用域
-        // 在作用域堆栈中推入一个新的If语句作用域
-        self.scope_vec.push(Scope {
-            ty: ScopeType::If,
-            map_tab: HashMap::new(),
-        });
-    }
-
-    pub fn enter_while_scope(&mut self, entry: &str, end: &str) {
-        // 进入While循环作用域
-        // 在作用域堆栈中推入一个新的While循环作用域，并指定循环入口和循环结束标签
-        self.scope_vec.push(Scope {
-            ty: ScopeType::While(String::from(entry), String::from(end)),
-            map_tab: HashMap::new(),
-        });
-    }
-
-    pub fn exit_current_scope(&mut self) {
-        // 退出当前作用域
-        // 从作用域堆栈中弹出顶部的作用域
-        self.scope_vec.pop();
-    }
-
-
     pub fn is_in_while(&self) -> bool {
         self.scope_vec
             .iter()

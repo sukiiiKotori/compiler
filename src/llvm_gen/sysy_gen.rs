@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::ast::*;
 use crate::structures::llvm_struct::{LLVMProgram, Instruction, InstructionType};
 use crate::structures::symbol::*;
@@ -226,7 +227,10 @@ impl Generate for FuncDef {
             &SymbolVal::Func(func_type.clone(), types),
             None
         ) {
-            scopes.enter_function(&func_type);
+            scopes.scope_vec.push(Scope {
+                ty: ScopeType::Func(func_type.clone()),
+                map_tab: HashMap::new(),
+            });
             program.push_func(&func_type, label.as_str(), label_info);
 
             let i1_ty = SymbolType::new(SymbolWidth::Bool, false);
@@ -269,7 +273,7 @@ impl Generate for FuncDef {
                 }
             }
             self.block.generate(program, scopes, labels);
-            scopes.exit_current_scope();
+            scopes.scope_vec.pop();
             labels.clear();
         } else {
             panic!("Multi definition of {}", self.id);
@@ -371,9 +375,12 @@ impl Generate for Stmt {
                 
             },
             Stmt::Block(block) => {
-                scopes.enter_basis_block();
+                scopes.scope_vec.push(Scope {
+                    ty: ScopeType::Basic,
+                    map_tab: HashMap::new(),
+                });
                 block.generate(program, scopes, labels);
-                scopes.exit_current_scope();
+                scopes.scope_vec.pop();
                 
             },
             Stmt::Return(ret) => {
@@ -427,21 +434,27 @@ impl Generate for Stmt {
                     let str_vec = vec!(res.as_str(), if_then.as_str(), if_else.as_str());
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
                     
-                    scopes.enter_if_scope();
+                    scopes.scope_vec.push(Scope {
+                        ty: ScopeType::If,
+                        map_tab: HashMap::new(),
+                    });
                     program.push_bb(if_then.as_str(), scopes);
                     stmt1.generate(program, scopes, labels);
                     let ty_vec = vec!();
                     let str_vec = vec!("", if_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
-                    scopes.exit_current_scope();
+                    scopes.scope_vec.pop();
 
-                    scopes.enter_if_scope();
+                    scopes.scope_vec.push(Scope {
+                        ty: ScopeType::If,
+                        map_tab: HashMap::new(),
+                    });
                     program.push_bb(if_else.as_str(), scopes);
                     false_stmt.generate(program, scopes, labels);
                     let ty_vec = vec!();
                     let str_vec = vec!("", if_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
-                    scopes.exit_current_scope();
+                    scopes.scope_vec.pop();
 
                     program.push_bb(if_end.as_str(), scopes);
                 } else {
@@ -452,13 +465,16 @@ impl Generate for Stmt {
                     let str_vec = vec!(res.as_str(), if_then.as_str(), if_end.as_str());
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
                     
-                    scopes.enter_if_scope();
+                    scopes.scope_vec.push(Scope {
+                        ty: ScopeType::If,
+                        map_tab: HashMap::new(),
+                    });
                     program.push_bb(if_then.as_str(), scopes);
                     stmt1.generate(program, scopes, labels);
                     let ty_vec = vec!();
                     let str_vec = vec!("", if_end.as_str(), "");
                     program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
-                    scopes.exit_current_scope();
+                    scopes.scope_vec.pop();
                     program.push_bb(if_end.as_str(), scopes);
                 }
                 
@@ -488,14 +504,17 @@ impl Generate for Stmt {
                 program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
 
                 // while_body
-                scopes.enter_while_scope(&while_entry, &while_end);
+                scopes.scope_vec.push(Scope {
+                    ty: ScopeType::While(while_entry.clone(), while_end.clone()),
+                    map_tab: HashMap::new(),
+                });
                 program.push_bb(while_body.as_str(), scopes);
                 stmt.generate(program, scopes, labels);
                 
                 let ty_vec = vec!();
                 let str_vec = vec!("", while_entry.as_str(), "");
                 program.push_ter_instr(InstructionType::Br, str_vec, ty_vec);
-                scopes.exit_current_scope();
+                scopes.scope_vec.pop();
 
                 // while_end
                 program.push_bb(while_end.as_str(), scopes);
