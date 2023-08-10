@@ -393,7 +393,7 @@ impl MulExpBody {
         let (ty1, op1) = self.exp1.generate(program, scopes, labels);
         let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
-        if all_is_const(&ty1, &ty2) {
+        if both_is_const(&ty1, &ty2) {
             return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
         }
 
@@ -466,7 +466,7 @@ impl AddExpBody {
         let (ty1, op1) = self.exp1.generate(program, scopes, labels);
         let (ty2, op2) = self.exp2.generate(program, scopes, labels);
 
-        if all_is_const(&ty1, &ty2) {
+        if both_is_const(&ty1, &ty2) {
             return arithetic_operate(&ty1, &op1, &ty2, &op2, op_ty);
         }
 

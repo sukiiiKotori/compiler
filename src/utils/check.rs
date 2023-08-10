@@ -49,7 +49,7 @@ pub fn inside_imm_range(s: &str) -> bool {
 }
 
 /// 检查ty1和ty2是否都是常量
-pub fn all_is_const(ty1: &SymbolType, ty2: &SymbolType) -> bool {
+pub fn both_is_const(ty1: &SymbolType, ty2: &SymbolType) -> bool {
     return ty1.is_const && ty2.is_const;
 }
 
